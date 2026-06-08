@@ -10,6 +10,7 @@ import { TalkComposeModal, type TalkComposeValues } from './components/TalkCompo
 import { TalkPanel } from './components/TalkPanel';
 import { talkPosts } from './data/homeMockData';
 import './HomePage.css';
+import './HomeExtra.css';
 
 type HomeTab = 'talk' | 'people' | 'chats' | 'settings';
 const tabs: { id: HomeTab; label: string; icon: string }[] = [
