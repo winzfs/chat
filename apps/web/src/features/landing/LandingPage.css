@@ -45,27 +45,6 @@
   margin-top: 32px;
 }
 
-.primary-button,
-.secondary-button {
-  min-width: 148px;
-  height: 52px;
-  border-radius: var(--radius-button);
-  border: 0;
-  font-weight: 800;
-}
-
-.primary-button {
-  color: var(--color-white);
-  background: linear-gradient(135deg, var(--color-main-pink), var(--color-coral));
-  box-shadow: 0 12px 24px rgba(255, 107, 157, 0.28);
-}
-
-.secondary-button {
-  color: var(--color-main-pink);
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(255, 107, 157, 0.22);
-}
-
 .hero-card {
   position: relative;
   overflow: hidden;
