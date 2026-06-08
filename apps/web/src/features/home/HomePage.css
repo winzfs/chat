@@ -1,0 +1,266 @@
+.app-shell {
+  min-height: 100vh;
+  padding: 18px 16px 96px;
+}
+
+.home-screen {
+  width: min(520px, 100%);
+  margin: 0 auto;
+}
+
+.home-header,
+.section-title-row,
+.talk-card-header,
+.talk-actions {
+  display: flex;
+  align-items: center;
+}
+
+.home-header,
+.section-title-row {
+  justify-content: space-between;
+}
+
+.home-header {
+  gap: 16px;
+  padding: 12px 4px 18px;
+}
+
+.home-kicker {
+  margin: 0 0 6px;
+  color: var(--color-main-pink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.home-header h1 {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: 25px;
+  line-height: 1.22;
+  letter-spacing: -0.04em;
+}
+
+.profile-button {
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(255, 107, 157, 0.18);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-card);
+  font-size: 22px;
+}
+
+.quick-compose {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(255, 107, 157, 0.16), rgba(255, 142, 83, 0.12));
+  box-shadow: var(--shadow-card);
+}
+
+.quick-compose strong,
+.section-title-row h2,
+.talk-text,
+.recommend-card strong,
+.talk-card strong {
+  color: var(--color-text-strong);
+}
+
+.quick-compose p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.quick-compose .button {
+  min-width: 104px;
+  height: 44px;
+}
+
+.recommend-section,
+.talk-section {
+  margin-top: 24px;
+}
+
+.section-title-row {
+  margin-bottom: 12px;
+}
+
+.section-title-row h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.section-title-row button {
+  border: 0;
+  color: var(--color-main-pink);
+  background: transparent;
+  font-weight: 800;
+}
+
+.recommend-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(132px, 1fr));
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.recommend-card {
+  min-width: 132px;
+  text-align: center;
+}
+
+.avatar-wrap {
+  position: relative;
+  width: max-content;
+}
+
+.recommend-card .avatar-wrap {
+  margin: 0 auto 10px;
+}
+
+.avatar {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 18px;
+  color: var(--color-white);
+  background: linear-gradient(135deg, var(--color-main-pink), var(--color-purple));
+  font-weight: 900;
+}
+
+.status-dot {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--color-white);
+  border-radius: 999px;
+  background: var(--color-text-muted);
+}
+
+.status-dot.is-online {
+  background: #2fcd7a;
+}
+
+.recommend-card p,
+.talk-card-header p {
+  margin: 4px 0 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.match-rate,
+.tag {
+  display: inline-flex;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.match-rate {
+  margin-top: 10px;
+  padding: 5px 9px;
+  color: var(--color-main-pink);
+  background: #fff0f6;
+}
+
+.talk-list {
+  display: grid;
+  gap: 14px;
+}
+
+.talk-card-header {
+  gap: 12px;
+}
+
+.talk-text {
+  margin: 16px 0 12px;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  padding: 5px 9px;
+  color: var(--color-purple);
+  background: #f3f0ff;
+}
+
+.talk-actions {
+  gap: 12px;
+  margin-top: 16px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.talk-actions button {
+  margin-left: auto;
+  border: 0;
+  color: var(--color-white);
+  border-radius: 999px;
+  background: var(--color-main-pink);
+  padding: 8px 12px;
+  font-weight: 800;
+}
+
+.bottom-nav {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  left: 14px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  width: min(520px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 8px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 40px rgba(73, 80, 87, 0.14);
+}
+
+.nav-item {
+  display: grid;
+  gap: 4px;
+  place-items: center;
+  border: 0;
+  border-radius: 18px;
+  color: var(--color-text-muted);
+  background: transparent;
+  padding: 8px 0;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.nav-item span {
+  font-size: 18px;
+}
+
+.nav-item.is-active {
+  color: var(--color-main-pink);
+  background: #fff0f6;
+}
+
+@media (max-width: 420px) {
+  .quick-compose {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .recommend-list {
+    grid-template-columns: repeat(3, 132px);
+  }
+}
