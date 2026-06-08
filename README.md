@@ -22,3 +22,48 @@
 - 기능 단위로 폴더를 분리합니다.
 - 작은 작업 단위로 커밋합니다.
 - 먼저 배포 가능한 최소 버전을 만들고 점진적으로 확장합니다.
+
+## 프로젝트 구조
+
+```txt
+chat/
+ ├─ apps/
+ │  └─ web/
+ │     ├─ src/
+ │     │  ├─ features/
+ │     │  └─ shared/
+ │     └─ package.json
+ ├─ docs/
+ ├─ package.json
+ └─ pnpm-workspace.yaml
+```
+
+## 로컬 실행
+
+```bash
+pnpm install
+pnpm dev
+```
+
+## 빌드
+
+```bash
+pnpm build
+```
+
+빌드 결과물은 아래 경로에 생성됩니다.
+
+```txt
+apps/web/dist
+```
+
+## Cloudflare Pages 배포 설정
+
+```txt
+Root directory: apps/web
+Build command: pnpm install --frozen-lockfile=false && pnpm build
+Build output directory: apps/web/dist
+Node.js version: 20
+```
+
+자세한 내용은 `docs/03-deployment.md`를 참고합니다.
