@@ -2,19 +2,37 @@ import { useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import './TalkComposeModal.css';
 
+export type TalkComposeValues = {
+  text: string;
+  mood: string;
+};
+
 type TalkComposeModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onSubmit: (values: TalkComposeValues) => void;
 };
 
 const moodOptions = ['가벼운 수다', '취미 공유', '고민 상담', '오늘의 기분'];
 
-export function TalkComposeModal({ isOpen, onClose }: TalkComposeModalProps) {
+export function TalkComposeModal({ isOpen, onClose, onSubmit }: TalkComposeModalProps) {
+  const [text, setText] = useState('');
   const [selectedMood, setSelectedMood] = useState(moodOptions[0]);
+  const trimmedText = text.trim();
 
   if (!isOpen) {
     return null;
   }
+
+  const handleSubmit = () => {
+    if (!trimmedText) {
+      return;
+    }
+
+    onSubmit({ text: trimmedText, mood: selectedMood });
+    setText('');
+    setSelectedMood(moodOptions[0]);
+  };
 
   return (
     <div className="modal-backdrop" role="presentation">
@@ -28,20 +46,15 @@ export function TalkComposeModal({ isOpen, onClose }: TalkComposeModalProps) {
         </header>
 
         <label className="compose-field">
-          <span>내용</span>
-          <textarea maxLength={80} placeholder="예: 오늘 카페에서 수다 떨 사람 있나요?" rows={4} />
+          <span>내용 · {text.length}/80</span>
+          <textarea value={text} maxLength={80} placeholder="예: 오늘 카페에서 수다 떨 사람 있나요?" rows={4} onChange={(event) => setText(event.target.value)} />
         </label>
 
         <div className="compose-field">
           <span>분위기</span>
           <div className="mood-chip-list">
             {moodOptions.map((mood) => (
-              <button
-                className={selectedMood === mood ? 'mood-chip is-selected' : 'mood-chip'}
-                key={mood}
-                type="button"
-                onClick={() => setSelectedMood(mood)}
-              >
+              <button className={selectedMood === mood ? 'mood-chip is-selected' : 'mood-chip'} key={mood} type="button" onClick={() => setSelectedMood(mood)}>
                 {mood}
               </button>
             ))}
@@ -50,7 +63,7 @@ export function TalkComposeModal({ isOpen, onClose }: TalkComposeModalProps) {
 
         <div className="compose-modal-actions">
           <Button variant="secondary" onClick={onClose}>취소</Button>
-          <Button onClick={onClose}>등록하기</Button>
+          <Button disabled={!trimmedText} onClick={handleSubmit}>등록하기</Button>
         </div>
       </section>
     </div>
