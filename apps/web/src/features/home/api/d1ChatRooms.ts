@@ -23,6 +23,6 @@ export async function loadD1ChatRooms(): Promise<D1ChatRoom[]> {
     return fallbackRooms;
   }
 
-  const data = await response.json<{ rooms?: D1ChatRoom[] }>();
+  const data = await response.json() as { rooms?: D1ChatRoom[] };
   return data.rooms && data.rooms.length > 0 ? data.rooms : fallbackRooms;
 }
