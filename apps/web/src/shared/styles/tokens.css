@@ -1,0 +1,20 @@
+:root {
+  --color-main-pink: #ff6b9d;
+  --color-coral: #ff8e53;
+  --color-yellow: #ffd166;
+  --color-purple: #7b61ff;
+  --color-sky: #4cc9f0;
+
+  --color-white: #ffffff;
+  --color-soft-bg: #fff8f4;
+  --color-card-bg: #ffffff;
+  --color-border: #f1f3f5;
+  --color-text-strong: #212529;
+  --color-text-primary: #495057;
+  --color-text-muted: #adb5bd;
+
+  --radius-card: 24px;
+  --radius-button: 16px;
+  --shadow-card: 0 18px 45px rgba(73, 80, 87, 0.08);
+  --font-base: Pretendard, system-ui, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+}
