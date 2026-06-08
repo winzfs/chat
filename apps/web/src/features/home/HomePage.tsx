@@ -1,1 +1,1 @@
-export { HomeWithCompose as HomePage } from './HomeWithCompose';
+export { HomeScreen as HomePage } from './HomeScreen';
