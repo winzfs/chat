@@ -1,0 +1,36 @@
+export type D1ChatMessage = {
+  id: string;
+  room_id: string;
+  sender_nickname: string;
+  message_type: 'text' | 'image';
+  body: string | null;
+  image_key: string | null;
+  image_url: string | null;
+  created_at: string;
+};
+
+export async function loadD1ChatMessages(roomId: string): Promise<D1ChatMessage[]> {
+  const response = await fetch(`/api/chat-messages?room_id=${encodeURIComponent(roomId)}`);
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const data = await response.json() as { messages?: D1ChatMessage[] };
+  return data.messages ?? [];
+}
+
+export async function sendD1ChatMessage(roomId: string, body: string): Promise<D1ChatMessage | null> {
+  const response = await fetch('/api/chat-messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ room_id: roomId, body }),
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = await response.json() as { message?: D1ChatMessage };
+  return data.message ?? null;
+}
