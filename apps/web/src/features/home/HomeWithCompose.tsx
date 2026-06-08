@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Button } from '../../shared/components/Button';
 import { Card } from '../../shared/components/Card';
-import { TalkComposeModal } from './components/TalkComposeModal';
+import { TalkComposeModal, type TalkComposeValues } from './components/TalkComposeModal';
 import { recommendedUsers, talkPosts } from './data/homeMockData';
 import './HomePage.css';
 
 type HomeTab = 'talk' | 'people' | 'chats' | 'settings';
+type TalkPost = (typeof talkPosts)[number];
 
 const navItems: Array<{ id: HomeTab; label: string; icon: string }> = [
   { id: 'talk', label: '토크', icon: '💬' },
@@ -24,6 +25,26 @@ const titles: Record<HomeTab, string> = {
 export function HomeWithCompose() {
   const [activeTab, setActiveTab] = useState<HomeTab>('talk');
   const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const [posts, setPosts] = useState<TalkPost[]>(talkPosts);
+
+  const handleSubmitTalk = (values: TalkComposeValues) => {
+    const newPost: TalkPost = {
+      id: Date.now(),
+      nickname: '나',
+      age: 25,
+      location: '내 주변',
+      mood: values.mood,
+      text: values.text,
+      tags: ['방금작성', values.mood.replaceAll(' ', '')],
+      likes: 0,
+      replies: 0,
+      online: true,
+    };
+
+    setPosts((currentPosts) => [newPost, ...currentPosts]);
+    setIsComposeOpen(false);
+    setActiveTab('talk');
+  };
 
   return (
     <main className="app-shell">
@@ -36,7 +57,7 @@ export function HomeWithCompose() {
           <button className="profile-button" type="button" aria-label="내 프로필">🙂</button>
         </header>
 
-        {activeTab === 'talk' && <TalkTab onOpenCompose={() => setIsComposeOpen(true)} />}
+        {activeTab === 'talk' && <TalkTab posts={posts} onOpenCompose={() => setIsComposeOpen(true)} />}
         {activeTab === 'people' && <PeopleTab />}
         {activeTab === 'chats' && <ChatsTab />}
         {activeTab === 'settings' && <SettingsTab />}
@@ -51,12 +72,12 @@ export function HomeWithCompose() {
         ))}
       </nav>
 
-      <TalkComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} />
+      <TalkComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} onSubmit={handleSubmitTalk} />
     </main>
   );
 }
 
-function TalkTab({ onOpenCompose }: { onOpenCompose: () => void }) {
+function TalkTab({ posts, onOpenCompose }: { posts: TalkPost[]; onOpenCompose: () => void }) {
   return (
     <>
       <section className="quick-compose" aria-label="한줄 토크 작성">
@@ -72,7 +93,7 @@ function TalkTab({ onOpenCompose }: { onOpenCompose: () => void }) {
       </section>
       <section className="talk-section" aria-label="한줄 토크 목록">
         <div className="section-title-row"><h2>실시간 토크</h2><button type="button">필터</button></div>
-        <div className="talk-list">{talkPosts.map((post) => <TalkCard key={post.id} post={post} />)}</div>
+        <div className="talk-list">{posts.map((post) => <TalkCard key={post.id} post={post} />)}</div>
       </section>
     </>
   );
@@ -103,11 +124,11 @@ function PersonCard({ user }: { user: (typeof recommendedUsers)[number] }) {
   return <Card className="person-card"><div className="talk-card-header"><Avatar name={user.nickname} online={user.online} /><div><strong>{user.nickname}</strong><p>{user.age} · {user.location} · 취향 매칭 {user.matchRate}%</p></div></div><div className="talk-actions"><span>대화 가능</span><button type="button">프로필 보기</button></div></Card>;
 }
 
-function ChatCard({ post }: { post: (typeof talkPosts)[number] }) {
+function ChatCard({ post }: { post: TalkPost }) {
   return <Card className="person-card"><div className="talk-card-header"><Avatar name={post.nickname} online={post.online} /><div><strong>{post.nickname}</strong><p>{post.text}</p></div></div><div className="talk-actions"><span>방금 전</span><button type="button">열기</button></div></Card>;
 }
 
-function TalkCard({ post }: { post: (typeof talkPosts)[number] }) {
+function TalkCard({ post }: { post: TalkPost }) {
   return <Card as="article" className="talk-card"><div className="talk-card-header"><Avatar name={post.nickname} online={post.online} /><div><strong>{post.nickname}</strong><p>{post.age} · {post.location} · {post.mood}</p></div></div><p className="talk-text">{post.text}</p><div className="tag-row">{post.tags.map((tag) => <span className="tag" key={tag}>#{tag}</span>)}</div><div className="talk-actions"><span>♡ {post.likes}</span><span>댓글 {post.replies}</span><button type="button">대화하기</button></div></Card>;
 }
 
