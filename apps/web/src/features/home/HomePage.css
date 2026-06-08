@@ -11,13 +11,15 @@
 .home-header,
 .section-title-row,
 .talk-card-header,
-.talk-actions {
+.talk-actions,
+.setting-item {
   display: flex;
   align-items: center;
 }
 
 .home-header,
-.section-title-row {
+.section-title-row,
+.setting-item {
   justify-content: space-between;
 }
 
@@ -66,11 +68,15 @@
 .section-title-row h2,
 .talk-text,
 .recommend-card strong,
-.talk-card strong {
+.talk-card strong,
+.person-card strong,
+.settings-summary strong,
+.setting-item strong {
   color: var(--color-text-strong);
 }
 
-.quick-compose p {
+.quick-compose p,
+.settings-summary p {
   margin: 6px 0 0;
   font-size: 13px;
   line-height: 1.5;
@@ -151,9 +157,14 @@
 }
 
 .recommend-card p,
+.talk-card-header p,
+.settings-summary p {
+  color: var(--color-text-muted);
+}
+
+.recommend-card p,
 .talk-card-header p {
   margin: 4px 0 0;
-  color: var(--color-text-muted);
   font-size: 13px;
 }
 
@@ -215,6 +226,16 @@
   background: var(--color-main-pink);
   padding: 8px 12px;
   font-weight: 800;
+}
+
+.setting-item {
+  min-height: 58px;
+}
+
+.setting-item span {
+  color: var(--color-main-pink);
+  font-size: 24px;
+  font-weight: 900;
 }
 
 .bottom-nav {
