@@ -8,6 +8,12 @@ export type ChatRoomRecord = {
   created_at: string;
 };
 
+export type ChatRoomsResult = {
+  rooms: ChatRoomRecord[];
+  source: 'db' | 'fallback';
+  message: string;
+};
+
 const fallbackRooms: ChatRoomRecord[] = [
   {
     id: 'fallback-env',
@@ -26,10 +32,11 @@ const fallbackRooms: ChatRoomRecord[] = [
 ];
 
 export async function fetchChatRooms(): Promise<ChatRoomRecord[]> {
-  if (!supabase) {
-    return fallbackRooms;
-  }
+  const result = await fetchChatRoomsWithStatus();
+  return result.rooms;
+}
 
+export async function fetchChatRoomsWithStatus(): Promise<ChatRoomsResult> {
   const { data, error } = await supabase
     .from('chat_rooms')
     .select('id,title,last_message,last_message_at,created_at')
@@ -37,13 +44,24 @@ export async function fetchChatRooms(): Promise<ChatRoomRecord[]> {
     .limit(30);
 
   if (error) {
-    console.error(error);
-    return fallbackRooms;
+    return {
+      rooms: fallbackRooms,
+      source: 'fallback',
+      message: error.message,
+    };
   }
 
   if (!data || data.length === 0) {
-    return fallbackRooms;
+    return {
+      rooms: fallbackRooms,
+      source: 'fallback',
+      message: 'chat_rooms 테이블에 표시할 데이터가 없어요.',
+    };
   }
 
-  return data as ChatRoomRecord[];
+  return {
+    rooms: data as ChatRoomRecord[],
+    source: 'db',
+    message: `Supabase DB에서 ${data.length}개 채팅방을 불러왔어요.`,
+  };
 }
