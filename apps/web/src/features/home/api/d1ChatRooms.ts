@@ -17,7 +17,7 @@ const fallbackRooms: D1ChatRoom[] = [
 ];
 
 export async function loadD1ChatRooms(): Promise<D1ChatRoom[]> {
-  const response = await fetch('/api/chat-rooms');
+  const response = await fetch('/api/chat-rooms', { cache: 'no-store' });
 
   if (!response.ok) {
     return fallbackRooms;
@@ -38,17 +38,11 @@ export async function createD1ChatRoom(title: string): Promise<D1ChatRoom | null
     return null;
   }
 
-  const data = await response.json() as { id?: string; title?: string };
+  const data = await response.json() as D1ChatRoom;
 
   if (!data.id) {
     return null;
   }
 
-  return {
-    id: data.id,
-    title: data.title ?? title,
-    last_message: '아직 메시지가 없어요.',
-    last_message_at: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-  };
+  return data;
 }
