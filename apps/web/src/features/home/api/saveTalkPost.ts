@@ -1,7 +1,7 @@
 import { supabase } from '../../../shared/lib/supabaseClient';
 import type { TalkPostRecord } from './talkPosts';
 
-const columns = 'id,nickname,age,location,mood,body,tags,likes_count,replies_count,is_online,created_at';
+const columns = 'id,nickname,age,location,mood,text,tags,likes,replies,online,created_at';
 
 export async function saveTalkPost(text: string, mood: string): Promise<TalkPostRecord> {
   const fallback: TalkPostRecord = {
@@ -29,28 +29,19 @@ export async function saveTalkPost(text: string, mood: string): Promise<TalkPost
       age: fallback.age,
       location: fallback.location,
       mood: fallback.mood,
-      body: fallback.text,
+      text: fallback.text,
       tags: fallback.tags,
-      likes_count: 0,
-      replies_count: 0,
-      is_online: true,
+      likes: 0,
+      replies: 0,
+      online: true,
     })
     .select(columns)
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error(error);
+    return fallback;
+  }
 
-  return {
-    id: data.id,
-    nickname: data.nickname,
-    age: data.age,
-    location: data.location,
-    mood: data.mood,
-    text: data.body,
-    tags: data.tags ?? [],
-    likes: data.likes_count ?? 0,
-    replies: data.replies_count ?? 0,
-    online: data.is_online ?? false,
-    created_at: data.created_at,
-  };
+  return data as TalkPostRecord;
 }
