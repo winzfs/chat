@@ -1,0 +1,15 @@
+{
+  "name": "chat",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @chat/web dev",
+    "build": "pnpm --filter @chat/web build",
+    "preview": "pnpm --filter @chat/web preview"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
