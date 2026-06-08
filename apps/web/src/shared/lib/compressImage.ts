@@ -1,4 +1,4 @@
-const targetBytes = 300 * 1024;
+const targetBytes = 100 * 1024;
 const maxWidth = 1280;
 const maxHeight = 1280;
 
@@ -64,10 +64,10 @@ export async function compressImageToWebp(file: File): Promise<File> {
 
   context.drawImage(image, 0, 0, size.width, size.height);
 
-  let bestBlob = await canvasToBlob(canvas, 0.82);
-  let quality = 0.72;
+  let bestBlob = await canvasToBlob(canvas, 0.86);
+  let quality = 0.76;
 
-  while (bestBlob.size > targetBytes && quality >= 0.38) {
+  while (bestBlob.size > targetBytes && quality >= 0.34) {
     bestBlob = await canvasToBlob(canvas, quality);
     quality -= 0.08;
   }
