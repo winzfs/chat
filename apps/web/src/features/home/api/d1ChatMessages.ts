@@ -10,7 +10,7 @@ export type D1ChatMessage = {
 };
 
 export async function loadD1ChatMessages(roomId: string): Promise<D1ChatMessage[]> {
-  const response = await fetch(`/api/chat-messages?room_id=${encodeURIComponent(roomId)}`);
+  const response = await fetch(`/api/chat-messages?room_id=${encodeURIComponent(roomId)}`, { cache: 'no-store' });
 
   if (!response.ok) {
     return [];
