@@ -1,4 +1,5 @@
 import { Button } from '../../shared/components/Button';
+import { Card } from '../../shared/components/Card';
 import './LandingPage.css';
 
 const valueCards = [
@@ -45,11 +46,11 @@ export function LandingPage() {
 
       <section className="value-grid" aria-label="핵심 가치">
         {valueCards.map((card) => (
-          <article className="value-card" key={card.title}>
+          <Card as="article" className="value-card" key={card.title}>
             <span className="value-icon" aria-hidden="true">{card.icon}</span>
             <h2>{card.title}</h2>
             <p>{card.description}</p>
-          </article>
+          </Card>
         ))}
       </section>
     </main>
