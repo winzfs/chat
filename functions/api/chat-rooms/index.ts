@@ -31,12 +31,25 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const body = await request.json() as { title?: string };
-  const id = crypto.randomUUID();
   const title = body.title?.trim() || '새 채팅방';
+
+  const existingRoom = await env.DB.prepare(
+    'select id, title, last_message, last_message_at, created_at from chat_rooms where title = ? order by created_at desc limit 1',
+  ).bind(title).first();
+
+  if (existingRoom) {
+    return Response.json(existingRoom);
+  }
+
+  const id = crypto.randomUUID();
 
   await env.DB.prepare(
     'insert into chat_rooms (id, title, last_message, last_message_at) values (?, ?, ?, datetime("now"))',
   ).bind(id, title, '아직 메시지가 없어요.').run();
 
-  return Response.json({ id, title }, { status: 201 });
+  const room = await env.DB.prepare(
+    'select id, title, last_message, last_message_at, created_at from chat_rooms where id = ?',
+  ).bind(id).first();
+
+  return Response.json(room, { status: 201 });
 };
