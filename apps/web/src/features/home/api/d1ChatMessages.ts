@@ -34,3 +34,21 @@ export async function sendD1ChatMessage(roomId: string, body: string): Promise<D
   const data = await response.json() as { message?: D1ChatMessage };
   return data.message ?? null;
 }
+
+export async function sendD1ChatImage(roomId: string, image: File): Promise<D1ChatMessage | null> {
+  const formData = new FormData();
+  formData.append('room_id', roomId);
+  formData.append('image', image);
+
+  const response = await fetch('/api/chat-images', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = await response.json() as { message?: D1ChatMessage };
+  return data.message ?? null;
+}
