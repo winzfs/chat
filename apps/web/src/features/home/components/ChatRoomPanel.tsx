@@ -4,6 +4,7 @@ import { Card } from '../../../shared/components/Card';
 import { compressImageToWebp } from '../../../shared/lib/compressImage';
 import { loadD1ChatMessages, sendD1ChatImage, sendD1ChatMessage, type D1ChatMessage } from '../api/d1ChatMessages';
 import type { D1ChatRoom } from '../api/d1ChatRooms';
+import { useMessagePolling } from '../api/useMessagePolling';
 import { ChatMessageItem } from './ChatMessageItem';
 
 export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: () => void }) {
@@ -16,6 +17,8 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
   useEffect(() => {
     loadD1ChatMessages(room.id).then(setMessages);
   }, [room.id]);
+
+  useMessagePolling(room.id, setMessages);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -71,7 +74,7 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
       <Card className="settings-summary">
         <button type="button" onClick={onClose}>← 목록</button>
         <strong>{room.title ?? '새 채팅방'}</strong>
-        <p>{uploadStatus || `${messages.length}개 메시지`}</p>
+        <p>{uploadStatus || `${messages.length}개 메시지 · 자동 갱신 중`}</p>
         {errorText && <p className="error-text">{errorText}</p>}
       </Card>
 
