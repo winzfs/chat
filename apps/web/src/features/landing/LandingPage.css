@@ -128,14 +128,6 @@
   margin-top: 28px;
 }
 
-.value-card {
-  padding: 22px;
-  border: 1px solid rgba(241, 243, 245, 0.9);
-  border-radius: var(--radius-card);
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: var(--shadow-card);
-}
-
 .value-icon {
   display: grid;
   width: 46px;
