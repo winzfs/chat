@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Button } from '../../shared/components/Button';
 import { Card } from '../../shared/components/Card';
-import { createTalkPost, fetchTalkPosts } from './api/talkPostsApi';
+import { saveTalkPost } from './api/saveTalkPost';
+import { fetchTalkPosts, type TalkPostRecord } from './api/talkPosts';
 import { TalkComposeModal, type TalkComposeValues } from './components/TalkComposeModal';
 import { recommendedUsers, talkPosts } from './data/homeMockData';
 import './HomePage.css';
 
 type HomeTab = 'talk' | 'people' | 'chats' | 'settings';
-type TalkPost = (typeof talkPosts)[number];
+type TalkPost = TalkPostRecord;
 
 const navItems: Array<{ id: HomeTab; label: string; icon: string }> = [
   { id: 'talk', label: '토크', icon: '💬' },
@@ -23,10 +24,18 @@ const titles: Record<HomeTab, string> = {
   settings: '내 설정',
 };
 
+const fallbackPosts: TalkPost[] = talkPosts.map((post) => ({
+  ...post,
+  id: String(post.id),
+  age: post.age,
+  location: post.location,
+  created_at: new Date().toISOString(),
+}));
+
 export function HomeWithCompose() {
   const [activeTab, setActiveTab] = useState<HomeTab>('talk');
   const [isComposeOpen, setIsComposeOpen] = useState(false);
-  const [posts, setPosts] = useState<TalkPost[]>(talkPosts);
+  const [posts, setPosts] = useState<TalkPost[]>(fallbackPosts);
 
   useEffect(() => {
     fetchTalkPosts()
@@ -36,14 +45,14 @@ export function HomeWithCompose() {
         }
       })
       .catch(() => {
-        setPosts(talkPosts);
+        setPosts(fallbackPosts);
       });
   }, []);
 
   const handleSubmitTalk = async (values: TalkComposeValues) => {
-    const newPost = await createTalkPost(values);
+    const savedPost = await saveTalkPost(values.text, values.mood);
 
-    setPosts((currentPosts) => [newPost, ...currentPosts]);
+    setPosts((currentPosts) => [savedPost, ...currentPosts]);
     setIsComposeOpen(false);
     setActiveTab('talk');
   };
@@ -106,7 +115,7 @@ function PeopleTab() {
 }
 
 function ChatsTab() {
-  return <section className="talk-list" aria-label="채팅 목록">{talkPosts.map((post) => <ChatCard key={post.id} post={post} />)}</section>;
+  return <section className="talk-list" aria-label="채팅 목록">{fallbackPosts.map((post) => <ChatCard key={post.id} post={post} />)}</section>;
 }
 
 function SettingsTab() {
