@@ -60,7 +60,7 @@ apps/web/dist
 ## Cloudflare Pages 배포 설정
 
 ```txt
-Root directory: apps/web
+Root directory: /
 Build command: pnpm install --frozen-lockfile=false && pnpm build
 Build output directory: apps/web/dist
 Node.js version: 20
