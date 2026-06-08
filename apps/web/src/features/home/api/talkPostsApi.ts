@@ -7,11 +7,11 @@ type TalkPostRow = {
   age: number | null;
   location: string | null;
   mood: string;
-  text: string;
+  body: string;
   tags: string[] | null;
-  likes: number | null;
-  replies: number | null;
-  online: boolean | null;
+  likes_count: number | null;
+  replies_count: number | null;
+  is_online: boolean | null;
 };
 
 type CreateTalkPostInput = {
@@ -19,9 +19,13 @@ type CreateTalkPostInput = {
   mood: string;
 };
 
-const talkPostColumns = 'id,nickname,age,location,mood,text,tags,likes,replies,online';
+const talkPostColumns = 'id,nickname,age,location,mood,body,tags,likes_count,replies_count,is_online';
 
 export async function fetchTalkPosts(): Promise<TalkPost[]> {
+  if (!supabase) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from('talk_posts')
     .select(talkPostColumns)
@@ -35,7 +39,11 @@ export async function fetchTalkPosts(): Promise<TalkPost[]> {
   return (data ?? []).map(mapTalkPostRow);
 }
 
-export async function createTalkPost(input: CreateTalkPostInput): Promise<TalkPost> {
+export async function createTalkPost(input: CreateTalkPostInput): Promise<TalkPost | null> {
+  if (!supabase) {
+    return null;
+  }
+
   const { data, error } = await supabase
     .from('talk_posts')
     .insert({
@@ -43,11 +51,11 @@ export async function createTalkPost(input: CreateTalkPostInput): Promise<TalkPo
       age: 25,
       location: '내 주변',
       mood: input.mood,
-      text: input.text,
+      body: input.text,
       tags: ['방금작성', input.mood.replaceAll(' ', '')],
-      likes: 0,
-      replies: 0,
-      online: true,
+      likes_count: 0,
+      replies_count: 0,
+      is_online: true,
     })
     .select(talkPostColumns)
     .single();
@@ -66,10 +74,10 @@ function mapTalkPostRow(row: TalkPostRow): TalkPost {
     age: row.age ?? 0,
     location: row.location ?? '내 주변',
     mood: row.mood,
-    text: row.text,
+    text: row.body,
     tags: row.tags ?? [],
-    likes: row.likes ?? 0,
-    replies: row.replies ?? 0,
-    online: row.online ?? false,
+    likes: row.likes_count ?? 0,
+    replies: row.replies_count ?? 0,
+    online: row.is_online ?? false,
   };
 }
