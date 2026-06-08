@@ -58,7 +58,7 @@ export function HomeScreenNext() {
       <section className="home-screen" aria-labelledby="home-title">
         <header className="home-header"><div><p className="home-kicker">ChitChat</p><h1 id="home-title">{titles[activeTab]}</h1></div><button className="profile-button" type="button" onClick={() => setActiveTab('settings')}>{profile.nickname.slice(0, 1)}</button></header>
         {notice && <Card className="settings-summary"><strong>{notice}</strong></Card>}
-        {activeTab === 'talk' && <TalkPanel posts={posts} onOpenCompose={() => setIsComposeOpen(true)} />}
+        {activeTab === 'talk' && <TalkPanel posts={posts} onOpenCompose={() => setIsComposeOpen(true)} onOpenRoom={openDirectRoom} />}
         {activeTab === 'people' && <RecentPeoplePanel onOpenRoom={openDirectRoom} />}
         {activeTab === 'chats' && <ChatRoomsList initialRoom={openRoom} />}
         {activeTab === 'settings' && <ProfileSettingsPanel myProfile={profile} onSave={saveProfile} />}
