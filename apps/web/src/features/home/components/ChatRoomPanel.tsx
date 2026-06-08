@@ -1,6 +1,7 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
+import { compressImageToWebp } from '../../../shared/lib/compressImage';
 import { loadD1ChatMessages, sendD1ChatImage, sendD1ChatMessage, type D1ChatMessage } from '../api/d1ChatMessages';
 import type { D1ChatRoom } from '../api/d1ChatRooms';
 
@@ -8,6 +9,7 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
   const [messages, setMessages] = useState<D1ChatMessage[]>([]);
   const [text, setText] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
 
   useEffect(() => {
     loadD1ChatMessages(room.id).then(setMessages);
@@ -36,11 +38,20 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
     if (!image || isSending) return;
 
     setIsSending(true);
-    const saved = await sendD1ChatImage(room.id, image);
-    setIsSending(false);
+    setUploadStatus('이미지를 압축하는 중...');
 
-    if (saved) {
-      setMessages((current) => [...current, saved]);
+    try {
+      const compressedImage = await compressImageToWebp(image);
+      setUploadStatus(`압축 완료: ${Math.round(compressedImage.size / 1024)}KB`);
+
+      const saved = await sendD1ChatImage(room.id, compressedImage);
+
+      if (saved) {
+        setMessages((current) => [...current, saved]);
+      }
+    } finally {
+      setIsSending(false);
+      setUploadStatus('');
     }
   };
 
@@ -49,7 +60,7 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
       <Card className="settings-summary">
         <button type="button" onClick={onClose}>← 목록</button>
         <strong>{room.title ?? '새 채팅방'}</strong>
-        <p>{messages.length}개 메시지</p>
+        <p>{uploadStatus || `${messages.length}개 메시지`}</p>
       </Card>
 
       <div className="talk-list">
