@@ -10,16 +10,16 @@ export type ChatRoomRecord = {
 
 const fallbackRooms: ChatRoomRecord[] = [
   {
-    id: 'demo-1',
-    title: '지우',
-    last_message: '퇴근하고 달달한 커피 마시러 갈 사람 있어요?',
+    id: 'fallback-env',
+    title: 'DB 연결 확인 필요',
+    last_message: 'Cloudflare 환경변수 또는 Supabase 연결을 확인해야 해요.',
     last_message_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
   },
   {
-    id: 'demo-2',
-    title: '민준',
-    last_message: '잔잔한 영화 추천받아요.',
+    id: 'fallback-guide',
+    title: 'VITE_SUPABASE 설정 필요',
+    last_message: 'VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY가 필요해요.',
     last_message_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
   },
