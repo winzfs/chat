@@ -3,16 +3,21 @@ import { Card } from '../../../shared/components/Card';
 import { loadD1ChatRooms, type D1ChatRoom } from '../api/d1ChatRooms';
 import { ChatRoomPanel } from './ChatRoomPanel';
 
-export function ChatRoomsList() {
+export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null }) {
   const [rooms, setRooms] = useState<D1ChatRoom[]>([]);
-  const [selectedRoom, setSelectedRoom] = useState<D1ChatRoom | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<D1ChatRoom | null>(initialRoom ?? null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadD1ChatRooms()
-      .then(setRooms)
+      .then((loadedRooms) => {
+        setRooms(loadedRooms);
+        if (initialRoom) {
+          setSelectedRoom(initialRoom);
+        }
+      })
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [initialRoom]);
 
   if (selectedRoom) {
     return <ChatRoomPanel room={selectedRoom} onClose={() => setSelectedRoom(null)} />;
