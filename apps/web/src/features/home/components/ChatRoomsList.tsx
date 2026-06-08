@@ -1,21 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
-import { fetchChatRoomsWithStatus, type ChatRoomRecord, type ChatRoomsResult } from '../api/chatRooms';
-
-const initialResult: ChatRoomsResult = {
-  rooms: [],
-  source: 'fallback',
-  message: '채팅 목록을 불러오는 중...',
-};
+import { loadD1ChatRooms, type D1ChatRoom } from '../api/d1ChatRooms';
 
 export function ChatRoomsList() {
-  const [result, setResult] = useState<ChatRoomsResult>(initialResult);
+  const [rooms, setRooms] = useState<D1ChatRoom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchChatRoomsWithStatus()
-      .then(setResult)
-      .catch((error) => setResult({ rooms: [], source: 'fallback', message: String(error) }))
+    loadD1ChatRooms()
+      .then(setRooms)
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -26,15 +19,15 @@ export function ChatRoomsList() {
   return (
     <section className="talk-list" aria-label="채팅 목록">
       <Card className="settings-summary">
-        <strong>{result.source === 'db' ? 'DB 연결 성공' : 'DB 연결 실패'}</strong>
-        <p>{result.message}</p>
+        <strong>Cloudflare D1 모드</strong>
+        <p>{rooms.length}개 채팅방을 불러왔어요.</p>
       </Card>
-      {result.rooms.map((room) => <ChatRoomCard key={room.id} room={room} />)}
+      {rooms.map((room) => <ChatRoomCard key={room.id} room={room} />)}
     </section>
   );
 }
 
-function ChatRoomCard({ room }: { room: ChatRoomRecord }) {
+function ChatRoomCard({ room }: { room: D1ChatRoom }) {
   const title = room.title ?? '새 채팅방';
 
   return (
