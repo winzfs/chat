@@ -1,7 +1,7 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
-import { loadD1ChatMessages, sendD1ChatMessage, type D1ChatMessage } from '../api/d1ChatMessages';
+import { loadD1ChatMessages, sendD1ChatImage, sendD1ChatMessage, type D1ChatMessage } from '../api/d1ChatMessages';
 import type { D1ChatRoom } from '../api/d1ChatRooms';
 
 export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: () => void }) {
@@ -26,6 +26,21 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
     if (saved) {
       setMessages((current) => [...current, saved]);
       setText('');
+    }
+  };
+
+  const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const image = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!image || isSending) return;
+
+    setIsSending(true);
+    const saved = await sendD1ChatImage(room.id, image);
+    setIsSending(false);
+
+    if (saved) {
+      setMessages((current) => [...current, saved]);
     }
   };
 
@@ -54,7 +69,11 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
               </div>
               <div>
                 <strong>{message.sender_nickname}</strong>
-                <p>{message.body}</p>
+                {message.message_type === 'image' && message.image_url ? (
+                  <img alt="채팅 이미지" src={message.image_url} style={{ borderRadius: 18, marginTop: 8, maxWidth: '100%' }} />
+                ) : (
+                  <p>{message.body}</p>
+                )}
               </div>
             </div>
           </Card>
@@ -69,6 +88,10 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
           placeholder="메시지를 입력하세요"
           value={text}
         />
+        <label className="secondary-button">
+          사진
+          <input accept="image/*" hidden onChange={handleImageChange} type="file" />
+        </label>
         <Button disabled={isSending || text.trim().length === 0} type="submit">
           보내기
         </Button>
