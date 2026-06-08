@@ -4,7 +4,7 @@ import type { D1ChatRoom } from './api/d1ChatRooms';
 import { createD1TalkPost, loadD1TalkPosts, type D1TalkPost } from './api/d1TalkPosts';
 import { defaultProfile, loadMyProfile, saveMyProfile, type MyProfile } from './api/profileStorage';
 import { ChatRoomsList } from './components/ChatRoomsList';
-import { PeoplePanel } from './components/PeoplePanel';
+import { RecentPeoplePanel } from './components/RecentPeoplePanel';
 import { ProfileSettingsPanel } from './components/ProfileSettingsPanel';
 import { TalkComposeModal, type TalkComposeValues } from './components/TalkComposeModal';
 import { TalkPanel } from './components/TalkPanel';
@@ -19,7 +19,7 @@ const tabs: { id: HomeTab; label: string; icon: string }[] = [
   { id: 'chats', label: '채팅', icon: '✉️' },
   { id: 'settings', label: '설정', icon: '⚙️' },
 ];
-const titles: Record<HomeTab, string> = { talk: '지금 대화하고 싶은 사람들', people: '새로운 사람 둘러보기', chats: '내 대화 목록', settings: '내 설정' };
+const titles: Record<HomeTab, string> = { talk: '지금 대화하고 싶은 사람들', people: '최근 접속자', chats: '내 대화 목록', settings: '내 설정' };
 const fallbackPosts: D1TalkPost[] = talkPosts.map((post) => ({ ...post, id: String(post.id), created_at: new Date().toISOString() }));
 
 export function HomeScreenNext() {
@@ -59,7 +59,7 @@ export function HomeScreenNext() {
         <header className="home-header"><div><p className="home-kicker">ChitChat</p><h1 id="home-title">{titles[activeTab]}</h1></div><button className="profile-button" type="button" onClick={() => setActiveTab('settings')}>{profile.nickname.slice(0, 1)}</button></header>
         {notice && <Card className="settings-summary"><strong>{notice}</strong></Card>}
         {activeTab === 'talk' && <TalkPanel posts={posts} onOpenCompose={() => setIsComposeOpen(true)} />}
-        {activeTab === 'people' && <PeoplePanel onOpenRoom={openDirectRoom} />}
+        {activeTab === 'people' && <RecentPeoplePanel onOpenRoom={openDirectRoom} />}
         {activeTab === 'chats' && <ChatRoomsList initialRoom={openRoom} />}
         {activeTab === 'settings' && <ProfileSettingsPanel myProfile={profile} onSave={saveProfile} />}
       </section>
