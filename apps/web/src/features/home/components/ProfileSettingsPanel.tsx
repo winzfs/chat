@@ -20,6 +20,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
       <Card className="settings-summary">
         <strong>{myProfile.nickname}님</strong>
         <p>{myProfile.age}세 · {myProfile.location}</p>
+        <p>{myProfile.gender === 'female' ? '여성' : myProfile.gender === 'male' ? '남성' : '성별 선택 안 함'}</p>
         <p>{myProfile.bio}</p>
       </Card>
 
@@ -28,6 +29,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
           <label>닉네임<input value={form.nickname} maxLength={12} onChange={(event) => setForm({ ...form, nickname: event.target.value })} /></label>
           <label>나이<input type="number" value={form.age} min={18} max={80} onChange={(event) => setForm({ ...form, age: Number(event.target.value) })} /></label>
           <label>지역<input value={form.location} maxLength={20} onChange={(event) => setForm({ ...form, location: event.target.value })} /></label>
+          <label>성별<select value={form.gender} onChange={(event) => setForm({ ...form, gender: event.target.value as MyProfile['gender'] })}><option value="female">여성</option><option value="male">남성</option><option value="none">선택 안 함</option></select></label>
           <label>소개<textarea value={form.bio} maxLength={80} onChange={(event) => setForm({ ...form, bio: event.target.value })} /></label>
           <Button type="submit">프로필 저장</Button>
         </form>
