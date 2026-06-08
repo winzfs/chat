@@ -27,7 +27,7 @@ export async function loadD1TalkPosts(): Promise<D1TalkPost[]> {
     return fallbackPosts;
   }
 
-  const data = await response.json<{ posts?: D1TalkPost[] }>();
+  const data = await response.json() as { posts?: D1TalkPost[] };
   return data.posts && data.posts.length > 0 ? data.posts : fallbackPosts;
 }
 
@@ -54,6 +54,6 @@ export async function createD1TalkPost(text: string, mood: string): Promise<D1Ta
     };
   }
 
-  const data = await response.json<{ post: D1TalkPost }>();
+  const data = await response.json() as { post: D1TalkPost };
   return data.post;
 }
