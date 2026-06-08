@@ -1,10 +1,11 @@
 import { supabase } from '../../../shared/lib/supabaseClient';
 import type { TalkPostRecord } from './talkPosts';
 
-const columns = 'id,nickname,age,location,mood,text,tags,likes,replies,online,created_at';
+const columns = 'id,nickname,age,location,mood,body,tags,likes_count,replies_count,is_online,created_at';
 
-export async function saveTalkPost(text: string, mood: string) {
-  const payload = {
+export async function saveTalkPost(text: string, mood: string): Promise<TalkPostRecord> {
+  const fallback: TalkPostRecord = {
+    id: String(Date.now()),
     nickname: '나',
     age: 25,
     location: '내 주변',
@@ -14,12 +15,42 @@ export async function saveTalkPost(text: string, mood: string) {
     likes: 0,
     replies: 0,
     online: true,
+    created_at: new Date().toISOString(),
   };
 
-  const query = supabase.from('talk_posts');
-  const result = await query['insert'](payload).select(columns).single();
+  if (!supabase) {
+    return fallback;
+  }
 
-  if (result.error) throw result.error;
+  const { data, error } = await supabase
+    .from('talk_posts')
+    .insert({
+      nickname: fallback.nickname,
+      age: fallback.age,
+      location: fallback.location,
+      mood: fallback.mood,
+      body: fallback.text,
+      tags: fallback.tags,
+      likes_count: 0,
+      replies_count: 0,
+      is_online: true,
+    })
+    .select(columns)
+    .single();
 
-  return result.data as TalkPostRecord;
+  if (error) throw error;
+
+  return {
+    id: data.id,
+    nickname: data.nickname,
+    age: data.age,
+    location: data.location,
+    mood: data.mood,
+    text: data.body,
+    tags: data.tags ?? [],
+    likes: data.likes_count ?? 0,
+    replies: data.replies_count ?? 0,
+    online: data.is_online ?? false,
+    created_at: data.created_at,
+  };
 }
