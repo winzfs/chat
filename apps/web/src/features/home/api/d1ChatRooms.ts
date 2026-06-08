@@ -26,3 +26,29 @@ export async function loadD1ChatRooms(): Promise<D1ChatRoom[]> {
   const data = await response.json() as { rooms?: D1ChatRoom[] };
   return data.rooms && data.rooms.length > 0 ? data.rooms : fallbackRooms;
 }
+
+export async function createD1ChatRoom(title: string): Promise<D1ChatRoom | null> {
+  const response = await fetch('/api/chat-rooms', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = await response.json() as { id?: string; title?: string };
+
+  if (!data.id) {
+    return null;
+  }
+
+  return {
+    id: data.id,
+    title: data.title ?? title,
+    last_message: '아직 메시지가 없어요.',
+    last_message_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  };
+}
