@@ -3,24 +3,64 @@ import { Card } from '../../../shared/components/Card';
 import { loadD1ChatRooms, type D1ChatRoom } from '../api/d1ChatRooms';
 import { ChatRoomPanel } from './ChatRoomPanel';
 
+function readRoomIdFromHash() {
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  return params.get('room');
+}
+
+function writeRoomIdToHash(roomId: string) {
+  window.location.hash = `room=${encodeURIComponent(roomId)}`;
+}
+
+function clearRoomHash() {
+  if (window.location.hash.startsWith('#room=')) {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+}
+
 export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null }) {
   const [rooms, setRooms] = useState<D1ChatRoom[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<D1ChatRoom | null>(initialRoom ?? null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  const loadRooms = () => {
+    setIsLoading(true);
     loadD1ChatRooms()
       .then((loadedRooms) => {
         setRooms(loadedRooms);
+        const hashRoomId = readRoomIdFromHash();
+        const hashRoom = loadedRooms.find((room) => room.id === hashRoomId);
+
         if (initialRoom) {
           setSelectedRoom(initialRoom);
+          writeRoomIdToHash(initialRoom.id);
+          return;
+        }
+
+        if (hashRoom) {
+          setSelectedRoom(hashRoom);
         }
       })
       .finally(() => setIsLoading(false));
+  };
+
+  useEffect(() => {
+    loadRooms();
   }, [initialRoom]);
 
+  const openRoom = (room: D1ChatRoom) => {
+    writeRoomIdToHash(room.id);
+    setSelectedRoom(room);
+  };
+
+  const closeRoom = () => {
+    clearRoomHash();
+    setSelectedRoom(null);
+    loadRooms();
+  };
+
   if (selectedRoom) {
-    return <ChatRoomPanel room={selectedRoom} onClose={() => setSelectedRoom(null)} />;
+    return <ChatRoomPanel room={selectedRoom} onClose={closeRoom} />;
   }
 
   if (isLoading) {
@@ -33,7 +73,7 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
         <strong>Cloudflare D1 모드</strong>
         <p>{rooms.length}개 채팅방을 불러왔어요.</p>
       </Card>
-      {rooms.map((room) => <ChatRoomCard key={room.id} onOpen={() => setSelectedRoom(room)} room={room} />)}
+      {rooms.map((room) => <ChatRoomCard key={room.id} onOpen={() => openRoom(room)} room={room} />)}
     </section>
   );
 }
