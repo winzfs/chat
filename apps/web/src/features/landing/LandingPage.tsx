@@ -1,3 +1,4 @@
+import { Button } from '../../shared/components/Button';
 import './LandingPage.css';
 
 const valueCards = [
@@ -29,8 +30,8 @@ export function LandingPage() {
             밝고 편안한 분위기에서 새로운 사람과 가볍게 이야기를 시작해보세요.
           </p>
           <div className="landing-actions">
-            <button className="primary-button" type="button">시작하기</button>
-            <button className="secondary-button" type="button">둘러보기</button>
+            <Button>시작하기</Button>
+            <Button variant="secondary">둘러보기</Button>
           </div>
         </div>
 
