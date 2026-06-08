@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '../../shared/components/Button';
 import { Card } from '../../shared/components/Card';
+import { createTalkPost, fetchTalkPosts } from './api/talkPostsApi';
 import { TalkComposeModal, type TalkComposeValues } from './components/TalkComposeModal';
 import { recommendedUsers, talkPosts } from './data/homeMockData';
 import './HomePage.css';
@@ -27,19 +28,20 @@ export function HomeWithCompose() {
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [posts, setPosts] = useState<TalkPost[]>(talkPosts);
 
-  const handleSubmitTalk = (values: TalkComposeValues) => {
-    const newPost: TalkPost = {
-      id: Date.now(),
-      nickname: '나',
-      age: 25,
-      location: '내 주변',
-      mood: values.mood,
-      text: values.text,
-      tags: ['방금작성', values.mood.replaceAll(' ', '')],
-      likes: 0,
-      replies: 0,
-      online: true,
-    };
+  useEffect(() => {
+    fetchTalkPosts()
+      .then((loadedPosts) => {
+        if (loadedPosts.length > 0) {
+          setPosts(loadedPosts);
+        }
+      })
+      .catch(() => {
+        setPosts(talkPosts);
+      });
+  }, []);
+
+  const handleSubmitTalk = async (values: TalkComposeValues) => {
+    const newPost = await createTalkPost(values);
 
     setPosts((currentPosts) => [newPost, ...currentPosts]);
     setIsComposeOpen(false);
