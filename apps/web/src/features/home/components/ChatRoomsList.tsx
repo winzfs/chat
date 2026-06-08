@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
 import { loadD1ChatRooms, type D1ChatRoom } from '../api/d1ChatRooms';
+import { ChatRoomPanel } from './ChatRoomPanel';
 
 export function ChatRoomsList() {
   const [rooms, setRooms] = useState<D1ChatRoom[]>([]);
+  const [selectedRoom, setSelectedRoom] = useState<D1ChatRoom | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -11,6 +13,10 @@ export function ChatRoomsList() {
       .then(setRooms)
       .finally(() => setIsLoading(false));
   }, []);
+
+  if (selectedRoom) {
+    return <ChatRoomPanel room={selectedRoom} onClose={() => setSelectedRoom(null)} />;
+  }
 
   if (isLoading) {
     return <section className="talk-list" aria-label="채팅 목록"><Card className="person-card"><strong>채팅 목록을 불러오는 중...</strong></Card></section>;
@@ -22,12 +28,12 @@ export function ChatRoomsList() {
         <strong>Cloudflare D1 모드</strong>
         <p>{rooms.length}개 채팅방을 불러왔어요.</p>
       </Card>
-      {rooms.map((room) => <ChatRoomCard key={room.id} room={room} />)}
+      {rooms.map((room) => <ChatRoomCard key={room.id} onOpen={() => setSelectedRoom(room)} room={room} />)}
     </section>
   );
 }
 
-function ChatRoomCard({ room }: { room: D1ChatRoom }) {
+function ChatRoomCard({ onOpen, room }: { onOpen: () => void; room: D1ChatRoom }) {
   const title = room.title ?? '새 채팅방';
 
   return (
@@ -44,7 +50,7 @@ function ChatRoomCard({ room }: { room: D1ChatRoom }) {
       </div>
       <div className="talk-actions">
         <span>최근 대화</span>
-        <button type="button">열기</button>
+        <button type="button" onClick={onOpen}>열기</button>
       </div>
     </Card>
   );
