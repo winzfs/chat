@@ -1,5 +1,10 @@
 import { supabase } from '../../../shared/lib/supabase';
-import type { TalkPost } from '../data/homeMockData';
+import { talkPosts, type TalkPost } from '../data/homeMockData';
+
+export type CreateTalkPostInput = {
+  text: string;
+  mood: string;
+};
 
 type TalkPostRow = {
   id: string;
@@ -7,23 +12,18 @@ type TalkPostRow = {
   age: number | null;
   location: string | null;
   mood: string;
-  body: string;
-  tags: string[] | null;
-  likes_count: number | null;
-  replies_count: number | null;
-  is_online: boolean | null;
-};
-
-type CreateTalkPostInput = {
   text: string;
-  mood: string;
+  tags: string[] | null;
+  likes: number | null;
+  replies: number | null;
+  online: boolean | null;
 };
 
-const talkPostColumns = 'id,nickname,age,location,mood,body,tags,likes_count,replies_count,is_online';
+const talkPostColumns = 'id,nickname,age,location,mood,text,tags,likes,replies,online';
 
 export async function fetchTalkPosts(): Promise<TalkPost[]> {
   if (!supabase) {
-    return [];
+    return talkPosts;
   }
 
   const { data, error } = await supabase
@@ -33,15 +33,16 @@ export async function fetchTalkPosts(): Promise<TalkPost[]> {
     .limit(50);
 
   if (error) {
-    throw error;
+    console.error(error);
+    return talkPosts;
   }
 
   return (data ?? []).map(mapTalkPostRow);
 }
 
-export async function createTalkPost(input: CreateTalkPostInput): Promise<TalkPost | null> {
+export async function createTalkPost(input: CreateTalkPostInput): Promise<TalkPost> {
   if (!supabase) {
-    return null;
+    return createLocalTalkPost(input);
   }
 
   const { data, error } = await supabase
@@ -51,17 +52,18 @@ export async function createTalkPost(input: CreateTalkPostInput): Promise<TalkPo
       age: 25,
       location: '내 주변',
       mood: input.mood,
-      body: input.text,
+      text: input.text,
       tags: ['방금작성', input.mood.replaceAll(' ', '')],
-      likes_count: 0,
-      replies_count: 0,
-      is_online: true,
+      likes: 0,
+      replies: 0,
+      online: true,
     })
     .select(talkPostColumns)
     .single();
 
-  if (error) {
-    throw error;
+  if (error || !data) {
+    console.error(error);
+    return createLocalTalkPost(input);
   }
 
   return mapTalkPostRow(data);
@@ -74,10 +76,25 @@ function mapTalkPostRow(row: TalkPostRow): TalkPost {
     age: row.age ?? 0,
     location: row.location ?? '내 주변',
     mood: row.mood,
-    text: row.body,
+    text: row.text,
     tags: row.tags ?? [],
-    likes: row.likes_count ?? 0,
-    replies: row.replies_count ?? 0,
-    online: row.is_online ?? false,
+    likes: row.likes ?? 0,
+    replies: row.replies ?? 0,
+    online: row.online ?? false,
+  };
+}
+
+function createLocalTalkPost(input: CreateTalkPostInput): TalkPost {
+  return {
+    id: Date.now(),
+    nickname: '나',
+    age: 25,
+    location: '내 주변',
+    mood: input.mood,
+    text: input.text,
+    tags: ['방금작성', input.mood.replaceAll(' ', '')],
+    likes: 0,
+    replies: 0,
+    online: true,
   };
 }
