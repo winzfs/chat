@@ -1,14 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
-import { fetchChatRooms, type ChatRoomRecord } from '../api/chatRooms';
+import { fetchChatRoomsWithStatus, type ChatRoomRecord, type ChatRoomsResult } from '../api/chatRooms';
+
+const initialResult: ChatRoomsResult = {
+  rooms: [],
+  source: 'fallback',
+  message: '채팅 목록을 불러오는 중...',
+};
 
 export function ChatRoomsList() {
-  const [rooms, setRooms] = useState<ChatRoomRecord[]>([]);
+  const [result, setResult] = useState<ChatRoomsResult>(initialResult);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchChatRooms()
-      .then(setRooms)
+    fetchChatRoomsWithStatus()
+      .then(setResult)
+      .catch((error) => setResult({ rooms: [], source: 'fallback', message: String(error) }))
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -18,7 +25,11 @@ export function ChatRoomsList() {
 
   return (
     <section className="talk-list" aria-label="채팅 목록">
-      {rooms.map((room) => <ChatRoomCard key={room.id} room={room} />)}
+      <Card className="settings-summary">
+        <strong>{result.source === 'db' ? 'DB 연결 성공' : 'DB 연결 실패'}</strong>
+        <p>{result.message}</p>
+      </Card>
+      {result.rooms.map((room) => <ChatRoomCard key={room.id} room={room} />)}
     </section>
   );
 }
