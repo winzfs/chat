@@ -13,11 +13,13 @@ Cloudflare Pages에서 GitHub 저장소를 연결할 때 아래 값을 사용한
 ```txt
 Repository: winzfs/chat
 Production branch: main
-Root directory: apps/web
+Root directory: /
 Build command: pnpm install --frozen-lockfile=false && pnpm build
 Build output directory: apps/web/dist
 Node.js version: 20
 ```
+
+루트 디렉터리를 저장소 루트로 두고, 루트 `package.json`에서 웹앱 빌드를 실행한다.
 
 ## 로컬 실행
 
@@ -69,6 +71,6 @@ Android 작업은 웹앱의 핵심 화면과 결제/로그인 정책이 어느 �
 ## 주의 사항
 
 - 환경 변수는 `.env` 파일에 두고 GitHub에 올리지 않는다.
-- 결제 키, Supabase 키, 관리자 토큰은 공개 저장소에 커밋하지 않는다.
+- 결제 키, Supabase 키, 관리자 키는 공개 저장소에 커밋하지 않는다.
 - Cloudflare Pages 환경 변수 기능을 사용해 배포 환경 값을 관리한다.
 - UI 작업과 서버/DB 작업은 분리해서 진행한다.
