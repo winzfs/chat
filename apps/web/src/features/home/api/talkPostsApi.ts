@@ -7,11 +7,11 @@ type TalkPostRow = {
   age: number | null;
   location: string | null;
   mood: string;
-  body: string;
+  text: string;
   tags: string[] | null;
-  likes_count: number;
-  replies_count: number;
-  is_online: boolean;
+  likes: number | null;
+  replies: number | null;
+  online: boolean | null;
 };
 
 type CreateTalkPostInput = {
@@ -19,10 +19,12 @@ type CreateTalkPostInput = {
   mood: string;
 };
 
+const talkPostColumns = 'id,nickname,age,location,mood,text,tags,likes,replies,online';
+
 export async function fetchTalkPosts(): Promise<TalkPost[]> {
   const { data, error } = await supabase
     .from('talk_posts')
-    .select('id,nickname,age,location,mood,body,tags,likes_count,replies_count,is_online')
+    .select(talkPostColumns)
     .order('created_at', { ascending: false })
     .limit(50);
 
@@ -41,13 +43,13 @@ export async function createTalkPost(input: CreateTalkPostInput): Promise<TalkPo
       age: 25,
       location: '내 주변',
       mood: input.mood,
-      body: input.text,
+      text: input.text,
       tags: ['방금작성', input.mood.replaceAll(' ', '')],
-      likes_count: 0,
-      replies_count: 0,
-      is_online: true,
+      likes: 0,
+      replies: 0,
+      online: true,
     })
-    .select('id,nickname,age,location,mood,body,tags,likes_count,replies_count,is_online')
+    .select(talkPostColumns)
     .single();
 
   if (error) {
@@ -64,10 +66,10 @@ function mapTalkPostRow(row: TalkPostRow): TalkPost {
     age: row.age ?? 0,
     location: row.location ?? '내 주변',
     mood: row.mood,
-    text: row.body,
+    text: row.text,
     tags: row.tags ?? [],
-    likes: row.likes_count,
-    replies: row.replies_count,
-    online: row.is_online,
+    likes: row.likes ?? 0,
+    replies: row.replies ?? 0,
+    online: row.online ?? false,
   };
 }
