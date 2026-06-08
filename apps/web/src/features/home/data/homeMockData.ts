@@ -1,5 +1,5 @@
 export type TalkPost = {
-  id: number;
+  id: string | number;
   nickname: string;
   age: number;
   location: string;
