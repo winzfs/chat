@@ -27,8 +27,12 @@ const tabs: { id: HomeTab; label: string; icon: string }[] = [
 const titles: Record<HomeTab, string> = { talk: '지금 대화하고 싶은 사람들', people: '최근 접속자', chats: '내 대화 목록', settings: '내 설정' };
 const fallbackPosts: D1TalkPost[] = talkPosts.map((post) => ({ ...post, id: String(post.id), created_at: new Date().toISOString() }));
 
+function hasRoomHash() {
+  return window.location.hash.startsWith('#room=');
+}
+
 function clearRoomHash() {
-  if (window.location.hash.startsWith('#room=')) {
+  if (hasRoomHash()) {
     history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
   }
 }
@@ -73,7 +77,13 @@ export function HomeScreenNext() {
     }
 
     if (activeTab === 'chats') {
-      closeChatRoom();
+      if (openRoom || hasRoomHash()) {
+        closeChatRoom();
+        return true;
+      }
+
+      setActiveTab('talk');
+      refreshTalkPosts();
       return true;
     }
 
@@ -84,7 +94,7 @@ export function HomeScreenNext() {
     }
 
     return false;
-  }, [activeTab, closeChatRoom, isComposeOpen]));
+  }, [activeTab, closeChatRoom, isComposeOpen, openRoom]));
 
   useEffect(() => {
     const savedProfile = loadMyProfile();
