@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
-import { loadProfileById } from '../api/profileLookup';
+import { loadProfile } from '../api/profileLookup';
 import { UserAvatar } from './UserAvatar';
 
 export type ProfilePreview = {
@@ -16,12 +16,11 @@ export function ProfilePreviewModal({ onClose, onStartChat, profile }: { profile
   const [displayProfile, setDisplayProfile] = useState(profile);
 
   useEffect(() => {
+    let isMounted = true;
     setDisplayProfile(profile);
 
-    if (!profile.profile_id) return;
-
-    loadProfileById(profile.profile_id).then((loaded) => {
-      if (!loaded) return;
+    loadProfile(profile.profile_id, profile.nickname).then((loaded) => {
+      if (!isMounted || !loaded) return;
       setDisplayProfile({
         profile_id: loaded.id ?? profile.profile_id,
         nickname: loaded.nickname || profile.nickname,
@@ -31,6 +30,10 @@ export function ProfilePreviewModal({ onClose, onStartChat, profile }: { profile
         avatar_url: loaded.avatar_url ?? profile.avatar_url,
       });
     });
+
+    return () => {
+      isMounted = false;
+    };
   }, [profile]);
 
   return (
@@ -42,7 +45,7 @@ export function ProfilePreviewModal({ onClose, onStartChat, profile }: { profile
         <strong>{displayProfile.nickname}</strong>
         <p>{displayProfile.age ?? '-'}세 · {displayProfile.location || '내 주변'}</p>
         <p>{displayProfile.bio || '소개글이 아직 없어요.'}</p>
-        <div className="talk-actions">
+        <div className="talk-actions profile-modal-actions">
           <button type="button" onClick={onClose}>닫기</button>
           {onStartChat && <button type="button" onClick={onStartChat}>채팅 시작</button>}
         </div>
