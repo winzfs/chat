@@ -54,6 +54,17 @@ export function HomeScreenNext() {
   }, []);
 
   useEffect(() => {
+    if (activeTab !== 'talk') return;
+
+    const timer = window.setInterval(() => {
+      if (document.hidden || isComposeOpen) return;
+      refreshTalkPosts();
+    }, 3000);
+
+    return () => window.clearInterval(timer);
+  }, [activeTab, isComposeOpen]);
+
+  useEffect(() => {
     const checkRooms = async () => {
       const rooms = await loadD1ChatRooms();
       const previous = lastRoomTimesRef.current;
@@ -92,11 +103,13 @@ export function HomeScreenNext() {
     setPosts((current) => [saved, ...current]);
     setIsComposeOpen(false);
     setActiveTab('talk');
+    refreshTalkPosts();
   };
 
   const removeTalk = async (id: string) => {
     setPosts((current) => current.filter((post) => post.id !== id));
     await deleteD1TalkPost(id);
+    refreshTalkPosts();
   };
 
   const saveProfile = (next: MyProfile) => {
@@ -105,6 +118,7 @@ export function HomeScreenNext() {
     setProfile(next);
     syncProfile(previousNickname, next).catch(() => undefined);
     touchRecentUser(next).catch(() => undefined);
+    refreshTalkPosts();
     setNotice('프로필이 저장됐어요.');
   };
 
