@@ -47,6 +47,24 @@
   font-weight: 800;
 }
 
+.nav-badge {
+  position: absolute;
+  top: 4px;
+  right: 18px;
+  min-width: 24px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #ff2f6d;
+  color: white;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+  box-shadow: 0 8px 18px rgba(255, 47, 109, 0.32);
+}
+
 .talk-card.is-mine {
   border: 1px solid rgba(255, 107, 157, 0.3);
   background: linear-gradient(135deg, rgba(255, 107, 157, 0.18), rgba(255, 255, 255, 0.96));
