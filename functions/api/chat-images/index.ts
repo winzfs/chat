@@ -9,6 +9,17 @@ async function ensureChatImageColumns(env: Env) {
   } catch {
     // column already exists
   }
+
+  await env.DB.prepare(
+    `create table if not exists chat_room_exits (
+      room_id text not null,
+      profile_id text not null,
+      exited_at text not null default (datetime('now')),
+      is_hidden integer not null default 1,
+      updated_at text not null default (datetime('now')),
+      primary key (room_id, profile_id)
+    )`,
+  ).run();
 }
 
 async function hasRecentUser(env: Env, profileId: string) {
@@ -19,6 +30,16 @@ async function hasRecentUser(env: Env, profileId: string) {
     // recent_users may not exist on a fresh DB yet. The required profile_id check still protects anonymous uploads.
     return true;
   }
+}
+
+async function unhideRoom(env: Env, roomId: string, profileId: string) {
+  if (!profileId) return;
+
+  await env.DB.prepare(
+    `update chat_room_exits
+     set is_hidden = 0, updated_at = datetime('now')
+     where room_id = ? and profile_id = ?`,
+  ).bind(roomId, profileId).run();
 }
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
@@ -75,6 +96,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   if (file.size > 5 * 1024 * 1024) {
     return Response.json({ error: '이미지는 5MB 이하만 업로드할 수 있어요.' }, { status: 400 });
   }
+
+  await unhideRoom(env, roomId, profileId);
 
   const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
   const key = `chat/${roomId}/${profileId}/${crypto.randomUUID()}.${extension}`;
