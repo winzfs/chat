@@ -1,3 +1,4 @@
+import { apiUrl } from './apiBase';
 import { getProfileId } from './profileId';
 
 export function getAdminRequestHeaders() {
@@ -6,7 +7,7 @@ export function getAdminRequestHeaders() {
 
 export async function loadAdminStatus() {
   const params = new URLSearchParams({ profile_id: getProfileId() });
-  const response = await fetch(`/api/admin/me?${params.toString()}`, { headers: getAdminRequestHeaders() });
+  const response = await fetch(apiUrl(`/api/admin/me?${params.toString()}`), { headers: getAdminRequestHeaders() });
   if (!response.ok) return false;
 
   const data = await response.json() as { is_admin?: boolean };
@@ -15,7 +16,7 @@ export async function loadAdminStatus() {
 
 export async function loadUserReview(targetId: string) {
   const params = new URLSearchParams({ target_id: targetId });
-  const response = await fetch(`/api/admin/user-review?${params.toString()}`, { headers: getAdminRequestHeaders() });
+  const response = await fetch(apiUrl(`/api/admin/user-review?${params.toString()}`), { headers: getAdminRequestHeaders() });
   if (!response.ok) return null;
 
   return await response.json() as {
