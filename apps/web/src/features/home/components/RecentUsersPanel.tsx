@@ -47,7 +47,7 @@ export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRo
   };
 
   const previewUser = (user: RecentUser) => {
-    setPreviewProfile({ nickname: user.nickname, age: user.age, location: user.location, bio: user.bio, avatar_url: user.avatar_url });
+    setPreviewProfile({ profile_id: user.id, nickname: user.nickname, age: user.age, location: user.location, bio: user.bio, avatar_url: user.avatar_url });
   };
 
   return (
