@@ -13,11 +13,8 @@ type TalkComposeModalProps = {
   onSubmit: (values: TalkComposeValues) => void;
 };
 
-const moodOptions = ['가벼운 수다', '취미 공유', '고민 상담', '오늘의 기분'];
-
 export function TalkComposeModal({ isOpen, onClose, onSubmit }: TalkComposeModalProps) {
   const [text, setText] = useState('');
-  const [selectedMood, setSelectedMood] = useState(moodOptions[0]);
   const trimmedText = text.trim();
 
   if (!isOpen) {
@@ -29,9 +26,8 @@ export function TalkComposeModal({ isOpen, onClose, onSubmit }: TalkComposeModal
       return;
     }
 
-    onSubmit({ text: trimmedText, mood: selectedMood });
+    onSubmit({ text: trimmedText, mood: '가벼운 수다' });
     setText('');
-    setSelectedMood(moodOptions[0]);
   };
 
   return (
@@ -49,17 +45,6 @@ export function TalkComposeModal({ isOpen, onClose, onSubmit }: TalkComposeModal
           <span>내용 · {text.length}/80</span>
           <textarea value={text} maxLength={80} placeholder="예: 오늘 카페에서 수다 떨 사람 있나요?" rows={4} onChange={(event) => setText(event.target.value)} />
         </label>
-
-        <div className="compose-field">
-          <span>분위기</span>
-          <div className="mood-chip-list">
-            {moodOptions.map((mood) => (
-              <button className={selectedMood === mood ? 'mood-chip is-selected' : 'mood-chip'} key={mood} type="button" onClick={() => setSelectedMood(mood)}>
-                {mood}
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div className="compose-modal-actions">
           <Button variant="secondary" onClick={onClose}>취소</Button>
