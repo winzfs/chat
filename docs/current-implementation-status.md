@@ -14,6 +14,7 @@
 - API: Cloudflare Pages Functions `functions/api/*`
 - 데이터베이스: Cloudflare D1, 바인딩 이름 `DB`
 - 이미지 저장소: Cloudflare R2, 바인딩 이름 `IMAGES`
+- 운영자 판별: Cloudflare 환경변수 `ADMIN_PROFILE_IDS`
 
 ## 현재 구현된 주요 기능
 
@@ -127,8 +128,11 @@ POST /api/chat-room-leave
 - 차단 정보는 `user_blocks` 테이블에 저장
 - 신고 정보는 `reports` 테이블에 저장
 - 차단된 관계는 최근 접속자 목록과 새 직접 채팅방 생성에서 제외
-- 설정 화면의 차단/신고 관리에서 신고 목록 조회 가능
+- 차단 목록 조회/해제 API는 구현되어 있음
+- 차단 해제 UI 컴포넌트는 준비되어 있으며, 설정 화면 연결은 후속 작업 필요
+- 신고 목록 조회와 신고 상태 변경은 운영자만 가능
 - 신고 상태를 `open`, `reviewing`, `closed`로 변경 가능
+- 운영자는 신고 대상의 프로필, 소개글, 프로필 사진, 토크 글, 관련 채팅방과 메시지 검토 자료를 조회할 수 있음
 
 ## 주요 API
 
@@ -143,6 +147,8 @@ POST            /api/profile-sync
 POST            /api/chat-room-leave
 GET/POST/DELETE /api/user-blocks
 GET/POST/PATCH  /api/reports
+GET             /api/admin/me
+GET             /api/admin/user-review
 ```
 
 ## 클라이언트 주요 파일
@@ -161,6 +167,7 @@ apps/web/src/features/home/api/d1ChatMessages.ts
 apps/web/src/features/home/api/userSafety.ts
 apps/web/src/features/home/api/reportsAdmin.ts
 apps/web/src/features/home/api/pollingIntervals.ts
+apps/web/src/features/home/api/admin.ts
 apps/web/src/features/home/components/ProfileSettingsPanel.tsx
 apps/web/src/features/home/components/AvatarCropModal.tsx
 apps/web/src/features/home/components/UserAvatar.tsx
@@ -169,6 +176,7 @@ apps/web/src/features/home/components/RecentUsersPanel.tsx
 apps/web/src/features/home/components/ChatRoomsList.tsx
 apps/web/src/features/home/components/ChatRoomPanel.tsx
 apps/web/src/features/home/components/ReportsAdminPanel.tsx
+apps/web/src/features/home/components/BlockedUsersPanel.tsx
 apps/web/src/features/home/ProfileAvatar.css
 ```
 
@@ -209,7 +217,13 @@ MVP/테스트 단계에서는 폴링 기반으로 유지해도 됩니다. 다만
 
 ### 신고 관리 보안
 
-현재 신고 관리 화면과 `GET/PATCH /api/reports`는 MVP 관리용 기능입니다. 실제 운영 전에는 관리자 인증 또는 서버 측 권한 검사가 반드시 필요합니다.
+신고 관리 API는 `ADMIN_PROFILE_IDS`에 포함된 `profile_id`만 접근할 수 있습니다. Cloudflare Pages 환경변수에 운영자 `profile_id`를 쉼표로 구분해 등록해야 합니다.
+
+```txt
+ADMIN_PROFILE_IDS=운영자_profile_id
+```
+
+현재는 localStorage 기반 `profile_id`를 운영자 식별에 사용하므로, 실제 운영 전에는 로그인 기반 관리자 권한 검사로 교체하는 것이 안전합니다.
 
 ### 기존 데이터 보정
 
@@ -220,7 +234,7 @@ MVP/테스트 단계에서는 폴링 기반으로 유지해도 됩니다. 다만
 ## 다음 작업 후보
 
 1. 로컬에서 `pnpm build`로 타입/빌드 확인
-2. 신고 관리 화면/API에 관리자 인증 또는 서버 측 권한 검사 추가
-3. 차단 목록 조회/해제 UI 추가
-4. 실제 인증 체계 도입 검토
-5. WebSocket 또는 Durable Objects 기반 실시간화 검토
+2. Cloudflare Pages 환경변수 `ADMIN_PROFILE_IDS` 등록
+3. 설정 화면에 차단 관리 UI 연결 마무리
+4. 신고 대상 검토 화면에서 토크/채팅 상세 목록 펼침 UI 개선
+5. 실제 인증 체계 도입 검토
