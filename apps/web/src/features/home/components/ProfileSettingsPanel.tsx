@@ -135,6 +135,15 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
       <Card className="setting-item"><strong>알림 설정</strong><span>›</span></Card>
       <Card className="setting-item"><strong>차단 관리</strong><button className="secondary-button" onClick={() => setIsBlockListOpen(true)} type="button">열기</button></Card>
       {isAdmin && <Card className="setting-item"><strong>신고 관리</strong><button className="secondary-button" onClick={() => setIsReportAdminOpen(true)} type="button">열기</button></Card>}
+
+      <Card className="person-card settings-legal-card">
+        <strong>서비스 안내</strong>
+        <p>플러팅은 20세 이상 이용자를 위한 1:1 대화 서비스입니다.</p>
+        <div className="legal-link-row">
+          <a href="/terms.html">이용약관</a>
+          <a href="/privacy.html">개인정보처리방침</a>
+        </div>
+      </Card>
     </section>
   );
 }
