@@ -46,6 +46,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile=false
 
+      - name: Copy splash artwork
+        run: |
+          mkdir -p apps/web/public
+          cp resources/splash.png apps/web/public/splash.png
+
       - name: Build web app
         run: pnpm build
 
