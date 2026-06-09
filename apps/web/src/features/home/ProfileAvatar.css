@@ -1,15 +1,26 @@
-.avatar-wrap {
-  width: 48px;
-  height: 48px;
-  flex: 0 0 48px;
+.avatar-wrap,
+.profile-icon-button {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
   overflow: visible;
 }
 
+.profile-icon-button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
 .avatar-wrap .avatar,
-.avatar-wrap .avatar-image {
-  width: 48px;
-  height: 48px;
-  border-radius: 18px;
+.avatar-wrap .avatar-image,
+.profile-icon-button .avatar,
+.profile-icon-button .avatar-image,
+.profile-icon-button .user-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 20px;
 }
 
 .avatar-image {
@@ -34,26 +45,26 @@
 }
 
 .profile-avatar-preview {
-  width: 88px;
-  height: 88px;
+  width: 100px;
+  height: 100px;
   display: inline-grid;
   place-items: center;
   margin: 0 auto 12px;
   overflow: hidden;
-  border-radius: 30px;
+  border-radius: 32px;
   background: linear-gradient(135deg, #ff6b9d, #ffad85);
   color: #ffffff;
-  font-size: 34px;
+  font-size: 38px;
   font-weight: 900;
 }
 
 .profile-avatar-preview.is-small {
-  width: 54px;
-  height: 54px;
+  width: 60px;
+  height: 60px;
   flex: 0 0 auto;
   margin: 0;
-  border-radius: 20px;
-  font-size: 22px;
+  border-radius: 22px;
+  font-size: 24px;
 }
 
 .profile-avatar-preview img {
@@ -122,4 +133,32 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+.profile-preview-avatar {
+  width: 104px;
+  height: 104px;
+  margin: 0 auto 14px;
+}
+
+.profile-preview-avatar .user-avatar,
+.profile-preview-avatar .avatar,
+.profile-preview-avatar img {
+  width: 104px;
+  height: 104px;
+  border-radius: 32px;
+  font-size: 38px;
+}
+
+.message-profile-button {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--color-main-pink), var(--color-purple));
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
 }
