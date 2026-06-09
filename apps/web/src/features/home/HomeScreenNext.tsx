@@ -38,6 +38,7 @@ export function HomeScreenNext() {
   const [posts, setPosts] = useState<D1TalkPost[]>(fallbackPosts);
   const [profile, setProfile] = useState<MyProfile>(defaultProfile);
   const [openRoom, setOpenRoom] = useState<D1ChatRoom | null>(null);
+  const [chatListKey, setChatListKey] = useState(0);
   const [notice, setNotice] = useState('');
   const [hasNewChat, setHasNewChat] = useState(false);
   const lastRoomTimesRef = useRef<Record<string, string>>({});
@@ -53,6 +54,7 @@ export function HomeScreenNext() {
     if (tab === 'chats') {
       clearRoomHash();
       setOpenRoom(null);
+      setChatListKey((current) => current + 1);
       setHasNewChat(false);
     }
   };
@@ -146,7 +148,7 @@ export function HomeScreenNext() {
         {notice && <Card className="settings-summary"><strong>{notice}</strong></Card>}
         {activeTab === 'talk' && <TalkPanel2 posts={posts} myNickname={profile.nickname} onDeletePost={removeTalk} onOpenCompose={() => setIsComposeOpen(true)} onOpenRoom={openDirectRoom} />}
         {activeTab === 'people' && <RecentUsersPanel onOpenRoom={openDirectRoom} />}
-        {activeTab === 'chats' && <ChatRoomsList initialRoom={openRoom} />}
+        {activeTab === 'chats' && <ChatRoomsList key={chatListKey} initialRoom={openRoom} />}
         {activeTab === 'settings' && <ProfileSettingsPanel myProfile={profile} onSave={saveProfile} />}
       </section>
       <nav className="bottom-nav" aria-label="주요 메뉴">{tabs.map((tab) => <button className={activeTab === tab.id ? 'nav-item is-active' : 'nav-item'} key={tab.id} onClick={() => changeTab(tab.id)} type="button"><span>{tab.icon}</span>{tab.label}{tab.id === 'chats' && hasNewChat ? <em className="nav-badge">새</em> : null}</button>)}</nav>
