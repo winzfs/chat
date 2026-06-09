@@ -4,6 +4,7 @@ import { Card } from '../../../shared/components/Card';
 import { compressImageToWebp } from '../../../shared/lib/compressImage';
 import { loadD1ChatMessages, sendD1ChatImage, sendD1ChatMessage, type D1ChatMessage } from '../api/d1ChatMessages';
 import type { D1ChatRoom } from '../api/d1ChatRooms';
+import { blockUser, getPeerFromRoom, reportUser } from '../api/userSafety';
 import { useMessagePolling } from '../api/useMessagePolling';
 import { ChatMessageItem } from './ChatMessageItem';
 
@@ -13,6 +14,7 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
   const [isSending, setIsSending] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const [errorText, setErrorText] = useState('');
+  const peer = getPeerFromRoom(room);
 
   useEffect(() => {
     loadD1ChatMessages(room.id).then(setMessages);
@@ -69,12 +71,42 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
     }
   };
 
+  const handleReport = async () => {
+    if (!peer) {
+      setErrorText('신고할 상대 정보를 찾지 못했어요.');
+      return;
+    }
+
+    const ok = await reportUser(peer.id, peer.nickname, room.id);
+    setErrorText(ok ? '신고가 접수됐어요.' : '신고를 접수하지 못했어요.');
+  };
+
+  const handleBlock = async () => {
+    if (!peer) {
+      setErrorText('차단할 상대 정보를 찾지 못했어요.');
+      return;
+    }
+
+    const ok = await blockUser(peer.id, peer.nickname);
+    if (ok) {
+      setErrorText(`${peer.nickname}님을 차단했어요. 목록에서 더 이상 보이지 않아요.`);
+      onClose();
+      return;
+    }
+
+    setErrorText('차단하지 못했어요. 잠시 후 다시 시도해주세요.');
+  };
+
   return (
     <section className="talk-list" aria-label="채팅방">
       <Card className="settings-summary">
         <button type="button" onClick={onClose}>← 목록</button>
         <strong>{room.title ?? '새 채팅방'}</strong>
         <p>{uploadStatus || `${messages.length}개 메시지 · 자동 갱신 중`}</p>
+        <div className="talk-actions">
+          <button type="button" onClick={handleReport}>신고</button>
+          <button type="button" onClick={handleBlock}>차단</button>
+        </div>
         {errorText && <p className="error-text">{errorText}</p>}
       </Card>
 
