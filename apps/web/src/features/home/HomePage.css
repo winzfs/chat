@@ -1,6 +1,6 @@
 .app-shell {
-  min-height: 100vh;
-  padding: 18px 16px 96px;
+  min-height: 100dvh;
+  padding: 16px 16px calc(118px + env(safe-area-inset-bottom));
 }
 
 .home-screen {
@@ -24,8 +24,8 @@
 }
 
 .home-header {
-  gap: 16px;
-  padding: 12px 4px 18px;
+  gap: 14px;
+  padding: 8px 4px 16px;
 }
 
 .home-kicker {
@@ -39,7 +39,7 @@
   margin: 0;
   color: var(--color-text-strong);
   font-size: 25px;
-  line-height: 1.22;
+  line-height: 1.18;
   letter-spacing: -0.04em;
 }
 
@@ -57,8 +57,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 18px;
+  gap: 14px;
+  padding: 16px;
   border-radius: 24px;
   background: linear-gradient(135deg, rgba(255, 107, 157, 0.16), rgba(255, 142, 83, 0.12));
   box-shadow: var(--shadow-card);
@@ -89,7 +89,7 @@
 
 .recommend-section,
 .talk-section {
-  margin-top: 24px;
+  margin-top: 22px;
 }
 
 .section-title-row {
@@ -185,7 +185,7 @@
 
 .talk-list {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .talk-card-header {
@@ -193,9 +193,9 @@
 }
 
 .talk-text {
-  margin: 16px 0 12px;
+  margin: 14px 0 12px;
   font-size: 16px;
-  line-height: 1.65;
+  line-height: 1.6;
 }
 
 .tag-row {
@@ -211,8 +211,8 @@
 }
 
 .talk-actions {
-  gap: 12px;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: 14px;
   color: var(--color-text-muted);
   font-size: 13px;
   font-weight: 700;
@@ -229,7 +229,7 @@
 }
 
 .setting-item {
-  min-height: 58px;
+  min-height: 56px;
 }
 
 .setting-item span {
@@ -241,7 +241,7 @@
 .bottom-nav {
   position: fixed;
   right: 14px;
-  bottom: 14px;
+  bottom: calc(14px + env(safe-area-inset-bottom));
   left: 14px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -249,11 +249,13 @@
   margin: 0 auto;
   padding: 8px;
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 40px rgba(73, 80, 87, 0.14);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16px 34px rgba(73, 80, 87, 0.13);
+  backdrop-filter: blur(16px);
 }
 
 .nav-item {
+  position: relative;
   display: grid;
   gap: 4px;
   place-items: center;
@@ -276,6 +278,15 @@
 }
 
 @media (max-width: 420px) {
+  .app-shell {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .home-header h1 {
+    font-size: 24px;
+  }
+
   .quick-compose {
     align-items: stretch;
     flex-direction: column;
