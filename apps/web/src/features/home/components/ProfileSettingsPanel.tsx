@@ -3,6 +3,7 @@ import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
 import { getProfileId } from '../api/profileId';
 import type { MyProfile } from '../api/profileStorage';
+import { AvatarCropModal } from './AvatarCropModal';
 
 async function uploadAvatar(image: File) {
   const formData = new FormData();
@@ -19,21 +20,32 @@ async function uploadAvatar(image: File) {
 export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfile; onSave: (profile: MyProfile) => void }) {
   const [form, setForm] = useState<MyProfile>(myProfile);
   const [isUploading, setIsUploading] = useState(false);
+  const [cropImageUrl, setCropImageUrl] = useState('');
 
   useEffect(() => {
     setForm(myProfile);
   }, [myProfile]);
+
+  useEffect(() => () => {
+    if (cropImageUrl) URL.revokeObjectURL(cropImageUrl);
+  }, [cropImageUrl]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     onSave(form);
   };
 
-  const handleAvatarChange = async (file?: File) => {
+  const handleAvatarPick = (file?: File) => {
     if (!file) return;
+    if (cropImageUrl) URL.revokeObjectURL(cropImageUrl);
+    setCropImageUrl(URL.createObjectURL(file));
+  };
+
+  const uploadCroppedAvatar = async (file: File) => {
     setIsUploading(true);
     const avatarUrl = await uploadAvatar(file);
     setIsUploading(false);
+    setCropImageUrl('');
     if (avatarUrl) {
       setForm((current) => ({ ...current, avatar_url: avatarUrl }));
     }
@@ -59,7 +71,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
               <div className="profile-avatar-preview is-small">
                 {form.avatar_url ? <img alt="프로필 사진 미리보기" src={form.avatar_url} /> : <span>{form.nickname.slice(0, 1) || '?'}</span>}
               </div>
-              <input accept="image/*" onChange={(event) => handleAvatarChange(event.target.files?.[0])} type="file" />
+              <input accept="image/*" onChange={(event) => handleAvatarPick(event.target.files?.[0])} type="file" />
             </div>
             {isUploading && <span className="upload-hint">사진 업로드 중...</span>}
           </label>
@@ -71,6 +83,8 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
           <Button type="submit">프로필 저장</Button>
         </form>
       </Card>
+
+      {cropImageUrl && <AvatarCropModal imageUrl={cropImageUrl} onApply={uploadCroppedAvatar} onClose={() => setCropImageUrl('')} />}
 
       {['포인트 충전', '알림 설정', '차단/신고 관리'].map((item) => (
         <Card className="setting-item" key={item}><strong>{item}</strong><span>›</span></Card>
