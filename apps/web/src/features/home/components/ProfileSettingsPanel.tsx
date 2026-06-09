@@ -4,6 +4,7 @@ import { Card } from '../../../shared/components/Card';
 import { getProfileId } from '../api/profileId';
 import type { MyProfile } from '../api/profileStorage';
 import { AvatarCropModal } from './AvatarCropModal';
+import { ReportsAdminPanel } from './ReportsAdminPanel';
 
 async function uploadAvatar(image: File) {
   const formData = new FormData();
@@ -29,6 +30,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
   const [form, setForm] = useState<MyProfile>(myProfile);
   const [isUploading, setIsUploading] = useState(false);
   const [cropImageUrl, setCropImageUrl] = useState('');
+  const [isReportAdminOpen, setIsReportAdminOpen] = useState(false);
 
   useEffect(() => {
     setForm(myProfile);
@@ -54,8 +56,11 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
     const avatarUrl = await uploadAvatar(file);
     setIsUploading(false);
     setCropImageUrl('');
+
     if (avatarUrl) {
-      setForm((current) => ({ ...current, avatar_url: avatarUrl }));
+      const next = { ...form, avatar_url: avatarUrl };
+      setForm(next);
+      onSave(next);
     }
   };
 
@@ -63,8 +68,15 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
     setIsUploading(true);
     await deleteAvatar(form.avatar_url);
     setIsUploading(false);
-    setForm((current) => ({ ...current, avatar_url: '' }));
+
+    const next = { ...form, avatar_url: '' };
+    setForm(next);
+    onSave(next);
   };
+
+  if (isReportAdminOpen) {
+    return <ReportsAdminPanel onClose={() => setIsReportAdminOpen(false)} />;
+  }
 
   return (
     <section className="talk-list" aria-label="프로필 설정">
@@ -102,9 +114,9 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
 
       {cropImageUrl && <AvatarCropModal imageUrl={cropImageUrl} onApply={uploadCroppedAvatar} onClose={() => setCropImageUrl('')} />}
 
-      {['포인트 충전', '알림 설정', '차단/신고 관리'].map((item) => (
-        <Card className="setting-item" key={item}><strong>{item}</strong><span>›</span></Card>
-      ))}
+      <Card className="setting-item"><strong>포인트 충전</strong><span>›</span></Card>
+      <Card className="setting-item"><strong>알림 설정</strong><span>›</span></Card>
+      <button className="setting-item" onClick={() => setIsReportAdminOpen(true)} type="button"><strong>차단/신고 관리</strong><span>›</span></button>
     </section>
   );
 }
