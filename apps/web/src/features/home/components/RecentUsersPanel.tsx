@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
 import { openDirectD1ChatRoom, type D1ChatRoom } from '../api/d1ChatRooms';
 import { getProfileId } from '../api/profileId';
+import { POLLING_INTERVALS } from '../api/pollingIntervals';
 import { loadRecentUsers, type RecentUser } from '../api/recentUsers';
 import { UserAvatar } from './UserAvatar';
 
@@ -22,7 +23,7 @@ export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRo
     const timer = window.setInterval(() => {
       if (document.hidden) return;
       refreshUsers();
-    }, 3000);
+    }, POLLING_INTERVALS.recentUsers);
 
     return () => window.clearInterval(timer);
   }, [currentProfileId]);
