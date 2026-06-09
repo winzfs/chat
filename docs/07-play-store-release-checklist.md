@@ -1,18 +1,28 @@
 # Google Play 정식 출시 체크리스트
 
-마지막 갱신: 2026-06-09
+마지막 갱신: 2026-06-10
 
 ## 현재 상태
 
-- 웹앱 MVP 구현 진행 중
+- 앱 이름: 플러팅
+- Android 패키지명: `com.flirting.app`
 - Cloudflare Pages 배포 구조 있음
-- Capacitor Android debug APK 빌드 성공
+- Capacitor Android debug APK 빌드 성공 이력 있음
 - Android 실기기 실행 확인 완료
+- 앱 내부 API 연결 확인 완료
+- 앱 아이콘 원본 추가: `resources/icon.png`
+- 스플래시 원본 추가: `resources/splash.png`
+- Android 기본 스플래시 이후 웹앱 내부 풀스크린 스플래시 표시
 - 개인정보처리방침/이용약관 초안 페이지 추가
-- release AAB 워크플로우 초안 추가
+- release AAB 워크플로우 추가
+- Play Store 등록 문구 초안 추가: `docs/08-play-store-listing-draft.md`
+- release AAB/keystore 준비 문서 추가: `docs/09-release-aab-and-keystore.md`
 
 ## 1. 앱 품질 점검
 
+- [ ] 새 APK에서 앱 이름이 플러팅으로 표시되는지 확인
+- [ ] 새 APK에서 앱 아이콘이 바뀌었는지 확인
+- [ ] 앱 실행 직후 웹 스플래시가 자연스럽게 표시되는지 확인
 - [ ] 가입 화면 테스트
 - [ ] 지역 선택 테스트
 - [ ] 프로필 저장 테스트
@@ -48,14 +58,16 @@
 
 ## 3. Google Play Console 준비
 
+- [x] 앱 이름 초안 확정: 플러팅
+- [x] 패키지명 초안 확정: `com.flirting.app`
+- [x] 앱 아이콘 원본 준비
+- [x] 스플래시 원본 준비
+- [x] 앱 설명 초안 작성
 - [ ] Google Play 개발자 계정 생성
-- [ ] 앱 이름 확정
-- [ ] 패키지명 확정
 - [ ] 앱 카테고리 선택
-- [ ] 앱 설명 작성
 - [ ] 스크린샷 준비
-- [ ] 앱 아이콘 준비
-- [ ] 그래픽 이미지 준비
+- [ ] Play Store 512×512 아이콘 추출
+- [ ] 1024×500 피처 그래픽 준비
 - [ ] 개인정보처리방침 URL 입력
 - [ ] 데이터 보안 섹션 작성
 - [ ] 콘텐츠 등급 설문 작성
@@ -85,7 +97,7 @@ ANDROID_KEY_PASSWORD
 2. keystore 파일을 base64로 변환
 3. GitHub 저장소 Secrets에 등록
 4. Actions에서 `Android Release AAB` 수동 실행
-5. `chitchat-release-aab` artifact 다운로드
+5. `flirting-release-aab` artifact 다운로드
 6. Play Console에 업로드
 
 ## 5. 아직 위험한 부분
@@ -124,9 +136,11 @@ ANDROID_KEY_PASSWORD
 
 ## 6. 다음 작업 순서 추천
 
-1. 앱 아이콘/스플래시 추가
-2. Android 뒤로가기 버튼 처리
+1. Android Debug APK 재빌드 후 앱 이름/아이콘/스플래시 확인
+2. 실기기에서 토크/채팅/이미지 업로드/뒤로가기 테스트
 3. 개인정보처리방침/이용약관 실제 정보 반영
-4. release keystore 생성 방법 문서화
-5. release AAB 워크플로우 실제 실행 테스트
-6. Play Console 등록 자료 작성
+4. Play Store 스크린샷 제작
+5. 512×512 Play Store 아이콘 및 1024×500 피처 그래픽 제작
+6. release keystore 생성 및 GitHub Secrets 등록
+7. release AAB 워크플로우 실제 실행 테스트
+8. Play Console 등록 자료 입력
