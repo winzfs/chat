@@ -152,19 +152,20 @@
 }
 
 .talk-list[aria-label="채팅방"] {
-  gap: 10px;
-  padding-bottom: 96px;
+  gap: 8px;
+  padding-bottom: 112px;
 }
 
 .talk-list[aria-label="채팅방"] > .settings-summary {
   min-height: auto;
-  padding: 18px 20px;
+  padding: 14px 18px;
+  border-radius: 24px;
 }
 
 .talk-list[aria-label="채팅방"] > .settings-summary button {
   width: auto;
-  min-width: 76px;
-  min-height: 36px;
+  min-width: 72px;
+  min-height: 34px;
   margin-right: 8px;
   border: 1px solid rgba(255, 107, 157, 0.18);
   border-radius: 999px;
@@ -181,23 +182,23 @@
 }
 
 .talk-list[aria-label="채팅방"] > .settings-summary p {
-  margin-top: 8px;
+  margin-top: 6px;
   font-size: 13px;
 }
 
 .talk-list[aria-label="채팅방"] .chat-message {
   width: fit-content;
-  max-width: 78%;
-  min-width: 64px;
-  padding: 10px 14px;
-  border-radius: 20px 20px 20px 8px;
+  max-width: 76%;
+  min-width: 56px;
+  padding: 9px 13px;
+  border-radius: 18px 18px 18px 7px;
   background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 10px 24px rgba(39, 39, 42, 0.06);
+  box-shadow: 0 8px 18px rgba(39, 39, 42, 0.055);
 }
 
 .talk-list[aria-label="채팅방"] .chat-message.is-me {
   align-self: flex-end;
-  border-radius: 20px 20px 8px 20px;
+  border-radius: 18px 18px 7px 18px;
   background: linear-gradient(135deg, #ff6b9d, #ffad85);
   color: #ffffff;
 }
@@ -208,16 +209,16 @@
 
 .message-bubble-body {
   display: grid;
-  gap: 4px;
+  gap: 3px;
 }
 
 .chat-message p,
 .chat-message .talk-text {
   margin: 0;
   color: #27272a;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
-  line-height: 1.45;
+  line-height: 1.42;
   word-break: break-word;
 }
 
@@ -237,15 +238,15 @@
 }
 
 .talk-list[aria-label="채팅방"] .person-card:not(.chat-message) {
-  padding: 16px 18px;
-  border-radius: 24px;
+  padding: 14px 16px;
+  border-radius: 22px;
 }
 
 .talk-list[aria-label="채팅방"] .person-card:not(.chat-message) p {
   color: #3f3f46;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 .talk-list[aria-label="채팅방"] > .quick-compose {
@@ -254,37 +255,58 @@
   z-index: 12;
   display: grid;
   grid-template-columns: 1fr auto auto;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 24px;
-  background: rgba(255, 222, 231, 0.92);
-  box-shadow: 0 18px 36px rgba(255, 107, 157, 0.18);
+  gap: 7px;
+  padding: 10px;
+  border-radius: 22px;
+  background: rgba(255, 222, 231, 0.94);
+  box-shadow: 0 14px 30px rgba(255, 107, 157, 0.16);
   backdrop-filter: blur(14px);
 }
 
 .talk-list[aria-label="채팅방"] > .quick-compose input {
-  min-height: 44px;
-  border-radius: 18px;
-  padding: 10px 14px;
+  min-height: 42px;
+  border-radius: 17px;
+  padding: 9px 13px;
+  font-size: 14px;
 }
 
 .talk-list[aria-label="채팅방"] > .quick-compose .secondary-button,
 .talk-list[aria-label="채팅방"] > .quick-compose button {
-  min-width: 58px;
-  height: 44px;
-  padding: 0 14px;
-  border-radius: 18px;
+  min-width: 56px;
+  height: 42px;
+  padding: 0 13px;
+  border-radius: 17px;
   font-size: 13px;
 }
 
 @media (max-width: 420px) {
   .talk-list[aria-label="채팅방"] > .quick-compose {
-    grid-template-columns: 1fr 54px 64px;
+    grid-template-columns: 1fr 52px 62px;
   }
 
   .talk-list[aria-label="채팅방"] > .quick-compose .secondary-button,
   .talk-list[aria-label="채팅방"] > .quick-compose button {
     min-width: 0;
     padding: 0 8px;
+  }
+
+  .person-card,
+  .settings-summary,
+  .talk-card {
+    border-radius: 24px;
+  }
+
+  .person-card {
+    padding: 18px;
+  }
+
+  .talk-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .talk-actions button {
+    min-height: 38px;
+    padding: 8px 14px;
   }
 }
