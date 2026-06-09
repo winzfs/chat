@@ -1,19 +1,24 @@
 import { useState } from 'react';
 import { Card } from '../../../shared/components/Card';
 import type { D1ChatMessage } from '../api/d1ChatMessages';
+import { getProfileId } from '../api/profileId';
 import { loadMyProfile } from '../api/profileStorage';
 
 function formatTime(value: string) {
   return new Date(value).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
 }
 
-function isMyMessage(nickname: string) {
-  return nickname === loadMyProfile().nickname;
+function isMyMessage(message: D1ChatMessage) {
+  if (message.sender_profile_id) {
+    return message.sender_profile_id === getProfileId();
+  }
+
+  return message.sender_nickname === loadMyProfile().nickname;
 }
 
 export function ChatMessageItem({ message }: { message: D1ChatMessage }) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const isMe = isMyMessage(message.sender_nickname);
+  const isMe = isMyMessage(message);
 
   return (
     <>
