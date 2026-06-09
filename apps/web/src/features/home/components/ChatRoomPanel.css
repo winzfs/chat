@@ -1,6 +1,6 @@
 .chat-room-view {
   gap: 10px;
-  padding-bottom: 116px;
+  padding-bottom: 172px;
 }
 
 .chat-room-header-card {
@@ -107,12 +107,20 @@
 }
 
 .chat-compose-bar {
-  bottom: 86px !important;
+  position: fixed !important;
+  left: max(24px, calc((100vw - 720px) / 2 + 24px)) !important;
+  right: max(24px, calc((100vw - 720px) / 2 + 24px)) !important;
+  bottom: calc(94px + env(safe-area-inset-bottom, 0px)) !important;
+  z-index: 20 !important;
+  display: grid !important;
   grid-template-columns: minmax(0, 1fr) 54px 64px !important;
   gap: 8px !important;
   padding: 9px !important;
   border: 1px solid rgba(255, 107, 157, 0.16);
+  border-radius: 24px !important;
   background: rgba(255, 244, 248, 0.96) !important;
+  box-shadow: 0 18px 40px rgba(255, 107, 157, 0.18);
+  backdrop-filter: blur(16px);
 }
 
 .chat-compose-bar input {
@@ -133,7 +141,7 @@
 
 @media (max-width: 420px) {
   .chat-room-view {
-    padding-bottom: 122px;
+    padding-bottom: 178px;
   }
 
   .chat-room-header-card {
@@ -145,6 +153,8 @@
   }
 
   .chat-compose-bar {
+    left: 24px !important;
+    right: 24px !important;
     grid-template-columns: minmax(0, 1fr) 50px 58px !important;
   }
 }
