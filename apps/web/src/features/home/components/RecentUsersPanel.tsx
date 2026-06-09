@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
-import { createD1ChatRoom, type D1ChatRoom } from '../api/d1ChatRooms';
+import { openDirectD1ChatRoom, type D1ChatRoom } from '../api/d1ChatRooms';
 import { loadMyProfile } from '../api/profileStorage';
 import { loadRecentUsers, type RecentUser } from '../api/recentUsers';
 
@@ -22,7 +22,7 @@ export function RecentUsersPanel({ myNickname, onOpenRoom }: { myNickname?: stri
     }
 
     setNotice(`${user.nickname}님과 연결하는 중...`);
-    const room = await createD1ChatRoom(`${user.nickname}님과의 대화`);
+    const room = await openDirectD1ChatRoom(user.nickname);
     if (room) {
       setNotice('');
       onOpenRoom(room);
