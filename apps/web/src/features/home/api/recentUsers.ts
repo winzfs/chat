@@ -1,3 +1,4 @@
+import { apiUrl } from './apiBase';
 import { getProfileId } from './profileId';
 import type { MyProfile } from './profileStorage';
 
@@ -14,7 +15,7 @@ export type RecentUser = {
 
 export async function loadRecentUsers(): Promise<RecentUser[]> {
   const params = new URLSearchParams({ profile_id: getProfileId() });
-  const response = await fetch(`/api/recent-users?${params.toString()}`, { cache: 'no-store' });
+  const response = await fetch(apiUrl(`/api/recent-users?${params.toString()}`), { cache: 'no-store' });
 
   if (!response.ok) {
     return [];
@@ -25,7 +26,7 @@ export async function loadRecentUsers(): Promise<RecentUser[]> {
 }
 
 export async function touchRecentUser(profile: MyProfile): Promise<void> {
-  await fetch('/api/recent-users', {
+  await fetch(apiUrl('/api/recent-users'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...profile, profile_id: getProfileId() }),
