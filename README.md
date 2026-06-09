@@ -17,7 +17,7 @@ Deploy: Cloudflare Pages
 API: Cloudflare Pages Functions
 DB: Cloudflare D1
 Image Storage: Cloudflare R2
-Mobile Wrapper: Capacitor 예정
+Mobile Wrapper: Capacitor
 ```
 
 ## 현재 구현된 기능
@@ -112,6 +112,7 @@ chat/
  ├─ functions/
  │  └─ api/
  ├─ docs/
+ ├─ capacitor.config.ts
  ├─ package.json
  └─ pnpm-workspace.yaml
 ```
@@ -121,11 +122,13 @@ chat/
 ```txt
 docs/03-deployment.md
 docs/04-auth-and-permissions-plan.md
+docs/05-android-capacitor.md
 docs/current-implementation-status.md
 ```
 
 현재 구현 상태와 주의사항은 `docs/current-implementation-status.md`를 기준으로 확인합니다.
 실제 인증/권한 전환 계획은 `docs/04-auth-and-permissions-plan.md`를 기준으로 확인합니다.
+Android 패키징 절차는 `docs/05-android-capacitor.md`를 기준으로 확인합니다.
 
 ## 로컬 실행
 
@@ -144,6 +147,17 @@ pnpm build
 
 ```txt
 apps/web/dist
+```
+
+## Android 패키징
+
+```bash
+pnpm add @capacitor/core @capacitor/android
+pnpm add -D @capacitor/cli
+pnpm build
+npx cap add android
+npx cap sync android
+npx cap open android
 ```
 
 ## Cloudflare Pages 배포 설정
@@ -180,6 +194,7 @@ ADMIN_PROFILE_IDS=운영자_profile_id
 ## 다음 작업 후보
 
 - 로컬에서 `pnpm build` 실행 후 타입/빌드 확인
-- 프로필 모달에서 채팅 시작 버튼 연결 범위 추가 확대
+- Capacitor 의존성 설치 후 Android 프로젝트 생성
+- Android 실기기에서 키보드/입력창/이미지 업로드 테스트
 - 실제 인증 체계 도입
 - WebSocket 또는 Durable Objects 기반 실시간화 검토
