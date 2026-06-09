@@ -4,6 +4,7 @@ export type D1ChatMessage = {
   id: string;
   room_id: string;
   sender_nickname: string;
+  sender_profile_id?: string | null;
   message_type: 'text' | 'image';
   body: string | null;
   image_key: string | null;
@@ -22,7 +23,8 @@ function getProfileNickname() {
 }
 
 export async function loadD1ChatMessages(roomId: string): Promise<D1ChatMessage[]> {
-  const response = await fetch(`/api/chat-messages?room_id=${encodeURIComponent(roomId)}`, { cache: 'no-store' });
+  const params = new URLSearchParams({ room_id: roomId, profile_id: getProfileId() });
+  const response = await fetch(`/api/chat-messages?${params.toString()}`, { cache: 'no-store' });
 
   if (!response.ok) {
     return [];
