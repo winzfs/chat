@@ -1,3 +1,5 @@
+import { apiUrl } from './apiBase';
+
 export type LookupProfile = {
   id?: string;
   nickname: string;
@@ -15,7 +17,7 @@ export async function loadProfile(profileId?: string | null, nickname?: string |
   if (!profileId && nickname) params.set('nickname', nickname);
   if (!params.toString()) return null;
 
-  const response = await fetch(`/api/profile-lookup?${params.toString()}`);
+  const response = await fetch(apiUrl(`/api/profile-lookup?${params.toString()}`));
   if (!response.ok) return null;
 
   const data = await response.json() as { profile?: LookupProfile | null };
