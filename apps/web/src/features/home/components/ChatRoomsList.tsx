@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
 import { leaveD1ChatRoom, loadD1ChatRooms, type D1ChatRoom } from '../api/d1ChatRooms';
+import { POLLING_INTERVALS } from '../api/pollingIntervals';
 import { ChatRoomPanel } from './ChatRoomPanel';
 
 function readRoomIdFromHash() {
@@ -84,7 +85,7 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
 
     const timer = window.setInterval(() => {
       loadRooms(true);
-    }, 3000);
+    }, POLLING_INTERVALS.chatRooms);
 
     return () => window.clearInterval(timer);
   }, [selectedRoom, initialRoom]);
