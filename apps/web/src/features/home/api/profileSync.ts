@@ -1,3 +1,4 @@
+import { getProfileId } from './profileId';
 import type { MyProfile } from './profileStorage';
 
 export async function syncProfile(previousNickname: string, profile: MyProfile): Promise<void> {
@@ -5,6 +6,7 @@ export async function syncProfile(previousNickname: string, profile: MyProfile):
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      profile_id: getProfileId(),
       previous_nickname: previousNickname,
       nickname: profile.nickname,
       age: profile.age,
