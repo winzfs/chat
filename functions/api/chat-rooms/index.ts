@@ -53,3 +53,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
   return Response.json(room, { status: 201 });
 };
+
+export const onRequestDelete: PagesFunction<Env> = async ({ env, request }) => {
+  const url = new URL(request.url);
+  const id = url.searchParams.get('id')?.trim();
+
+  if (!id) {
+    return Response.json({ error: 'id가 필요해요.' }, { status: 400 });
+  }
+
+  await env.DB.prepare('delete from chat_messages where room_id = ?').bind(id).run();
+  await env.DB.prepare('delete from chat_rooms where id = ?').bind(id).run();
+
+  return Response.json({ ok: true });
+};
