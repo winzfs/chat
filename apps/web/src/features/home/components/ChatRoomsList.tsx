@@ -41,6 +41,7 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
   const [isLoading, setIsLoading] = useState(true);
   const [newRoomIds, setNewRoomIds] = useState<Set<string>>(new Set());
   const [previewProfile, setPreviewProfile] = useState<ProfilePreview | null>(null);
+  const [previewRoom, setPreviewRoom] = useState<D1ChatRoom | null>(null);
   const lastRoomTimesRef = useRef<Record<string, string>>({});
   const initializedRef = useRef(false);
 
@@ -137,6 +138,18 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
     await leaveD1ChatRoom(room.id);
   };
 
+  const previewRoomProfile = (room: D1ChatRoom) => {
+    setPreviewRoom(room);
+    setPreviewProfile(getRoomPeerProfile(room));
+  };
+
+  const openPreviewRoom = () => {
+    if (!previewRoom) return;
+    setPreviewProfile(null);
+    setPreviewRoom(null);
+    openRoom(previewRoom);
+  };
+
   if (selectedRoom) {
     return <ChatRoomPanel room={selectedRoom} onClose={closeRoom} />;
   }
@@ -153,8 +166,8 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
         <strong>내 채팅 목록</strong>
         <p>{rooms.length}개 채팅방 · 안 읽은 메시지 {totalUnread}개</p>
       </Card>
-      {rooms.map((room) => <ChatRoomCard hasNewMessage={newRoomIds.has(room.id)} key={room.id} onLeave={() => leaveRoom(room)} onOpen={() => openRoom(room)} onPreview={() => setPreviewProfile(getRoomPeerProfile(room))} room={room} />)}
-      {previewProfile && <ProfilePreviewModal profile={previewProfile} onClose={() => setPreviewProfile(null)} />}
+      {rooms.map((room) => <ChatRoomCard hasNewMessage={newRoomIds.has(room.id)} key={room.id} onLeave={() => leaveRoom(room)} onOpen={() => openRoom(room)} onPreview={() => previewRoomProfile(room)} room={room} />)}
+      {previewProfile && <ProfilePreviewModal profile={previewProfile} onClose={() => setPreviewProfile(null)} onStartChat={openPreviewRoom} />}
     </section>
   );
 }
