@@ -1,3 +1,4 @@
+import { apiUrl } from './apiBase';
 import { getProfileId } from './profileId';
 import { loadMyProfile } from './profileStorage';
 
@@ -74,7 +75,7 @@ export async function loadD1ChatRooms(): Promise<D1ChatRoom[]> {
     viewer_nickname: profile.nickname,
   });
 
-  const response = await fetch(`/api/chat-rooms?${params.toString()}`, { cache: 'no-store' });
+  const response = await fetch(apiUrl(`/api/chat-rooms?${params.toString()}`), { cache: 'no-store' });
 
   if (!response.ok) {
     return fallbackRooms;
@@ -88,7 +89,7 @@ export async function loadD1ChatRooms(): Promise<D1ChatRoom[]> {
 }
 
 export async function createD1ChatRoom(title: string): Promise<D1ChatRoom | null> {
-  const response = await fetch('/api/chat-rooms', {
+  const response = await fetch(apiUrl('/api/chat-rooms'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title, profile_id: getProfileId(), viewer_nickname: loadMyProfile().nickname }),
@@ -108,7 +109,7 @@ export async function createD1ChatRoom(title: string): Promise<D1ChatRoom | null
 }
 
 export async function openDirectD1ChatRoom(peerNickname: string, peerId?: string): Promise<D1ChatRoom | null> {
-  const response = await fetch('/api/chat-rooms', {
+  const response = await fetch(apiUrl('/api/chat-rooms'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -130,7 +131,7 @@ export async function openDirectD1ChatRoom(peerNickname: string, peerId?: string
 export async function leaveD1ChatRoom(id: string): Promise<boolean> {
   hideRoomLocally(id);
 
-  const response = await fetch('/api/chat-room-leave', {
+  const response = await fetch(apiUrl('/api/chat-room-leave'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ room_id: id, profile_id: getProfileId(), nickname: loadMyProfile().nickname }),
