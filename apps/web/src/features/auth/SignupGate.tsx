@@ -8,17 +8,18 @@ import '../home/HomePage.css';
 import '../home/HomeExtra.css';
 import './SignupGate.css';
 
-type SignupValues = Pick<MyProfile, 'nickname' | 'gender' | 'age'>;
+type SignupValues = Pick<MyProfile, 'nickname' | 'gender' | 'age' | 'location'>;
 
 export function SignupGate({ children }: { children: ReactNode }) {
   const [isSignedUp, setIsSignedUp] = useState(hasCompletedSignup());
-  const [values, setValues] = useState<SignupValues>({ nickname: '', gender: 'none', age: 20 });
+  const [values, setValues] = useState<SignupValues>({ nickname: '', gender: 'none', age: 20, location: '' });
   const [error, setError] = useState('');
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const nickname = values.nickname.trim();
     const age = Number(values.age);
+    const location = values.location.trim();
 
     if (nickname.length < 2 || nickname.length > 12) {
       setError('닉네임은 2자 이상 12자 이하로 입력해주세요.');
@@ -35,12 +36,17 @@ export function SignupGate({ children }: { children: ReactNode }) {
       return;
     }
 
+    if (location.length < 2 || location.length > 20) {
+      setError('지역은 2자 이상 20자 이하로 입력해주세요.');
+      return;
+    }
+
     const profile: MyProfile = {
       ...defaultProfile,
       nickname,
       gender: values.gender,
       age,
-      location: '내 주변',
+      location,
       bio: '',
     };
 
@@ -57,7 +63,7 @@ export function SignupGate({ children }: { children: ReactNode }) {
       <section className="signup-card" aria-labelledby="signup-title">
         <p className="home-kicker">ChitChat</p>
         <h1 id="signup-title">20세 이상 가입</h1>
-        <p className="signup-copy">닉네임, 성별, 나이만 설정하면 바로 시작할 수 있어요. 같은 기기에서는 한 계정만 사용할 수 있어요.</p>
+        <p className="signup-copy">닉네임, 성별, 나이, 지역을 설정하면 바로 시작할 수 있어요. 같은 기기에서는 한 계정만 사용할 수 있어요.</p>
 
         <form className="profile-form" onSubmit={submit}>
           <label>
@@ -77,6 +83,11 @@ export function SignupGate({ children }: { children: ReactNode }) {
           <label>
             나이
             <input min={20} onChange={(event) => setValues((current) => ({ ...current, age: Number(event.target.value) }))} type="number" value={values.age} />
+          </label>
+
+          <label>
+            지역
+            <input maxLength={20} onChange={(event) => setValues((current) => ({ ...current, location: event.target.value }))} placeholder="예: 서울, 부산, 광주" value={values.location} />
           </label>
 
           {error && <p className="error-text">{error}</p>}
