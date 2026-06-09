@@ -179,20 +179,22 @@ function ChatRoomCard({ hasNewMessage, onLeave, onOpen, onPreview, room }: { has
 
   return (
     <Card className={shouldHighlight ? 'person-card chat-room-card has-new-message' : 'person-card chat-room-card'}>
-      <div className="talk-card-header">
-        <button className="profile-icon-button" type="button" onClick={onPreview}>
-          <span className="avatar">{title.slice(0, 1)}</span>
-          <span className="status-dot is-online" />
-        </button>
-        <div>
-          <strong>{title}{shouldHighlight ? <em className="chat-new-badge">{unreadCount > 0 ? `${unreadCount}개` : '새 메시지'}</em> : null}</strong>
-          <p>{room.last_message ?? '아직 메시지가 없어요.'}</p>
+      <div className="chat-room-card-layout">
+        <div className="chat-room-card-main">
+          <button className="profile-icon-button" type="button" onClick={onPreview}>
+            <span className="avatar">{title.slice(0, 1)}</span>
+            <span className="status-dot is-online" />
+          </button>
+          <div className="chat-room-card-copy">
+            <strong>{title}{shouldHighlight ? <em className="chat-new-badge">{unreadCount > 0 ? `${unreadCount}개` : '새 메시지'}</em> : null}</strong>
+            <p>{room.last_message ?? '아직 메시지가 없어요.'}</p>
+            <span>{room.last_message_at ? '최근 대화 업데이트됨' : '최근 대화'}</span>
+          </div>
         </div>
-      </div>
-      <div className="talk-actions">
-        <span>{room.last_message_at ? '최근 대화 업데이트됨' : '최근 대화'}</span>
-        <button type="button" onClick={onOpen}>열기</button>
-        <button type="button" onClick={onLeave}>나가기</button>
+        <div className="chat-room-card-actions">
+          <button type="button" onClick={onOpen}>열기</button>
+          <button type="button" onClick={onLeave}>나가기</button>
+        </div>
       </div>
     </Card>
   );
