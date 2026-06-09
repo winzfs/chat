@@ -151,6 +151,24 @@
   margin: 0 auto 12px;
 }
 
+.profile-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  gap: 10px;
+}
+
+.profile-modal-actions button {
+  width: 100%;
+  min-height: 42px;
+  margin: 0;
+}
+
+.profile-modal-actions button:first-child {
+  color: var(--color-main-pink);
+  background: #fff0f6;
+}
+
 .talk-list[aria-label="채팅방"] {
   gap: 8px;
   padding-bottom: 112px;
