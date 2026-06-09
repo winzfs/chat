@@ -107,14 +107,8 @@ async function hasBlockBetween(env: Env, viewerId: string, peerId: string) {
   return Boolean(row);
 }
 
-async function unhideRoomForViewer(env: Env, roomId: string, viewerId: string) {
-  if (!viewerId) return;
-
-  await env.DB.prepare(
-    `update chat_room_exits
-     set is_hidden = 0, updated_at = datetime('now')
-     where room_id = ? and profile_id = ?`,
-  ).bind(roomId, viewerId).run();
+async function markRoomAsRead(env: Env, roomId: string, profileId: string) {
+  if (!profileId) return;
 
   await env.DB.prepare(
     `insert into chat_room_reads (room_id, profile_id, last_read_at, updated_at)
@@ -122,7 +116,23 @@ async function unhideRoomForViewer(env: Env, roomId: string, viewerId: string) {
      on conflict(room_id, profile_id) do update set
        last_read_at = datetime('now'),
        updated_at = datetime('now')`,
-  ).bind(roomId, viewerId).run();
+  ).bind(roomId, profileId).run();
+}
+
+async function unhideRoomForProfile(env: Env, roomId: string, profileId: string) {
+  if (!profileId) return;
+
+  await env.DB.prepare(
+    `update chat_room_exits
+     set is_hidden = 0, updated_at = datetime('now')
+     where room_id = ? and profile_id = ?`,
+  ).bind(roomId, profileId).run();
+}
+
+async function unhideRoomForParticipants(env: Env, roomId: string, profileIds: string[]) {
+  for (const profileId of [...new Set(profileIds.filter(Boolean))]) {
+    await unhideRoomForProfile(env, roomId, profileId);
+  }
 }
 
 async function listRooms(env: Env, viewerId: string) {
@@ -216,7 +226,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     ).bind(key).first<ChatRoomRow>();
 
     if (existingDirectRoom) {
-      await unhideRoomForViewer(env, existingDirectRoom.id, viewerId);
+      await unhideRoomForParticipants(env, existingDirectRoom.id, [viewerId, peerId]);
+      await markRoomAsRead(env, existingDirectRoom.id, viewerId);
       return Response.json(displayRoomForViewer(existingDirectRoom, viewerId));
     }
 
@@ -240,6 +251,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
        from chat_rooms where id = ?`,
     ).bind(id).first<ChatRoomRow>();
 
+    await markRoomAsRead(env, id, viewerId);
     return Response.json(room ? displayRoomForViewer(room, viewerId) : null, { status: 201 });
   }
 
