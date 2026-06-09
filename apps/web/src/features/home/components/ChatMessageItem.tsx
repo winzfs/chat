@@ -21,7 +21,9 @@ export function ChatMessageItem({ message }: { message: D1ChatMessage }) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const isMe = isMyMessage(message);
-  const nickname = isMe ? loadMyProfile().nickname : message.sender_nickname || '상대방';
+  const myProfile = loadMyProfile();
+  const nickname = isMe ? myProfile.nickname : message.sender_nickname || '상대방';
+  const profileId = isMe ? getProfileId() : message.sender_profile_id;
 
   return (
     <>
@@ -39,7 +41,7 @@ export function ChatMessageItem({ message }: { message: D1ChatMessage }) {
         </div>
       </Card>
 
-      {isProfileOpen && <ProfilePreviewModal profile={{ nickname }} onClose={() => setIsProfileOpen(false)} />}
+      {isProfileOpen && <ProfilePreviewModal profile={{ profile_id: profileId, nickname }} onClose={() => setIsProfileOpen(false)} />}
 
       {previewImage && (
         <button className="image-preview-backdrop" type="button" onClick={() => setPreviewImage(null)}>
