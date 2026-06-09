@@ -23,6 +23,17 @@ async function ensureChatMessageColumns(env: Env) {
       primary key (room_id, profile_id)
     )`,
   ).run();
+
+  await env.DB.prepare(
+    `create table if not exists chat_room_exits (
+      room_id text not null,
+      profile_id text not null,
+      exited_at text not null default (datetime('now')),
+      is_hidden integer not null default 1,
+      updated_at text not null default (datetime('now')),
+      primary key (room_id, profile_id)
+    )`,
+  ).run();
 }
 
 async function markRoomAsRead(env: Env, roomId: string, profileId: string) {
@@ -34,6 +45,16 @@ async function markRoomAsRead(env: Env, roomId: string, profileId: string) {
      on conflict(room_id, profile_id) do update set
        last_read_at = datetime('now'),
        updated_at = datetime('now')`,
+  ).bind(roomId, profileId).run();
+}
+
+async function unhideRoom(env: Env, roomId: string, profileId: string) {
+  if (!profileId) return;
+
+  await env.DB.prepare(
+    `update chat_room_exits
+     set is_hidden = 0, updated_at = datetime('now')
+     where room_id = ? and profile_id = ?`,
   ).bind(roomId, profileId).run();
 }
 
@@ -49,8 +70,14 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   }
 
   const { results } = await env.DB.prepare(
-    'select id, room_id, sender_nickname, sender_profile_id, message_type, body, image_key, image_url, created_at from chat_messages where room_id = ? order by created_at asc limit 100',
-  ).bind(roomId).all();
+    `select m.id, m.room_id, m.sender_nickname, m.sender_profile_id, m.message_type, m.body, m.image_key, m.image_url, m.created_at
+     from chat_messages m
+     left join chat_room_exits ex on ex.room_id = m.room_id and ex.profile_id = ?
+     where m.room_id = ?
+       and (ex.exited_at is null or datetime(m.created_at) > datetime(ex.exited_at))
+     order by m.created_at asc
+     limit 100`,
+  ).bind(profileId, roomId).all();
 
   await markRoomAsRead(env, roomId, profileId);
 
@@ -77,6 +104,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   if (body.length < 1 || body.length > 500) {
     return Response.json({ error: '메시지는 1자 이상 500자 이하로 입력해야 해요.' }, { status: 400 });
   }
+
+  await unhideRoom(env, roomId, profileId);
 
   const id = crypto.randomUUID();
 
