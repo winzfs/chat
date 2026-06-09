@@ -31,28 +31,14 @@ function hiddenRoomsKey() {
   return `chitchat.hiddenRooms.${getProfileId()}.v1`;
 }
 
-function getHiddenRoomIds() {
+function clearLegacyHiddenRoom(roomId: string) {
   try {
-    return new Set(JSON.parse(localStorage.getItem(hiddenRoomsKey()) || '[]') as string[]);
+    const hidden = new Set(JSON.parse(localStorage.getItem(hiddenRoomsKey()) || '[]') as string[]);
+    if (!hidden.delete(roomId)) return;
+    localStorage.setItem(hiddenRoomsKey(), JSON.stringify([...hidden]));
   } catch {
-    return new Set<string>();
+    localStorage.removeItem(hiddenRoomsKey());
   }
-}
-
-function saveHiddenRoomIds(hidden: Set<string>) {
-  localStorage.setItem(hiddenRoomsKey(), JSON.stringify([...hidden]));
-}
-
-function hideRoomLocally(roomId: string) {
-  const hidden = getHiddenRoomIds();
-  hidden.add(roomId);
-  saveHiddenRoomIds(hidden);
-}
-
-function showRoomLocally(roomId: string) {
-  const hidden = getHiddenRoomIds();
-  if (!hidden.delete(roomId)) return;
-  saveHiddenRoomIds(hidden);
 }
 
 function resolveRoomTitle(room: D1ChatRoom): D1ChatRoom {
@@ -91,10 +77,9 @@ export async function loadD1ChatRooms(): Promise<D1ChatRoom[]> {
     return fallbackRooms;
   }
 
-  const hidden = getHiddenRoomIds();
   const data = await response.json() as { rooms?: D1ChatRoom[] };
   return data.rooms && data.rooms.length > 0
-    ? data.rooms.filter((room) => !hidden.has(room.id)).map(resolveRoomTitle)
+    ? data.rooms.map(resolveRoomTitle)
     : fallbackRooms;
 }
 
@@ -115,7 +100,7 @@ export async function createD1ChatRoom(title: string): Promise<D1ChatRoom | null
     return null;
   }
 
-  showRoomLocally(data.id);
+  clearLegacyHiddenRoom(data.id);
   return resolveRoomTitle(data);
 }
 
@@ -141,13 +126,11 @@ export async function openDirectD1ChatRoom(peerNickname: string, peerId?: string
     return null;
   }
 
-  showRoomLocally(data.id);
+  clearLegacyHiddenRoom(data.id);
   return resolveRoomTitle(data);
 }
 
 export async function leaveD1ChatRoom(id: string): Promise<boolean> {
-  hideRoomLocally(id);
-
   const response = await fetch(apiUrl('/api/chat-room-leave'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
