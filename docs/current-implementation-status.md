@@ -26,6 +26,7 @@
 - 같은 기기에서는 localStorage 기준으로 한 계정만 사용
 - 프로필 정보는 localStorage에 저장
 - 서버에는 `profile_id` 기준으로 최근 접속자/토크/채팅방 정보 동기화
+- 토크, 사람, 채팅 목록, 채팅방 메시지에서 프로필 아이콘을 눌러 간단한 프로필 정보를 확인할 수 있음
 
 현재 프로필 필드:
 
@@ -49,6 +50,7 @@ avatar_url
 - 프로필 사진을 기본 이미지로 되돌릴 수 있음
 - 프로필 사진 업로드/기본 이미지 되돌리기 후 즉시 프로필 저장까지 처리
 - 사진이 없으면 닉네임 첫 글자 아바타 표시
+- 목록과 프로필 모달의 프로필 아이콘/사진 크기를 모바일에서 더 잘 보이도록 키움
 
 적용 위치:
 
@@ -56,14 +58,18 @@ avatar_url
 - 상단 내 프로필 버튼
 - 토크 카드
 - 사람 탭 최근 접속자 카드
+- 채팅 목록 카드
+- 채팅방 메시지
 
 ### 3. 토크 탭
 
 - 한줄 토크 작성
+- 토크 작성 시 분위기 선택 없이 내용만 입력
 - 토크 글 작성자 `profile_id` 저장
 - 토크 글에 닉네임, 나이, 지역, 프로필 사진 URL 저장
 - 내 글은 다른 스타일로 표시
 - 내 글 삭제 가능
+- 토크 목록에서 분위기 문구와 `#태그` 표시는 숨김
 - 다른 사람 글에서 대화하기 가능
 - 대화하기는 닉네임이 아니라 작성자 `profile_id` 기준으로 직접 채팅방 연결
 - 토크 탭을 보고 있을 때 자동 갱신
@@ -170,10 +176,12 @@ apps/web/src/features/home/api/admin.ts
 apps/web/src/features/home/components/ProfileSettingsPanel.tsx
 apps/web/src/features/home/components/AvatarCropModal.tsx
 apps/web/src/features/home/components/UserAvatar.tsx
+apps/web/src/features/home/components/ProfilePreviewModal.tsx
 apps/web/src/features/home/components/TalkPanel2.tsx
 apps/web/src/features/home/components/RecentUsersPanel.tsx
 apps/web/src/features/home/components/ChatRoomsList.tsx
 apps/web/src/features/home/components/ChatRoomPanel.tsx
+apps/web/src/features/home/components/ChatMessageItem.tsx
 apps/web/src/features/home/components/ReportsAdminPanel.tsx
 apps/web/src/features/home/components/BlockedUsersPanel.tsx
 apps/web/src/features/home/ProfileAvatar.css
@@ -234,6 +242,6 @@ ADMIN_PROFILE_IDS=운영자_profile_id
 
 1. 로컬에서 `pnpm build`로 타입/빌드 확인
 2. Cloudflare Pages 환경변수 `ADMIN_PROFILE_IDS` 등록
-3. 신고 대상 검토 화면에서 토크/채팅 상세 목록 UI 추가 개선
+3. 프로필 모달에 실제 상대방 최신 프로필 API 연결
 4. 실제 인증 체계 도입 검토
 5. WebSocket 또는 Durable Objects 기반 실시간화 검토
