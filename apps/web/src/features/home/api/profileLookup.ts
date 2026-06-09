@@ -9,13 +9,19 @@ export type LookupProfile = {
   last_seen_at?: string | null;
 };
 
-export async function loadProfileById(profileId?: string | null) {
-  if (!profileId) return null;
+export async function loadProfile(profileId?: string | null, nickname?: string | null) {
+  const params = new URLSearchParams();
+  if (profileId) params.set('profile_id', profileId);
+  if (!profileId && nickname) params.set('nickname', nickname);
+  if (!params.toString()) return null;
 
-  const params = new URLSearchParams({ profile_id: profileId });
   const response = await fetch(`/api/profile-lookup?${params.toString()}`);
   if (!response.ok) return null;
 
   const data = await response.json() as { profile?: LookupProfile | null };
   return data.profile ?? null;
+}
+
+export async function loadProfileById(profileId?: string | null) {
+  return loadProfile(profileId, null);
 }
