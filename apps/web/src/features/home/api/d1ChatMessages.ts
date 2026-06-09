@@ -20,11 +20,11 @@ export async function loadD1ChatMessages(roomId: string): Promise<D1ChatMessage[
   return data.messages ?? [];
 }
 
-export async function sendD1ChatMessage(roomId: string, body: string): Promise<D1ChatMessage | null> {
+export async function sendD1ChatMessage(roomId: string, body: string, senderNickname = '익명'): Promise<D1ChatMessage | null> {
   const response = await fetch('/api/chat-messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ room_id: roomId, body }),
+    body: JSON.stringify({ room_id: roomId, body, sender_nickname: senderNickname }),
   });
 
   if (!response.ok) {
