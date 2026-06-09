@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Card } from '../../shared/components/Card';
 import { loadD1ChatRooms, type D1ChatRoom } from './api/d1ChatRooms';
 import { createD1TalkPost, deleteD1TalkPost, loadD1TalkPosts, type D1TalkPost } from './api/d1TalkPosts';
@@ -6,6 +6,7 @@ import { POLLING_INTERVALS } from './api/pollingIntervals';
 import { defaultProfile, loadMyProfile, saveMyProfile, type MyProfile } from './api/profileStorage';
 import { syncProfile } from './api/profileSync';
 import { touchRecentUser } from './api/recentUsers';
+import { useAndroidBackButton } from './api/useAndroidBackButton';
 import { ChatRoomsList } from './components/ChatRoomsList';
 import { RecentUsersPanel } from './components/RecentUsersPanel';
 import { ProfileSettingsPanel } from './components/ProfileSettingsPanel';
@@ -58,6 +59,32 @@ export function HomeScreenNext() {
       setHasNewChat(false);
     }
   };
+
+  const closeChatRoom = useCallback(() => {
+    clearRoomHash();
+    setOpenRoom(null);
+    setChatListKey((current) => current + 1);
+  }, []);
+
+  useAndroidBackButton(useCallback(() => {
+    if (isComposeOpen) {
+      setIsComposeOpen(false);
+      return true;
+    }
+
+    if (activeTab === 'chats') {
+      closeChatRoom();
+      return true;
+    }
+
+    if (activeTab !== 'talk') {
+      setActiveTab('talk');
+      refreshTalkPosts();
+      return true;
+    }
+
+    return false;
+  }, [activeTab, closeChatRoom, isComposeOpen]));
 
   useEffect(() => {
     const savedProfile = loadMyProfile();
