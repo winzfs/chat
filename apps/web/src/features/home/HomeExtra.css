@@ -108,7 +108,7 @@
 }
 
 .talk-list[aria-label="채팅방"] {
-  gap: 12px;
+  gap: 10px;
   padding-bottom: 96px;
 }
 
@@ -141,34 +141,67 @@
   font-size: 13px;
 }
 
-.talk-list[aria-label="채팅방"] .chat-message,
-.talk-list[aria-label="채팅방"] .person-card {
+.talk-list[aria-label="채팅방"] .chat-message {
+  width: fit-content;
+  max-width: 78%;
+  min-width: 64px;
+  padding: 10px 14px;
+  border-radius: 20px 20px 20px 8px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 24px rgba(39, 39, 42, 0.06);
+}
+
+.talk-list[aria-label="채팅방"] .chat-message.is-me {
+  align-self: flex-end;
+  border-radius: 20px 20px 8px 20px;
+  background: linear-gradient(135deg, #ff6b9d, #ffad85);
+  color: #ffffff;
+}
+
+.talk-list[aria-label="채팅방"] .chat-message:not(.is-me) {
+  align-self: flex-start;
+}
+
+.message-bubble-body {
+  display: grid;
+  gap: 4px;
+}
+
+.chat-message p,
+.chat-message .talk-text {
+  margin: 0;
+  color: #27272a;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.chat-message.is-me p,
+.chat-message.is-me .talk-text,
+.chat-message.is-me .message-time {
+  color: #ffffff;
+}
+
+.chat-message .message-time {
+  order: 2;
+  margin: 0;
+  color: #a1a1aa;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.talk-list[aria-label="채팅방"] .person-card:not(.chat-message) {
   padding: 16px 18px;
   border-radius: 24px;
 }
 
-.chat-message .talk-card-header,
-.talk-list[aria-label="채팅방"] .talk-card-header {
-  align-items: flex-start;
-}
-
-.chat-message strong {
-  font-size: 15px;
-}
-
-.chat-message p,
-.chat-message .talk-text,
-.talk-list[aria-label="채팅방"] .person-card p {
+.talk-list[aria-label="채팅방"] .person-card:not(.chat-message) p {
   color: #3f3f46;
   font-size: 16px;
   font-weight: 700;
   line-height: 1.55;
-}
-
-.talk-list[aria-label="채팅방"] .avatar {
-  width: 52px;
-  height: 52px;
-  font-size: 18px;
 }
 
 .talk-list[aria-label="채팅방"] > .quick-compose {
