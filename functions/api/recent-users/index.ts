@@ -1,6 +1,7 @@
 type Env = { DB: D1Database };
 
 type RecentUserBody = {
+  profile_id?: string;
   nickname?: string;
   age?: number;
   location?: string;
@@ -47,10 +48,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
   const body = await request.json() as RecentUserBody;
   const nickname = body.nickname?.trim().slice(0, 20) || '익명';
-  const id = nickname;
+  const id = body.profile_id?.trim() || nickname;
   const age = Number.isFinite(body.age) ? body.age : 25;
   const location = body.location?.trim().slice(0, 20) || '내 주변';
   const bio = body.bio?.trim().slice(0, 80) || '';
+
+  if (id !== nickname) {
+    await env.DB.prepare('delete from recent_users where id = ?').bind(nickname).run();
+  }
 
   await env.DB.prepare(
     `insert into recent_users (id, nickname, age, location, bio, online, last_seen_at, updated_at)
