@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
 import { loadAdminStatus } from '../api/admin';
-import { KOREA_REGIONS } from '../api/koreaRegions';
+import { isKoreaRegion, KOREA_REGIONS } from '../api/koreaRegions';
 import { getProfileId } from '../api/profileId';
 import type { MyProfile } from '../api/profileStorage';
 import { AvatarCropModal } from './AvatarCropModal';
@@ -83,6 +83,9 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
     onSave(next);
   };
 
+  const regionValue = isKoreaRegion(form.location) ? form.location : '';
+  const profileLocation = isKoreaRegion(myProfile.location) ? myProfile.location : '지역 재선택 필요';
+
   if (isReportAdminOpen) {
     return <ReportsAdminPanel onClose={() => setIsReportAdminOpen(false)} />;
   }
@@ -98,7 +101,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
           {myProfile.avatar_url ? <img alt="프로필 사진" src={myProfile.avatar_url} /> : <span>{myProfile.nickname.slice(0, 1)}</span>}
         </div>
         <strong>{myProfile.nickname}님</strong>
-        <p>{myProfile.age}세 · {myProfile.location || '지역 없음'}</p>
+        <p>{myProfile.age}세 · {profileLocation}</p>
         <p>{myProfile.gender === 'female' ? '여성' : myProfile.gender === 'male' ? '남성' : '성별 선택 안 함'}</p>
         <p>{myProfile.bio}</p>
       </Card>
@@ -118,7 +121,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
           </label>
           <label>닉네임<input value={form.nickname} maxLength={12} onChange={(event) => setForm({ ...form, nickname: event.target.value })} /></label>
           <label>나이<input type="number" value={form.age} min={20} max={80} onChange={(event) => setForm({ ...form, age: Number(event.target.value) })} /></label>
-          <label>지역<select value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })}><option value="">지역 선택</option>{KOREA_REGIONS.map((region) => <option key={region} value={region}>{region}</option>)}</select></label>
+          <label>지역<select value={regionValue} onChange={(event) => setForm({ ...form, location: event.target.value })}><option value="">지역 선택</option>{KOREA_REGIONS.map((region) => <option key={region} value={region}>{region}</option>)}</select></label>
           <label>성별<select value={form.gender} onChange={(event) => setForm({ ...form, gender: event.target.value as MyProfile['gender'] })}><option value="female">여성</option><option value="male">남성</option><option value="none">선택 안 함</option></select></label>
           <label>소개<textarea value={form.bio} maxLength={80} onChange={(event) => setForm({ ...form, bio: event.target.value })} /></label>
           <Button type="submit">프로필 저장</Button>
