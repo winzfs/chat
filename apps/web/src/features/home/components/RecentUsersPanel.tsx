@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
 import { openDirectD1ChatRoom, type D1ChatRoom } from '../api/d1ChatRooms';
+import { getProfileId } from '../api/profileId';
 import { loadMyProfile } from '../api/profileStorage';
 import { loadRecentUsers, type RecentUser } from '../api/recentUsers';
 
@@ -8,21 +9,22 @@ export function RecentUsersPanel({ myNickname, onOpenRoom }: { myNickname?: stri
   const [users, setUsers] = useState<RecentUser[]>([]);
   const [notice, setNotice] = useState('');
   const currentNickname = myNickname || loadMyProfile().nickname;
+  const currentProfileId = getProfileId();
 
   useEffect(() => {
     loadRecentUsers().then((loadedUsers) => {
-      setUsers(loadedUsers.filter((user) => user.nickname !== currentNickname));
+      setUsers(loadedUsers.filter((user) => user.id !== currentProfileId));
     });
-  }, [currentNickname]);
+  }, [currentProfileId]);
 
   const openChat = async (user: RecentUser) => {
-    if (user.nickname === currentNickname) {
+    if (user.id === currentProfileId) {
       setNotice('내 프로필에는 채팅을 걸 수 없어요.');
       return;
     }
 
     setNotice(`${user.nickname}님과 연결하는 중...`);
-    const room = await openDirectD1ChatRoom(user.nickname);
+    const room = await openDirectD1ChatRoom(user.nickname, user.id);
     if (room) {
       setNotice('');
       onOpenRoom(room);
