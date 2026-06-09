@@ -4,6 +4,7 @@ type MessageBody = {
   room_id?: string;
   body?: string;
   sender_nickname?: string;
+  profile_id?: string;
 };
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
@@ -26,6 +27,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const roomId = data.room_id?.trim() ?? '';
   const body = data.body?.trim() ?? '';
   const senderNickname = data.sender_nickname?.trim().slice(0, 20) || '익명';
+  const profileId = data.profile_id?.trim() ?? '';
+
+  if (!profileId) {
+    return Response.json({ error: '가입한 사용자만 메시지를 보낼 수 있어요.' }, { status: 401 });
+  }
 
   if (!roomId) {
     return Response.json({ error: 'room_id가 필요해요.' }, { status: 400 });
