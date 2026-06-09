@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { Button } from '../../shared/components/Button';
+import { KOREA_REGIONS } from '../home/api/koreaRegions';
 import { defaultProfile, saveMyProfile, type MyProfile } from '../home/api/profileStorage';
 import { touchRecentUser } from '../home/api/recentUsers';
 import { completeSignup, hasCompletedSignup } from './authStorage';
@@ -36,8 +37,8 @@ export function SignupGate({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (location.length < 2 || location.length > 20) {
-      setError('지역은 2자 이상 20자 이하로 입력해주세요.');
+    if (!KOREA_REGIONS.includes(location as typeof KOREA_REGIONS[number])) {
+      setError('지역을 선택해주세요.');
       return;
     }
 
@@ -87,7 +88,10 @@ export function SignupGate({ children }: { children: ReactNode }) {
 
           <label>
             지역
-            <input maxLength={20} onChange={(event) => setValues((current) => ({ ...current, location: event.target.value }))} placeholder="예: 서울, 부산, 광주" value={values.location} />
+            <select onChange={(event) => setValues((current) => ({ ...current, location: event.target.value }))} value={values.location}>
+              <option value="">지역 선택</option>
+              {KOREA_REGIONS.map((region) => <option key={region} value={region}>{region}</option>)}
+            </select>
           </label>
 
           {error && <p className="error-text">{error}</p>}
