@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
+import { loadAdminStatus } from '../api/admin';
 import { getProfileId } from '../api/profileId';
 import type { MyProfile } from '../api/profileStorage';
 import { AvatarCropModal } from './AvatarCropModal';
@@ -31,10 +32,15 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
   const [isUploading, setIsUploading] = useState(false);
   const [cropImageUrl, setCropImageUrl] = useState('');
   const [isReportAdminOpen, setIsReportAdminOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     setForm(myProfile);
   }, [myProfile]);
+
+  useEffect(() => {
+    loadAdminStatus().then(setIsAdmin).catch(() => setIsAdmin(false));
+  }, []);
 
   useEffect(() => () => {
     if (cropImageUrl) URL.revokeObjectURL(cropImageUrl);
@@ -116,7 +122,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
 
       <Card className="setting-item"><strong>포인트 충전</strong><span>›</span></Card>
       <Card className="setting-item"><strong>알림 설정</strong><span>›</span></Card>
-      <Card className="setting-item"><strong>차단/신고 관리</strong><button className="secondary-button" onClick={() => setIsReportAdminOpen(true)} type="button">열기</button></Card>
+      {isAdmin && <Card className="setting-item"><strong>신고 관리</strong><button className="secondary-button" onClick={() => setIsReportAdminOpen(true)} type="button">열기</button></Card>}
     </section>
   );
 }
