@@ -1,4 +1,5 @@
-import { FormEvent, useState } from 'react';
+import { useState } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { Button } from '../../shared/components/Button';
 import { defaultProfile, saveMyProfile, type MyProfile } from '../home/api/profileStorage';
 import { touchRecentUser } from '../home/api/recentUsers';
@@ -9,7 +10,7 @@ import './SignupGate.css';
 
 type SignupValues = Pick<MyProfile, 'nickname' | 'gender' | 'age'>;
 
-export function SignupGate({ children }: { children: React.ReactNode }) {
+export function SignupGate({ children }: { children: ReactNode }) {
   const [isSignedUp, setIsSignedUp] = useState(hasCompletedSignup());
   const [values, setValues] = useState<SignupValues>({ nickname: '', gender: 'none', age: 20 });
   const [error, setError] = useState('');
@@ -56,7 +57,7 @@ export function SignupGate({ children }: { children: React.ReactNode }) {
       <section className="signup-card" aria-labelledby="signup-title">
         <p className="home-kicker">ChitChat</p>
         <h1 id="signup-title">20세 이상 가입</h1>
-        <p className="signup-copy">대화를 시작하려면 기본 프로필을 먼저 설정해주세요.</p>
+        <p className="signup-copy">닉네임, 성별, 나이만 설정하면 바로 시작할 수 있어요. 같은 기기에서는 한 계정만 사용할 수 있어요.</p>
 
         <form className="profile-form" onSubmit={submit}>
           <label>
