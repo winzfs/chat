@@ -6,15 +6,15 @@ import type { D1TalkPost } from '../api/d1TalkPosts';
 type OpenRoom = (room: D1ChatRoom) => void;
 
 export function TalkPanel2({ myNickname, onDeletePost, onOpenCompose, onOpenRoom, posts }: { posts: D1TalkPost[]; myNickname: string; onDeletePost: (id: string) => void; onOpenCompose: () => void; onOpenRoom: OpenRoom }) {
-  const startTalk = async (nickname: string) => {
-    const room = await openDirectD1ChatRoom(nickname);
+  const startTalk = async (post: D1TalkPost) => {
+    const room = await openDirectD1ChatRoom(post.nickname, post.profile_id || undefined);
     if (room) onOpenRoom(room);
   };
 
   return (
     <>
       <section className="quick-compose" aria-label="한줄 토크 작성"><div><strong>한줄 토크를 남겨보세요</strong><p>내 글은 다른 색으로 표시되고 직접 삭제할 수 있어요.</p></div><Button onClick={onOpenCompose}>작성하기</Button></section>
-      <section className="talk-section" aria-label="한줄 토크 목록"><div className="section-title-row"><h2>실시간 토크</h2><button type="button">필터</button></div><div className="talk-list">{posts.map((post) => <TalkCard key={post.id} isMine={post.nickname === myNickname} onDelete={() => onDeletePost(post.id)} onStart={() => startTalk(post.nickname)} post={post} />)}</div></section>
+      <section className="talk-section" aria-label="한줄 토크 목록"><div className="section-title-row"><h2>실시간 토크</h2><button type="button">필터</button></div><div className="talk-list">{posts.map((post) => <TalkCard key={post.id} isMine={post.nickname === myNickname} onDelete={() => onDeletePost(post.id)} onStart={() => startTalk(post)} post={post} />)}</div></section>
     </>
   );
 }
