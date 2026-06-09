@@ -7,6 +7,11 @@ export type D1ChatRoom = {
   last_message: string | null;
   last_message_at: string | null;
   created_at: string;
+  direct_key?: string | null;
+  participant_a_id?: string | null;
+  participant_a_nickname?: string | null;
+  participant_b_id?: string | null;
+  participant_b_nickname?: string | null;
 };
 
 const fallbackRooms: D1ChatRoom[] = [
@@ -18,6 +23,28 @@ const fallbackRooms: D1ChatRoom[] = [
     created_at: new Date().toISOString(),
   },
 ];
+
+function resolveRoomTitle(room: D1ChatRoom): D1ChatRoom {
+  const profile = loadMyProfile();
+  const myId = getProfileId();
+  const myNickname = profile.nickname;
+  const isA = room.participant_a_id === myId || room.participant_a_nickname === myNickname;
+  const isB = room.participant_b_id === myId || room.participant_b_nickname === myNickname;
+
+  if (isA && room.participant_b_nickname) {
+    return { ...room, title: `${room.participant_b_nickname}님과의 대화` };
+  }
+
+  if (isB && room.participant_a_nickname) {
+    return { ...room, title: `${room.participant_a_nickname}님과의 대화` };
+  }
+
+  if (room.title === `${myNickname}님과의 대화` || room.title === '새 채팅방') {
+    return { ...room, title: '상대방과의 대화' };
+  }
+
+  return room;
+}
 
 export async function loadD1ChatRooms(): Promise<D1ChatRoom[]> {
   const profile = loadMyProfile();
@@ -33,7 +60,7 @@ export async function loadD1ChatRooms(): Promise<D1ChatRoom[]> {
   }
 
   const data = await response.json() as { rooms?: D1ChatRoom[] };
-  return data.rooms && data.rooms.length > 0 ? data.rooms : fallbackRooms;
+  return data.rooms && data.rooms.length > 0 ? data.rooms.map(resolveRoomTitle) : fallbackRooms;
 }
 
 export async function createD1ChatRoom(title: string): Promise<D1ChatRoom | null> {
@@ -53,7 +80,7 @@ export async function createD1ChatRoom(title: string): Promise<D1ChatRoom | null
     return null;
   }
 
-  return data;
+  return resolveRoomTitle(data);
 }
 
 export async function openDirectD1ChatRoom(peerNickname: string, peerId?: string): Promise<D1ChatRoom | null> {
@@ -73,7 +100,7 @@ export async function openDirectD1ChatRoom(peerNickname: string, peerId?: string
   }
 
   const data = await response.json() as D1ChatRoom;
-  return data.id ? data : null;
+  return data.id ? resolveRoomTitle(data) : null;
 }
 
 export async function leaveD1ChatRoom(id: string): Promise<boolean> {
