@@ -3,15 +3,22 @@ import { Card } from '../../../shared/components/Card';
 import { createD1ChatRoom, type D1ChatRoom } from '../api/d1ChatRooms';
 import { loadRecentUsers, type RecentUser } from '../api/recentUsers';
 
-export function RecentUsersPanel({ onOpenRoom }: { onOpenRoom: (room: D1ChatRoom) => void }) {
+export function RecentUsersPanel({ myNickname, onOpenRoom }: { myNickname: string; onOpenRoom: (room: D1ChatRoom) => void }) {
   const [users, setUsers] = useState<RecentUser[]>([]);
   const [notice, setNotice] = useState('');
 
   useEffect(() => {
-    loadRecentUsers().then(setUsers);
-  }, []);
+    loadRecentUsers().then((loadedUsers) => {
+      setUsers(loadedUsers.filter((user) => user.nickname !== myNickname));
+    });
+  }, [myNickname]);
 
   const openChat = async (user: RecentUser) => {
+    if (user.nickname === myNickname) {
+      setNotice('내 프로필에는 채팅을 걸 수 없어요.');
+      return;
+    }
+
     setNotice(`${user.nickname}님과 연결하는 중...`);
     const room = await createD1ChatRoom(`${user.nickname}님과의 대화`);
     if (room) {
@@ -26,7 +33,7 @@ export function RecentUsersPanel({ onOpenRoom }: { onOpenRoom: (room: D1ChatRoom
     <section className="talk-list" aria-label="최근 접속자">
       <Card className="settings-summary"><strong>최근 접속자</strong><p>{users.length}명이 최근 접속했어요.</p></Card>
       {notice && <Card className="settings-summary"><strong>{notice}</strong></Card>}
-      {users.length === 0 && <Card className="person-card"><strong>아직 최근 접속자가 없어요</strong><p>다른 탭이나 기기에서 프로필 저장/토크 작성 후 다시 확인해보세요.</p></Card>}
+      {users.length === 0 && <Card className="person-card"><strong>아직 다른 접속자가 없어요</strong><p>다른 탭이나 기기에서 다른 닉네임으로 프로필 저장 후 다시 확인해보세요.</p></Card>}
       {users.map((user) => (
         <Card className="person-card" key={user.id}>
           <div className="talk-card-header">
