@@ -9,6 +9,13 @@ type ReportBody = {
   detail?: string;
 };
 
+type ReportStatusBody = {
+  id?: string;
+  status?: string;
+};
+
+const allowedStatuses = new Set(['open', 'reviewing', 'closed']);
+
 async function ensureReportsTable(env: Env) {
   await env.DB.prepare(
     `create table if not exists reports (
@@ -27,6 +34,32 @@ async function ensureReportsTable(env: Env) {
   await env.DB.prepare('create index if not exists reports_status_created_idx on reports(status, created_at desc)').run();
   await env.DB.prepare('create index if not exists reports_reported_idx on reports(reported_id, created_at desc)').run();
 }
+
+export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
+  await ensureReportsTable(env);
+
+  const url = new URL(request.url);
+  const status = url.searchParams.get('status')?.trim() ?? '';
+  const limit = Math.min(Number(url.searchParams.get('limit') ?? 50) || 50, 100);
+
+  const query = status && allowedStatuses.has(status)
+    ? env.DB.prepare(
+      `select id, reporter_id, reported_id, reported_nickname, room_id, reason, detail, status, created_at
+       from reports
+       where status = ?
+       order by created_at desc
+       limit ?`,
+    ).bind(status, limit)
+    : env.DB.prepare(
+      `select id, reporter_id, reported_id, reported_nickname, room_id, reason, detail, status, created_at
+       from reports
+       order by created_at desc
+       limit ?`,
+    ).bind(limit);
+
+  const { results } = await query.all();
+  return Response.json({ reports: results ?? [] });
+};
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   await ensureReportsTable(env);
@@ -55,4 +88,19 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   ).bind(id, reporterId, reportedId, reportedNickname, roomId, reason, detail).run();
 
   return Response.json({ ok: true, id }, { status: 201 });
+};
+
+export const onRequestPatch: PagesFunction<Env> = async ({ env, request }) => {
+  await ensureReportsTable(env);
+
+  const body = await request.json() as ReportStatusBody;
+  const id = body.id?.trim() ?? '';
+  const status = body.status?.trim() ?? '';
+
+  if (!id || !allowedStatuses.has(status)) {
+    return Response.json({ error: '신고 ID와 올바른 상태값이 필요해요.' }, { status: 400 });
+  }
+
+  await env.DB.prepare('update reports set status = ? where id = ?').bind(status, id).run();
+  return Response.json({ ok: true });
 };
