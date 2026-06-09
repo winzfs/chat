@@ -1,8 +1,10 @@
+import { getProfileId } from './profileId';
 import { talkPosts } from '../data/homeMockData';
 import type { MyProfile } from './profileStorage';
 
 export type D1TalkPost = {
   id: string;
+  profile_id?: string | null;
   nickname: string;
   age: number | null;
   location: string | null;
@@ -18,6 +20,7 @@ export type D1TalkPost = {
 const fallbackPosts: D1TalkPost[] = talkPosts.map((post) => ({
   ...post,
   id: String(post.id),
+  profile_id: null,
   created_at: new Date().toISOString(),
 }));
 
@@ -33,10 +36,12 @@ export async function loadD1TalkPosts(): Promise<D1TalkPost[]> {
 }
 
 export async function createD1TalkPost(text: string, mood: string, profile?: MyProfile): Promise<D1TalkPost> {
+  const profileId = getProfileId();
   const response = await fetch('/api/talk-posts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      profile_id: profileId,
       text,
       mood,
       nickname: profile?.nickname,
@@ -48,6 +53,7 @@ export async function createD1TalkPost(text: string, mood: string, profile?: MyP
   if (!response.ok) {
     return {
       id: String(Date.now()),
+      profile_id: profileId,
       nickname: profile?.nickname || '익명',
       age: profile?.age ?? 25,
       location: profile?.location || '내 주변',
