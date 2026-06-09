@@ -3,8 +3,9 @@ import { Card } from '../../shared/components/Card';
 import type { D1ChatRoom } from './api/d1ChatRooms';
 import { createD1TalkPost, deleteD1TalkPost, loadD1TalkPosts, type D1TalkPost } from './api/d1TalkPosts';
 import { defaultProfile, loadMyProfile, saveMyProfile, type MyProfile } from './api/profileStorage';
+import { touchRecentUser } from './api/recentUsers';
 import { ChatRoomsList } from './components/ChatRoomsList';
-import { RecentPeoplePanel } from './components/RecentPeoplePanel';
+import { RecentUsersPanel } from './components/RecentUsersPanel';
 import { ProfileSettingsPanel } from './components/ProfileSettingsPanel';
 import { TalkComposeModal, type TalkComposeValues } from './components/TalkComposeModal';
 import { TalkPanel2 } from './components/TalkPanel2';
@@ -31,11 +32,14 @@ export function HomeScreenNext() {
   const [notice, setNotice] = useState('');
 
   useEffect(() => {
-    setProfile(loadMyProfile());
+    const savedProfile = loadMyProfile();
+    setProfile(savedProfile);
+    touchRecentUser(savedProfile).catch(() => undefined);
     loadD1TalkPosts().then((loaded) => { if (loaded.length > 0) setPosts(loaded); });
   }, []);
 
   const submitTalk = async (values: TalkComposeValues) => {
+    await touchRecentUser(profile).catch(() => undefined);
     const saved = await createD1TalkPost(values.text, values.mood, profile);
     setPosts((current) => [saved, ...current]);
     setIsComposeOpen(false);
@@ -50,6 +54,7 @@ export function HomeScreenNext() {
   const saveProfile = (next: MyProfile) => {
     saveMyProfile(next);
     setProfile(next);
+    touchRecentUser(next).catch(() => undefined);
     setNotice('프로필이 저장됐어요.');
   };
 
@@ -64,7 +69,7 @@ export function HomeScreenNext() {
         <header className="home-header"><div><p className="home-kicker">ChitChat</p><h1 id="home-title">{titles[activeTab]}</h1></div><button className="profile-button" type="button" onClick={() => setActiveTab('settings')}>{profile.nickname.slice(0, 1)}</button></header>
         {notice && <Card className="settings-summary"><strong>{notice}</strong></Card>}
         {activeTab === 'talk' && <TalkPanel2 posts={posts} myNickname={profile.nickname} onDeletePost={removeTalk} onOpenCompose={() => setIsComposeOpen(true)} onOpenRoom={openDirectRoom} />}
-        {activeTab === 'people' && <RecentPeoplePanel onOpenRoom={openDirectRoom} />}
+        {activeTab === 'people' && <RecentUsersPanel onOpenRoom={openDirectRoom} />}
         {activeTab === 'chats' && <ChatRoomsList initialRoom={openRoom} />}
         {activeTab === 'settings' && <ProfileSettingsPanel myProfile={profile} onSave={saveProfile} />}
       </section>
