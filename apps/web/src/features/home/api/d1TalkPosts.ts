@@ -1,4 +1,5 @@
 import { talkPosts } from '../data/homeMockData';
+import type { MyProfile } from './profileStorage';
 
 export type D1TalkPost = {
   id: string;
@@ -21,7 +22,7 @@ const fallbackPosts: D1TalkPost[] = talkPosts.map((post) => ({
 }));
 
 export async function loadD1TalkPosts(): Promise<D1TalkPost[]> {
-  const response = await fetch('/api/talk-posts');
+  const response = await fetch('/api/talk-posts', { cache: 'no-store' });
 
   if (!response.ok) {
     return fallbackPosts;
@@ -31,19 +32,25 @@ export async function loadD1TalkPosts(): Promise<D1TalkPost[]> {
   return data.posts && data.posts.length > 0 ? data.posts : fallbackPosts;
 }
 
-export async function createD1TalkPost(text: string, mood: string): Promise<D1TalkPost> {
+export async function createD1TalkPost(text: string, mood: string, profile?: MyProfile): Promise<D1TalkPost> {
   const response = await fetch('/api/talk-posts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, mood }),
+    body: JSON.stringify({
+      text,
+      mood,
+      nickname: profile?.nickname,
+      age: profile?.age,
+      location: profile?.location,
+    }),
   });
 
   if (!response.ok) {
     return {
       id: String(Date.now()),
-      nickname: '나',
-      age: 25,
-      location: '내 주변',
+      nickname: profile?.nickname || '익명',
+      age: profile?.age ?? 25,
+      location: profile?.location || '내 주변',
       mood,
       text,
       tags: ['방금작성', mood.split(' ').join('')],
@@ -56,4 +63,12 @@ export async function createD1TalkPost(text: string, mood: string): Promise<D1Ta
 
   const data = await response.json() as { post: D1TalkPost };
   return data.post;
+}
+
+export async function deleteD1TalkPost(id: string): Promise<boolean> {
+  const response = await fetch(`/api/talk-posts?id=${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+
+  return response.ok;
 }
