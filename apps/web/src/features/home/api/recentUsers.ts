@@ -7,6 +7,7 @@ export type RecentUser = {
   age: number | null;
   location: string | null;
   bio: string | null;
+  avatar_url?: string | null;
   online: boolean;
   last_seen_at: string;
 };
