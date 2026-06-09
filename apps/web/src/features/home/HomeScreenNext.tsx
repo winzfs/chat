@@ -13,6 +13,7 @@ import { TalkPanel2 } from './components/TalkPanel2';
 import { talkPosts } from './data/homeMockData';
 import './HomePage.css';
 import './HomeExtra.css';
+import './ProfileAvatar.css';
 
 type HomeTab = 'talk' | 'people' | 'chats' | 'settings';
 const tabs: { id: HomeTab; label: string; icon: string }[] = [
@@ -116,7 +117,7 @@ export function HomeScreenNext() {
   return (
     <main className="app-shell">
       <section className="home-screen" aria-labelledby="home-title">
-        <header className="home-header"><div><p className="home-kicker">ChitChat</p><h1 id="home-title">{titles[activeTab]}</h1></div><button className="profile-button" type="button" onClick={() => changeTab('settings')}>{profile.nickname.slice(0, 1)}</button></header>
+        <header className="home-header"><div><p className="home-kicker">ChitChat</p><h1 id="home-title">{titles[activeTab]}</h1></div><button className={profile.avatar_url ? 'profile-button has-photo' : 'profile-button'} type="button" onClick={() => changeTab('settings')}>{profile.avatar_url ? <img alt="내 프로필" src={profile.avatar_url} /> : profile.nickname.slice(0, 1)}</button></header>
         {notice && <Card className="settings-summary"><strong>{notice}</strong></Card>}
         {activeTab === 'talk' && <TalkPanel2 posts={posts} myNickname={profile.nickname} onDeletePost={removeTalk} onOpenCompose={() => setIsComposeOpen(true)} onOpenRoom={openDirectRoom} />}
         {activeTab === 'people' && <RecentUsersPanel onOpenRoom={openDirectRoom} />}
