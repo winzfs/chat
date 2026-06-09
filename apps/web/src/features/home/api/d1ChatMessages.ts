@@ -9,6 +9,16 @@ export type D1ChatMessage = {
   created_at: string;
 };
 
+function getProfileNickname() {
+  try {
+    const raw = localStorage.getItem('chitchat.myProfile.v1');
+    const profile = raw ? JSON.parse(raw) as { nickname?: string } : null;
+    return profile?.nickname || '익명';
+  } catch {
+    return '익명';
+  }
+}
+
 export async function loadD1ChatMessages(roomId: string): Promise<D1ChatMessage[]> {
   const response = await fetch(`/api/chat-messages?room_id=${encodeURIComponent(roomId)}`, { cache: 'no-store' });
 
@@ -20,7 +30,7 @@ export async function loadD1ChatMessages(roomId: string): Promise<D1ChatMessage[
   return data.messages ?? [];
 }
 
-export async function sendD1ChatMessage(roomId: string, body: string, senderNickname = '익명'): Promise<D1ChatMessage | null> {
+export async function sendD1ChatMessage(roomId: string, body: string, senderNickname = getProfileNickname()): Promise<D1ChatMessage | null> {
   const response = await fetch('/api/chat-messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -38,6 +48,7 @@ export async function sendD1ChatMessage(roomId: string, body: string, senderNick
 export async function sendD1ChatImage(roomId: string, image: File): Promise<D1ChatMessage | null> {
   const formData = new FormData();
   formData.append('room_id', roomId);
+  formData.append('sender_nickname', getProfileNickname());
   formData.append('image', image);
 
   const response = await fetch('/api/chat-images', {
