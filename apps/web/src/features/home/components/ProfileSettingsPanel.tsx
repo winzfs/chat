@@ -9,6 +9,7 @@ import type { MyProfile } from '../api/profileStorage';
 import { AvatarCropModal } from './AvatarCropModal';
 import { BlockedUsersPanel } from './BlockedUsersPanel';
 import { ReportsAdminPanel } from './ReportsAdminPanel';
+import './SettingsLegalLinks.css';
 
 async function uploadAvatar(image: File) {
   const formData = new FormData();
