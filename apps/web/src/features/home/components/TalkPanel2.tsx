@@ -1,13 +1,13 @@
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
-import { createD1ChatRoom, type D1ChatRoom } from '../api/d1ChatRooms';
+import { openDirectD1ChatRoom, type D1ChatRoom } from '../api/d1ChatRooms';
 import type { D1TalkPost } from '../api/d1TalkPosts';
 
 type OpenRoom = (room: D1ChatRoom) => void;
 
 export function TalkPanel2({ myNickname, onDeletePost, onOpenCompose, onOpenRoom, posts }: { posts: D1TalkPost[]; myNickname: string; onDeletePost: (id: string) => void; onOpenCompose: () => void; onOpenRoom: OpenRoom }) {
   const startTalk = async (nickname: string) => {
-    const room = await createD1ChatRoom(`${nickname}님과의 대화`);
+    const room = await openDirectD1ChatRoom(nickname);
     if (room) onOpenRoom(room);
   };
 
