@@ -1,3 +1,5 @@
+import { getProfileId } from './profileId';
+
 export type D1ChatRoom = {
   id: string;
   title: string | null;
@@ -31,7 +33,7 @@ export async function createD1ChatRoom(title: string): Promise<D1ChatRoom | null
   const response = await fetch('/api/chat-rooms', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title }),
+    body: JSON.stringify({ title, profile_id: getProfileId() }),
   });
 
   if (!response.ok) {
@@ -51,7 +53,7 @@ export async function openDirectD1ChatRoom(peerNickname: string): Promise<D1Chat
   const response = await fetch('/api/chat-rooms', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ peer_nickname: peerNickname }),
+    body: JSON.stringify({ profile_id: getProfileId(), peer_nickname: peerNickname }),
   });
 
   if (!response.ok) {
