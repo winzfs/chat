@@ -24,6 +24,24 @@ const fallbackRooms: D1ChatRoom[] = [
   },
 ];
 
+function hiddenRoomsKey() {
+  return `chitchat.hiddenRooms.${getProfileId()}.v1`;
+}
+
+function getHiddenRoomIds() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(hiddenRoomsKey()) || '[]') as string[]);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function hideRoomLocally(roomId: string) {
+  const hidden = getHiddenRoomIds();
+  hidden.add(roomId);
+  localStorage.setItem(hiddenRoomsKey(), JSON.stringify([...hidden]));
+}
+
 function resolveRoomTitle(room: D1ChatRoom): D1ChatRoom {
   const profile = loadMyProfile();
   const myId = getProfileId();
@@ -59,8 +77,11 @@ export async function loadD1ChatRooms(): Promise<D1ChatRoom[]> {
     return fallbackRooms;
   }
 
+  const hidden = getHiddenRoomIds();
   const data = await response.json() as { rooms?: D1ChatRoom[] };
-  return data.rooms && data.rooms.length > 0 ? data.rooms.map(resolveRoomTitle) : fallbackRooms;
+  return data.rooms && data.rooms.length > 0
+    ? data.rooms.filter((room) => !hidden.has(room.id)).map(resolveRoomTitle)
+    : fallbackRooms;
 }
 
 export async function createD1ChatRoom(title: string): Promise<D1ChatRoom | null> {
@@ -104,8 +125,12 @@ export async function openDirectD1ChatRoom(peerNickname: string, peerId?: string
 }
 
 export async function leaveD1ChatRoom(id: string): Promise<boolean> {
-  const response = await fetch(`/api/chat-rooms?id=${encodeURIComponent(id)}`, {
-    method: 'DELETE',
+  hideRoomLocally(id);
+
+  const response = await fetch('/api/chat-room-leave', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ room_id: id, profile_id: getProfileId(), nickname: loadMyProfile().nickname }),
   });
 
   return response.ok;
