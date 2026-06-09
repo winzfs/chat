@@ -1,3 +1,4 @@
+import { apiUrl } from './apiBase';
 import { getProfileId } from './profileId';
 import { talkPosts } from '../data/homeMockData';
 import type { MyProfile } from './profileStorage';
@@ -27,7 +28,7 @@ const fallbackPosts: D1TalkPost[] = talkPosts.map((post) => ({
 }));
 
 export async function loadD1TalkPosts(): Promise<D1TalkPost[]> {
-  const response = await fetch('/api/talk-posts', { cache: 'no-store' });
+  const response = await fetch(apiUrl('/api/talk-posts'), { cache: 'no-store' });
 
   if (!response.ok) {
     return fallbackPosts;
@@ -39,7 +40,7 @@ export async function loadD1TalkPosts(): Promise<D1TalkPost[]> {
 
 export async function createD1TalkPost(text: string, mood: string, profile?: MyProfile): Promise<D1TalkPost> {
   const profileId = getProfileId();
-  const response = await fetch('/api/talk-posts', {
+  const response = await fetch(apiUrl('/api/talk-posts'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -76,7 +77,7 @@ export async function createD1TalkPost(text: string, mood: string, profile?: MyP
 }
 
 export async function deleteD1TalkPost(id: string): Promise<boolean> {
-  const response = await fetch(`/api/talk-posts?id=${encodeURIComponent(id)}`, {
+  const response = await fetch(apiUrl(`/api/talk-posts?id=${encodeURIComponent(id)}`), {
     method: 'DELETE',
   });
 
