@@ -5,6 +5,7 @@ import type { MyProfile } from './profileStorage';
 export type D1TalkPost = {
   id: string;
   profile_id?: string | null;
+  avatar_url?: string | null;
   nickname: string;
   age: number | null;
   location: string | null;
@@ -21,6 +22,7 @@ const fallbackPosts: D1TalkPost[] = talkPosts.map((post) => ({
   ...post,
   id: String(post.id),
   profile_id: null,
+  avatar_url: null,
   created_at: new Date().toISOString(),
 }));
 
@@ -42,6 +44,7 @@ export async function createD1TalkPost(text: string, mood: string, profile?: MyP
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       profile_id: profileId,
+      avatar_url: profile?.avatar_url,
       text,
       mood,
       nickname: profile?.nickname,
@@ -54,6 +57,7 @@ export async function createD1TalkPost(text: string, mood: string, profile?: MyP
     return {
       id: String(Date.now()),
       profile_id: profileId,
+      avatar_url: profile?.avatar_url || null,
       nickname: profile?.nickname || '익명',
       age: profile?.age ?? 25,
       location: profile?.location || '내 주변',
