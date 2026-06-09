@@ -98,24 +98,28 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
   };
 
   return (
-    <section className="talk-list" aria-label="채팅방">
-      <Card className="settings-summary">
-        <button type="button" onClick={onClose}>← 목록</button>
-        <strong>{room.title ?? '새 채팅방'}</strong>
-        <p>{uploadStatus || `${messages.length}개 메시지 · 자동 갱신 중`}</p>
-        <div className="talk-actions">
+    <section className="talk-list chat-room-view" aria-label="채팅방">
+      <Card className="settings-summary chat-room-header-card">
+        <div className="chat-room-header-main">
+          <button className="chat-back-button" type="button" onClick={onClose}>←</button>
+          <div>
+            <strong>{room.title ?? '새 채팅방'}</strong>
+            <p>{uploadStatus || `${messages.length}개 메시지 · 자동 갱신 중`}</p>
+          </div>
+        </div>
+        <div className="talk-actions chat-room-safety-actions">
           <button type="button" onClick={handleReport}>신고</button>
           <button type="button" onClick={handleBlock}>차단</button>
         </div>
         {errorText && <p className="error-text">{errorText}</p>}
       </Card>
 
-      <div className="talk-list">
+      <div className="talk-list chat-message-list">
         {messages.length === 0 && <Card className="person-card"><strong>아직 메시지가 없어요</strong><p>첫 메시지를 보내서 대화를 시작해보세요.</p></Card>}
         {messages.map((message) => <ChatMessageItem key={message.id} message={message} />)}
       </div>
 
-      <form className="quick-compose" onSubmit={handleSubmit}>
+      <form className="quick-compose chat-compose-bar" onSubmit={handleSubmit}>
         <input aria-label="메시지 입력" maxLength={500} onChange={(event) => setText(event.target.value)} placeholder="메시지를 입력하세요" value={text} />
         <label className="secondary-button">사진<input accept="image/*" hidden onChange={handleImageChange} type="file" /></label>
         <Button disabled={isSending || text.trim().length === 0} type="submit">보내기</Button>
