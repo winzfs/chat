@@ -65,6 +65,32 @@
   box-shadow: 0 8px 18px rgba(255, 47, 109, 0.32);
 }
 
+.chat-new-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #ff2f6d;
+  color: #ffffff;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+  vertical-align: middle;
+}
+
+.chat-room-card.has-new-message {
+  border: 1px solid rgba(255, 47, 109, 0.34);
+  background: linear-gradient(135deg, rgba(255, 47, 109, 0.12), rgba(255, 255, 255, 0.96));
+  box-shadow: 0 20px 44px rgba(255, 47, 109, 0.12);
+}
+
+.chat-room-card.has-new-message p {
+  color: #27272a !important;
+  font-weight: 900 !important;
+}
+
 .talk-card.is-mine {
   border: 1px solid rgba(255, 107, 157, 0.3);
   background: linear-gradient(135deg, rgba(255, 107, 157, 0.18), rgba(255, 255, 255, 0.96));
