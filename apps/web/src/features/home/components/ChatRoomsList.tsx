@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
 import { leaveD1ChatRoom, loadD1ChatRooms, type D1ChatRoom } from '../api/d1ChatRooms';
 import { ChatRoomPanel } from './ChatRoomPanel';
@@ -22,12 +22,41 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
   const [rooms, setRooms] = useState<D1ChatRoom[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<D1ChatRoom | null>(initialRoom ?? null);
   const [isLoading, setIsLoading] = useState(true);
+  const [newRoomIds, setNewRoomIds] = useState<Set<string>>(new Set());
+  const lastRoomTimesRef = useRef<Record<string, string>>({});
+  const initializedRef = useRef(false);
 
-  const loadRooms = () => {
-    setIsLoading(true);
+  const updateRooms = (loadedRooms: D1ChatRoom[], notify: boolean) => {
+    setRooms(loadedRooms);
+    const changedIds: string[] = [];
+
+    for (const room of loadedRooms) {
+      const currentTime = room.last_message_at ?? '';
+      const previousTime = lastRoomTimesRef.current[room.id];
+
+      if (notify && initializedRef.current && previousTime && currentTime && previousTime !== currentTime && selectedRoom?.id !== room.id) {
+        changedIds.push(room.id);
+      }
+
+      lastRoomTimesRef.current[room.id] = currentTime;
+    }
+
+    initializedRef.current = true;
+
+    if (changedIds.length > 0) {
+      setNewRoomIds((current) => {
+        const next = new Set(current);
+        changedIds.forEach((id) => next.add(id));
+        return next;
+      });
+    }
+  };
+
+  const loadRooms = (notify = false) => {
+    if (!notify) setIsLoading(true);
     loadD1ChatRooms()
       .then((loadedRooms) => {
-        setRooms(loadedRooms);
+        updateRooms(loadedRooms, notify);
         const hashRoomId = readRoomIdFromHash();
         const hashRoom = loadedRooms.find((room) => room.id === hashRoomId);
 
@@ -37,19 +66,36 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
           return;
         }
 
-        if (hashRoom) {
+        if (hashRoom && !selectedRoom) {
           setSelectedRoom(hashRoom);
         }
       })
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        if (!notify) setIsLoading(false);
+      });
   };
 
   useEffect(() => {
-    loadRooms();
+    loadRooms(false);
   }, [initialRoom]);
+
+  useEffect(() => {
+    if (selectedRoom) return;
+
+    const timer = window.setInterval(() => {
+      loadRooms(true);
+    }, 3000);
+
+    return () => window.clearInterval(timer);
+  }, [selectedRoom, initialRoom]);
 
   const openRoom = (room: D1ChatRoom) => {
     writeRoomIdToHash(room.id);
+    setNewRoomIds((current) => {
+      const next = new Set(current);
+      next.delete(room.id);
+      return next;
+    });
     setSelectedRoom(room);
   };
 
@@ -57,13 +103,18 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
     clearRoomHash();
     setSelectedRoom(null);
     setIsLoading(true);
-    loadD1ChatRooms().then(setRooms).finally(() => setIsLoading(false));
+    loadD1ChatRooms().then((loadedRooms) => updateRooms(loadedRooms, false)).finally(() => setIsLoading(false));
   };
 
   const leaveRoom = async (room: D1ChatRoom) => {
     clearRoomHash();
     if (selectedRoom?.id === room.id) setSelectedRoom(null);
     setRooms((current) => current.filter((item) => item.id !== room.id));
+    setNewRoomIds((current) => {
+      const next = new Set(current);
+      next.delete(room.id);
+      return next;
+    });
     await leaveD1ChatRoom(room.id);
   };
 
@@ -78,31 +129,31 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
   return (
     <section className="talk-list" aria-label="채팅 목록">
       <Card className="settings-summary">
-        <strong>Cloudflare D1 모드</strong>
-        <p>{rooms.length}개 채팅방을 불러왔어요.</p>
+        <strong>내 채팅 목록</strong>
+        <p>{rooms.length}개 채팅방을 불러왔어요. 새 메시지는 자동으로 표시돼요.</p>
       </Card>
-      {rooms.map((room) => <ChatRoomCard key={room.id} onLeave={() => leaveRoom(room)} onOpen={() => openRoom(room)} room={room} />)}
+      {rooms.map((room) => <ChatRoomCard hasNewMessage={newRoomIds.has(room.id)} key={room.id} onLeave={() => leaveRoom(room)} onOpen={() => openRoom(room)} room={room} />)}
     </section>
   );
 }
 
-function ChatRoomCard({ onLeave, onOpen, room }: { onLeave: () => void; onOpen: () => void; room: D1ChatRoom }) {
+function ChatRoomCard({ hasNewMessage, onLeave, onOpen, room }: { hasNewMessage: boolean; onLeave: () => void; onOpen: () => void; room: D1ChatRoom }) {
   const title = room.title ?? '새 채팅방';
 
   return (
-    <Card className="person-card">
+    <Card className={hasNewMessage ? 'person-card chat-room-card has-new-message' : 'person-card chat-room-card'}>
       <div className="talk-card-header">
         <div className="avatar-wrap">
           <span className="avatar">{title.slice(0, 1)}</span>
           <span className="status-dot is-online" />
         </div>
         <div>
-          <strong>{title}</strong>
+          <strong>{title}{hasNewMessage ? <em className="chat-new-badge">새 메시지</em> : null}</strong>
           <p>{room.last_message ?? '아직 메시지가 없어요.'}</p>
         </div>
       </div>
       <div className="talk-actions">
-        <span>최근 대화</span>
+        <span>{room.last_message_at ? '최근 대화 업데이트됨' : '최근 대화'}</span>
         <button type="button" onClick={onOpen}>열기</button>
         <button type="button" onClick={onLeave}>나가기</button>
       </div>
