@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Card } from '../../shared/components/Card';
 import type { D1ChatRoom } from './api/d1ChatRooms';
-import { createD1TalkPost, loadD1TalkPosts, type D1TalkPost } from './api/d1TalkPosts';
+import { createD1TalkPost, deleteD1TalkPost, loadD1TalkPosts, type D1TalkPost } from './api/d1TalkPosts';
 import { defaultProfile, loadMyProfile, saveMyProfile, type MyProfile } from './api/profileStorage';
 import { ChatRoomsList } from './components/ChatRoomsList';
 import { RecentPeoplePanel } from './components/RecentPeoplePanel';
 import { ProfileSettingsPanel } from './components/ProfileSettingsPanel';
 import { TalkComposeModal, type TalkComposeValues } from './components/TalkComposeModal';
-import { TalkPanel } from './components/TalkPanel';
+import { TalkPanel2 } from './components/TalkPanel2';
 import { talkPosts } from './data/homeMockData';
 import './HomePage.css';
 import './HomeExtra.css';
@@ -36,10 +36,15 @@ export function HomeScreenNext() {
   }, []);
 
   const submitTalk = async (values: TalkComposeValues) => {
-    const saved = await createD1TalkPost(values.text, values.mood);
+    const saved = await createD1TalkPost(values.text, values.mood, profile);
     setPosts((current) => [saved, ...current]);
     setIsComposeOpen(false);
     setActiveTab('talk');
+  };
+
+  const removeTalk = async (id: string) => {
+    setPosts((current) => current.filter((post) => post.id !== id));
+    await deleteD1TalkPost(id);
   };
 
   const saveProfile = (next: MyProfile) => {
@@ -58,7 +63,7 @@ export function HomeScreenNext() {
       <section className="home-screen" aria-labelledby="home-title">
         <header className="home-header"><div><p className="home-kicker">ChitChat</p><h1 id="home-title">{titles[activeTab]}</h1></div><button className="profile-button" type="button" onClick={() => setActiveTab('settings')}>{profile.nickname.slice(0, 1)}</button></header>
         {notice && <Card className="settings-summary"><strong>{notice}</strong></Card>}
-        {activeTab === 'talk' && <TalkPanel posts={posts} onOpenCompose={() => setIsComposeOpen(true)} onOpenRoom={openDirectRoom} />}
+        {activeTab === 'talk' && <TalkPanel2 posts={posts} myNickname={profile.nickname} onDeletePost={removeTalk} onOpenCompose={() => setIsComposeOpen(true)} onOpenRoom={openDirectRoom} />}
         {activeTab === 'people' && <RecentPeoplePanel onOpenRoom={openDirectRoom} />}
         {activeTab === 'chats' && <ChatRoomsList initialRoom={openRoom} />}
         {activeTab === 'settings' && <ProfileSettingsPanel myProfile={profile} onSave={saveProfile} />}
