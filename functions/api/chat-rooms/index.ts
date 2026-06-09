@@ -51,6 +51,17 @@ async function ensureChatRoomColumns(env: Env) {
   ).run();
 
   await env.DB.prepare(
+    `create table if not exists chat_room_exits (
+      room_id text not null,
+      profile_id text not null,
+      exited_at text not null default (datetime('now')),
+      is_hidden integer not null default 1,
+      updated_at text not null default (datetime('now')),
+      primary key (room_id, profile_id)
+    )`,
+  ).run();
+
+  await env.DB.prepare(
     `create table if not exists user_blocks (
       blocker_id text not null,
       blocked_id text not null,
@@ -61,6 +72,7 @@ async function ensureChatRoomColumns(env: Env) {
   ).run();
 
   await env.DB.prepare('create index if not exists user_blocks_blocked_idx on user_blocks(blocked_id)').run();
+  await env.DB.prepare('create index if not exists chat_room_exits_profile_idx on chat_room_exits(profile_id, is_hidden)').run();
 }
 
 function directKey(a: string, b: string) {
@@ -95,6 +107,24 @@ async function hasBlockBetween(env: Env, viewerId: string, peerId: string) {
   return Boolean(row);
 }
 
+async function unhideRoomForViewer(env: Env, roomId: string, viewerId: string) {
+  if (!viewerId) return;
+
+  await env.DB.prepare(
+    `update chat_room_exits
+     set is_hidden = 0, updated_at = datetime('now')
+     where room_id = ? and profile_id = ?`,
+  ).bind(roomId, viewerId).run();
+
+  await env.DB.prepare(
+    `insert into chat_room_reads (room_id, profile_id, last_read_at, updated_at)
+     values (?, ?, datetime('now'), datetime('now'))
+     on conflict(room_id, profile_id) do update set
+       last_read_at = datetime('now'),
+       updated_at = datetime('now')`,
+  ).bind(roomId, viewerId).run();
+}
+
 async function listRooms(env: Env, viewerId: string) {
   await ensureChatRoomColumns(env);
 
@@ -105,22 +135,28 @@ async function listRooms(env: Env, viewerId: string) {
          select count(*)
          from chat_messages m
          left join chat_room_reads rr on rr.room_id = r.id and rr.profile_id = ?
+         left join chat_room_exits ex on ex.room_id = r.id and ex.profile_id = ?
          where m.room_id = r.id
            and coalesce(m.sender_profile_id, '') != ''
            and m.sender_profile_id != ?
-           and datetime(m.created_at) > datetime(coalesce(rr.last_read_at, '1970-01-01 00:00:00'))
+           and datetime(m.created_at) > datetime(coalesce(rr.last_read_at, ex.exited_at, '1970-01-01 00:00:00'))
+           and (ex.exited_at is null or datetime(m.created_at) > datetime(ex.exited_at))
        ) as unread_count
      from chat_rooms r
-     where ? = ''
+     where (? = ''
         or r.direct_key is null
         or not exists (
           select 1 from user_blocks b
           where (b.blocker_id = ? and (b.blocked_id = r.participant_a_id or b.blocked_id = r.participant_b_id))
              or (b.blocked_id = ? and (b.blocker_id = r.participant_a_id or b.blocker_id = r.participant_b_id))
-        )
+        ))
+       and (? = '' or not exists (
+         select 1 from chat_room_exits hidden
+         where hidden.room_id = r.id and hidden.profile_id = ? and hidden.is_hidden = 1
+       ))
      order by r.last_message_at desc
      limit 50`,
-  ).bind(viewerId, viewerId, viewerId, viewerId, viewerId).all<ChatRoomRow>();
+  ).bind(viewerId, viewerId, viewerId, viewerId, viewerId, viewerId, viewerId, viewerId).all<ChatRoomRow>();
 
   return (results ?? []).map((room) => displayRoomForViewer(room, viewerId));
 }
@@ -180,6 +216,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     ).bind(key).first<ChatRoomRow>();
 
     if (existingDirectRoom) {
+      await unhideRoomForViewer(env, existingDirectRoom.id, viewerId);
       return Response.json(displayRoomForViewer(existingDirectRoom, viewerId));
     }
 
