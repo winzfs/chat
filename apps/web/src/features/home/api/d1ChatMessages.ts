@@ -1,3 +1,5 @@
+import { getProfileId } from './profileId';
+
 export type D1ChatMessage = {
   id: string;
   room_id: string;
@@ -34,7 +36,7 @@ export async function sendD1ChatMessage(roomId: string, body: string, senderNick
   const response = await fetch('/api/chat-messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ room_id: roomId, body, sender_nickname: senderNickname }),
+    body: JSON.stringify({ room_id: roomId, body, sender_nickname: senderNickname, profile_id: getProfileId() }),
   });
 
   if (!response.ok) {
@@ -48,6 +50,7 @@ export async function sendD1ChatMessage(roomId: string, body: string, senderNick
 export async function sendD1ChatImage(roomId: string, image: File): Promise<D1ChatMessage | null> {
   const formData = new FormData();
   formData.append('room_id', roomId);
+  formData.append('profile_id', getProfileId());
   formData.append('sender_nickname', getProfileNickname());
   formData.append('image', image);
 
