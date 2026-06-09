@@ -3,6 +3,7 @@ type Env = { DB: D1Database };
 type MessageBody = {
   room_id?: string;
   body?: string;
+  sender_nickname?: string;
 };
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
@@ -24,6 +25,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const data = await request.json() as MessageBody;
   const roomId = data.room_id?.trim() ?? '';
   const body = data.body?.trim() ?? '';
+  const senderNickname = data.sender_nickname?.trim().slice(0, 20) || '익명';
 
   if (!roomId) {
     return Response.json({ error: 'room_id가 필요해요.' }, { status: 400 });
@@ -37,7 +39,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
   await env.DB.prepare(
     'insert into chat_messages (id, room_id, sender_nickname, message_type, body) values (?, ?, ?, ?, ?)',
-  ).bind(id, roomId, '나', 'text', body).run();
+  ).bind(id, roomId, senderNickname, 'text', body).run();
 
   await env.DB.prepare(
     'update chat_rooms set last_message = ?, last_message_at = datetime("now"), updated_at = datetime("now") where id = ?',
