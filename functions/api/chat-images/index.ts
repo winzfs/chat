@@ -42,6 +42,16 @@ async function unhideRoom(env: Env, roomId: string, profileId: string) {
   ).bind(roomId, profileId).run();
 }
 
+async function unhideRoomParticipants(env: Env, roomId: string) {
+  const room = await env.DB.prepare(
+    'select participant_a_id, participant_b_id from chat_rooms where id = ? limit 1',
+  ).bind(roomId).first<{ participant_a_id?: string | null; participant_b_id?: string | null }>();
+
+  for (const profileId of [room?.participant_a_id, room?.participant_b_id]) {
+    if (profileId) await unhideRoom(env, roomId, profileId);
+  }
+}
+
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const url = new URL(request.url);
   const key = url.searchParams.get('key');
@@ -97,7 +107,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     return Response.json({ error: '이미지는 5MB 이하만 업로드할 수 있어요.' }, { status: 400 });
   }
 
-  await unhideRoom(env, roomId, profileId);
+  await unhideRoomParticipants(env, roomId);
 
   const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
   const key = `chat/${roomId}/${profileId}/${crypto.randomUUID()}.${extension}`;
