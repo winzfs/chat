@@ -181,14 +181,14 @@ export function HomeScreenNext() {
   return (
     <main className="app-shell">
       <section className="home-screen" aria-labelledby="home-title">
-        <header className="home-header"><div><p className="home-kicker">ChitChat</p><h1 id="home-title">{titles[activeTab]}</h1></div><button className={profile.avatar_url ? 'profile-button has-photo' : 'profile-button'} type="button" onClick={() => changeTab('settings')}>{profile.avatar_url ? <img alt="내 프로필" src={profile.avatar_url} /> : profile.nickname.slice(0, 1)}</button></header>
+        <header className="home-header"><div><p className="home-kicker">플러팅</p><h1 id="home-title">{titles[activeTab]}</h1></div></header>
         {notice && <Card className="settings-summary"><strong>{notice}</strong></Card>}
         {activeTab === 'talk' && <TalkPanel2 posts={posts} myNickname={profile.nickname} onDeletePost={removeTalk} onOpenCompose={() => setIsComposeOpen(true)} onOpenRoom={openDirectRoom} />}
         {activeTab === 'people' && <RecentUsersPanel onOpenRoom={openDirectRoom} />}
         {activeTab === 'chats' && <ChatRoomsList key={chatListKey} initialRoom={openRoom} />}
         {activeTab === 'settings' && <ProfileSettingsPanel myProfile={profile} onSave={saveProfile} />}
       </section>
-      <nav className="bottom-nav" aria-label="주요 메뉴">{tabs.map((tab) => <button className={activeTab === tab.id ? 'nav-item is-active' : 'nav-item'} key={tab.id} onClick={() => changeTab(tab.id)} type="button"><span>{tab.icon}</span>{tab.label}{tab.id === 'chats' && hasNewChat ? <em className="nav-badge">새</em> : null}</button>)}</nav>
+      <nav className="bottom-nav" aria-label="주요 메뉴">{tabs.map((tab) => <button className={activeTab === tab.id ? 'nav-item is-active' : 'nav-item'} key={tab.id} onClick={() => changeTab(tab.id)} type="button"><span>{tab.icon}</span>{tab.label}{tab.id === 'chats' && hasNewChat ? <em className="nav-dot" aria-label="새 채팅 알림" /> : null}</button>)}</nav>
       <TalkComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} onSubmit={submitTalk} />
     </main>
   );
