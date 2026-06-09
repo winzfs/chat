@@ -47,6 +47,21 @@ export async function createD1ChatRoom(title: string): Promise<D1ChatRoom | null
   return data;
 }
 
+export async function openDirectD1ChatRoom(peerNickname: string): Promise<D1ChatRoom | null> {
+  const response = await fetch('/api/chat-rooms', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ peer_nickname: peerNickname }),
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = await response.json() as D1ChatRoom;
+  return data.id ? data : null;
+}
+
 export async function leaveD1ChatRoom(id: string): Promise<boolean> {
   const response = await fetch(`/api/chat-rooms?id=${encodeURIComponent(id)}`, {
     method: 'DELETE',
