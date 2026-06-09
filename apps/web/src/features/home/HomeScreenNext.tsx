@@ -32,11 +32,20 @@ export function HomeScreenNext() {
   const [openRoom, setOpenRoom] = useState<D1ChatRoom | null>(null);
   const [notice, setNotice] = useState('');
 
+  const refreshTalkPosts = () => {
+    loadD1TalkPosts().then((loaded) => { if (loaded.length > 0) setPosts(loaded); });
+  };
+
+  const changeTab = (tab: HomeTab) => {
+    setActiveTab(tab);
+    if (tab === 'talk') refreshTalkPosts();
+  };
+
   useEffect(() => {
     const savedProfile = loadMyProfile();
     setProfile(savedProfile);
     touchRecentUser(savedProfile).catch(() => undefined);
-    loadD1TalkPosts().then((loaded) => { if (loaded.length > 0) setPosts(loaded); });
+    refreshTalkPosts();
   }, []);
 
   const submitTalk = async (values: TalkComposeValues) => {
@@ -69,14 +78,14 @@ export function HomeScreenNext() {
   return (
     <main className="app-shell">
       <section className="home-screen" aria-labelledby="home-title">
-        <header className="home-header"><div><p className="home-kicker">ChitChat</p><h1 id="home-title">{titles[activeTab]}</h1></div><button className="profile-button" type="button" onClick={() => setActiveTab('settings')}>{profile.nickname.slice(0, 1)}</button></header>
+        <header className="home-header"><div><p className="home-kicker">ChitChat</p><h1 id="home-title">{titles[activeTab]}</h1></div><button className="profile-button" type="button" onClick={() => changeTab('settings')}>{profile.nickname.slice(0, 1)}</button></header>
         {notice && <Card className="settings-summary"><strong>{notice}</strong></Card>}
         {activeTab === 'talk' && <TalkPanel2 posts={posts} myNickname={profile.nickname} onDeletePost={removeTalk} onOpenCompose={() => setIsComposeOpen(true)} onOpenRoom={openDirectRoom} />}
         {activeTab === 'people' && <RecentUsersPanel onOpenRoom={openDirectRoom} />}
         {activeTab === 'chats' && <ChatRoomsList initialRoom={openRoom} />}
         {activeTab === 'settings' && <ProfileSettingsPanel myProfile={profile} onSave={saveProfile} />}
       </section>
-      <nav className="bottom-nav" aria-label="주요 메뉴">{tabs.map((tab) => <button className={activeTab === tab.id ? 'nav-item is-active' : 'nav-item'} key={tab.id} onClick={() => setActiveTab(tab.id)} type="button"><span>{tab.icon}</span>{tab.label}</button>)}</nav>
+      <nav className="bottom-nav" aria-label="주요 메뉴">{tabs.map((tab) => <button className={activeTab === tab.id ? 'nav-item is-active' : 'nav-item'} key={tab.id} onClick={() => changeTab(tab.id)} type="button"><span>{tab.icon}</span>{tab.label}</button>)}</nav>
       <TalkComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} onSubmit={submitTalk} />
     </main>
   );
