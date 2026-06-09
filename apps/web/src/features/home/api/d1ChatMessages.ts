@@ -1,3 +1,4 @@
+import { apiUrl } from './apiBase';
 import { getProfileId } from './profileId';
 
 export type D1ChatMessage = {
@@ -24,7 +25,7 @@ function getProfileNickname() {
 
 export async function loadD1ChatMessages(roomId: string): Promise<D1ChatMessage[]> {
   const params = new URLSearchParams({ room_id: roomId, profile_id: getProfileId() });
-  const response = await fetch(`/api/chat-messages?${params.toString()}`, { cache: 'no-store' });
+  const response = await fetch(apiUrl(`/api/chat-messages?${params.toString()}`), { cache: 'no-store' });
 
   if (!response.ok) {
     return [];
@@ -35,7 +36,7 @@ export async function loadD1ChatMessages(roomId: string): Promise<D1ChatMessage[
 }
 
 export async function sendD1ChatMessage(roomId: string, body: string, senderNickname = getProfileNickname()): Promise<D1ChatMessage | null> {
-  const response = await fetch('/api/chat-messages', {
+  const response = await fetch(apiUrl('/api/chat-messages'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ room_id: roomId, body, sender_nickname: senderNickname, profile_id: getProfileId() }),
@@ -56,7 +57,7 @@ export async function sendD1ChatImage(roomId: string, image: File): Promise<D1Ch
   formData.append('sender_nickname', getProfileNickname());
   formData.append('image', image);
 
-  const response = await fetch('/api/chat-images', {
+  const response = await fetch(apiUrl('/api/chat-images'), {
     method: 'POST',
     body: formData,
   });
