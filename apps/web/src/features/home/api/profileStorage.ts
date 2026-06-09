@@ -4,6 +4,7 @@ export type MyProfile = {
   age: number;
   location: string;
   bio: string;
+  avatar_url?: string;
 };
 
 const profileKey = 'chitchat.myProfile.v1';
@@ -14,6 +15,7 @@ export const defaultProfile: MyProfile = {
   age: 25,
   location: '서울',
   bio: '가볍게 대화하면서 친해지고 싶어요.',
+  avatar_url: '',
 };
 
 export function loadMyProfile(): MyProfile {
