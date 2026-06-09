@@ -39,10 +39,20 @@ function getHiddenRoomIds() {
   }
 }
 
+function saveHiddenRoomIds(hidden: Set<string>) {
+  localStorage.setItem(hiddenRoomsKey(), JSON.stringify([...hidden]));
+}
+
 function hideRoomLocally(roomId: string) {
   const hidden = getHiddenRoomIds();
   hidden.add(roomId);
-  localStorage.setItem(hiddenRoomsKey(), JSON.stringify([...hidden]));
+  saveHiddenRoomIds(hidden);
+}
+
+function showRoomLocally(roomId: string) {
+  const hidden = getHiddenRoomIds();
+  if (!hidden.delete(roomId)) return;
+  saveHiddenRoomIds(hidden);
 }
 
 function resolveRoomTitle(room: D1ChatRoom): D1ChatRoom {
@@ -105,6 +115,7 @@ export async function createD1ChatRoom(title: string): Promise<D1ChatRoom | null
     return null;
   }
 
+  showRoomLocally(data.id);
   return resolveRoomTitle(data);
 }
 
@@ -125,7 +136,13 @@ export async function openDirectD1ChatRoom(peerNickname: string, peerId?: string
   }
 
   const data = await response.json() as D1ChatRoom;
-  return data.id ? resolveRoomTitle(data) : null;
+
+  if (!data.id) {
+    return null;
+  }
+
+  showRoomLocally(data.id);
+  return resolveRoomTitle(data);
 }
 
 export async function leaveD1ChatRoom(id: string): Promise<boolean> {
