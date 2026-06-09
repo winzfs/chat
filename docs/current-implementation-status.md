@@ -22,13 +22,22 @@
 
 - 첫 접속 시 가입 화면 표시
 - 닉네임, 성별, 나이, 지역을 입력해 가입
+- 지역은 대한민국 광역시/도 목록에서 선택
 - 20세 이상만 가입 가능
 - 같은 기기에서는 localStorage 기준으로 한 계정만 사용
 - 프로필 정보는 localStorage에 저장
-- 가입 시 입력한 지역은 `profile.location`에 저장되고 토크/사람/프로필 모달에 표시됨
+- 가입 시 선택한 지역은 `profile.location`에 저장되고 토크/사람/프로필 모달에 표시됨
+- 프로필 설정 화면에서도 같은 지역 목록으로 지역을 변경할 수 있음
 - 서버에는 `profile_id` 기준으로 최근 접속자/토크/채팅방 정보 동기화
 - 토크, 사람, 채팅 목록, 채팅방 메시지에서 프로필 아이콘을 눌러 프로필 정보를 확인할 수 있음
 - 프로필 모달은 `profile_id`가 있으면 `/api/profile-lookup`으로 최신 프로필 정보를 다시 불러옴
+
+지역 목록:
+
+```txt
+서울특별시, 부산광역시, 대구광역시, 인천광역시, 광주광역시, 대전광역시, 울산광역시, 세종특별자치시,
+경기도, 강원특별자치도, 충청북도, 충청남도, 전북특별자치도, 전라남도, 경상북도, 경상남도, 제주특별자치도
+```
 
 현재 프로필 필드:
 
@@ -169,6 +178,7 @@ apps/web/src/features/home/api/profileStorage.ts
 apps/web/src/features/home/api/profileId.ts
 apps/web/src/features/home/api/profileSync.ts
 apps/web/src/features/home/api/profileLookup.ts
+apps/web/src/features/home/api/koreaRegions.ts
 apps/web/src/features/home/api/d1TalkPosts.ts
 apps/web/src/features/home/api/recentUsers.ts
 apps/web/src/features/home/api/d1ChatRooms.ts
