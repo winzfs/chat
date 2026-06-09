@@ -27,16 +27,25 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 
   const url = new URL(request.url);
   const profileId = url.searchParams.get('profile_id')?.trim() ?? '';
+  const nickname = url.searchParams.get('nickname')?.trim() ?? '';
 
-  if (!profileId) {
-    return Response.json({ error: 'profile_id가 필요해요.' }, { status: 400 });
+  if (!profileId && !nickname) {
+    return Response.json({ error: 'profile_id 또는 nickname이 필요해요.' }, { status: 400 });
   }
 
-  const profile = await env.DB.prepare(
-    `select id, nickname, age, location, bio, avatar_url, online, last_seen_at
-     from recent_users
-     where id = ?`,
-  ).bind(profileId).first();
+  const profile = profileId
+    ? await env.DB.prepare(
+      `select id, nickname, age, location, bio, avatar_url, online, last_seen_at
+       from recent_users
+       where id = ?`,
+    ).bind(profileId).first()
+    : await env.DB.prepare(
+      `select id, nickname, age, location, bio, avatar_url, online, last_seen_at
+       from recent_users
+       where nickname = ?
+       order by last_seen_at desc
+       limit 1`,
+    ).bind(nickname).first();
 
   if (!profile) {
     return Response.json({ profile: null }, { status: 404 });
