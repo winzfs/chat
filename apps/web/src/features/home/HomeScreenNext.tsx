@@ -26,6 +26,12 @@ const tabs: { id: HomeTab; label: string; icon: string }[] = [
 const titles: Record<HomeTab, string> = { talk: '지금 대화하고 싶은 사람들', people: '최근 접속자', chats: '내 대화 목록', settings: '내 설정' };
 const fallbackPosts: D1TalkPost[] = talkPosts.map((post) => ({ ...post, id: String(post.id), created_at: new Date().toISOString() }));
 
+function clearRoomHash() {
+  if (window.location.hash.startsWith('#room=')) {
+    history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+  }
+}
+
 export function HomeScreenNext() {
   const [activeTab, setActiveTab] = useState<HomeTab>('talk');
   const [isComposeOpen, setIsComposeOpen] = useState(false);
@@ -44,7 +50,11 @@ export function HomeScreenNext() {
   const changeTab = (tab: HomeTab) => {
     setActiveTab(tab);
     if (tab === 'talk') refreshTalkPosts();
-    if (tab === 'chats') setHasNewChat(false);
+    if (tab === 'chats') {
+      clearRoomHash();
+      setOpenRoom(null);
+      setHasNewChat(false);
+    }
   };
 
   useEffect(() => {
