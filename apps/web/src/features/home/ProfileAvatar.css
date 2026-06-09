@@ -1,8 +1,19 @@
+.avatar-wrap {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  overflow: visible;
+}
+
+.avatar-wrap .avatar,
+.avatar-wrap .avatar-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 18px;
+}
+
 .avatar-image {
-  width: 100%;
-  height: 100%;
   display: block;
-  border-radius: inherit;
   object-fit: cover;
 }
 
@@ -65,4 +76,50 @@
   color: var(--color-main-pink);
   font-size: 12px;
   font-weight: 900;
+}
+
+.avatar-crop-card {
+  width: min(420px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+}
+
+.avatar-crop-card p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.avatar-crop-card label {
+  display: grid;
+  gap: 6px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.avatar-crop-preview {
+  width: min(280px, 72vw);
+  height: min(280px, 72vw);
+  place-self: center;
+  overflow: hidden;
+  border-radius: 28px;
+  background: #f4f4f5;
+  box-shadow: inset 0 0 0 2px rgba(255, 107, 157, 0.24);
+}
+
+.avatar-crop-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform-origin: center;
+}
+
+.crop-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
