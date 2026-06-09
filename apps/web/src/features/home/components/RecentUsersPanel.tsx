@@ -46,6 +46,15 @@ export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRo
     setNotice('채팅방을 열지 못했어요. 잠시 후 다시 시도해주세요.');
   };
 
+  const openPreviewChat = async () => {
+    if (!previewProfile) return;
+    const room = await openDirectD1ChatRoom(previewProfile.nickname, previewProfile.profile_id || undefined);
+    if (room) {
+      setPreviewProfile(null);
+      onOpenRoom(room);
+    }
+  };
+
   const previewUser = (user: RecentUser) => {
     setPreviewProfile({ profile_id: user.id, nickname: user.nickname, age: user.age, location: user.location, bio: user.bio, avatar_url: user.avatar_url });
   };
@@ -64,7 +73,7 @@ export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRo
           <div className="talk-actions"><span>{user.bio || '대화 가능한 사용자'}</span><button type="button" onClick={() => openChat(user)}>채팅 걸기</button></div>
         </Card>
       ))}
-      {previewProfile && <ProfilePreviewModal profile={previewProfile} onClose={() => setPreviewProfile(null)} />}
+      {previewProfile && <ProfilePreviewModal profile={previewProfile} onClose={() => setPreviewProfile(null)} onStartChat={openPreviewChat} />}
     </section>
   );
 }
