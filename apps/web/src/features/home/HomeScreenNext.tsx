@@ -3,6 +3,7 @@ import { Card } from '../../shared/components/Card';
 import type { D1ChatRoom } from './api/d1ChatRooms';
 import { createD1TalkPost, deleteD1TalkPost, loadD1TalkPosts, type D1TalkPost } from './api/d1TalkPosts';
 import { defaultProfile, loadMyProfile, saveMyProfile, type MyProfile } from './api/profileStorage';
+import { syncProfile } from './api/profileSync';
 import { touchRecentUser } from './api/recentUsers';
 import { ChatRoomsList } from './components/ChatRoomsList';
 import { RecentUsersPanel } from './components/RecentUsersPanel';
@@ -52,8 +53,10 @@ export function HomeScreenNext() {
   };
 
   const saveProfile = (next: MyProfile) => {
+    const previousNickname = profile.nickname;
     saveMyProfile(next);
     setProfile(next);
+    syncProfile(previousNickname, next).catch(() => undefined);
     touchRecentUser(next).catch(() => undefined);
     setNotice('프로필이 저장됐어요.');
   };
