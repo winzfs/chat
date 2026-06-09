@@ -12,6 +12,7 @@ export async function syncProfile(previousNickname: string, profile: MyProfile):
       age: profile.age,
       location: profile.location,
       bio: profile.bio,
+      avatar_url: profile.avatar_url,
     }),
   });
 }
