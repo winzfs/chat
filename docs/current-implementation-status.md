@@ -1,10 +1,10 @@
 # 현재 구현 상태
 
-마지막 갱신: 2026-06-09
+마지막 갱신: 2026-06-10
 
 ## 개요
 
-이 프로젝트는 모바일 웹 우선의 1:1 채팅 앱입니다. 현재는 React + Vite 프론트엔드와 Cloudflare Pages Functions, D1, R2를 중심으로 구현되어 있습니다.
+이 프로젝트는 **플러팅**이라는 모바일 웹 우선 1:1 채팅 앱입니다. 현재는 React + Vite 프론트엔드와 Cloudflare Pages Functions, D1, R2를 중심으로 구현되어 있습니다.
 
 ## 현재 배포/인프라
 
@@ -15,6 +15,32 @@
 - 데이터베이스: Cloudflare D1, 바인딩 이름 `DB`
 - 이미지 저장소: Cloudflare R2, 바인딩 이름 `IMAGES`
 - 운영자 판별: Cloudflare 환경변수 `ADMIN_PROFILE_IDS`
+- Android 포장: Capacitor
+- Android 앱 이름: 플러팅
+- Android 패키지명: `com.flirting.app`
+- 앱 아이콘 원본: `resources/icon.png`
+- 스플래시 원본: `resources/splash.png`
+
+## Android 앱 상태
+
+- Debug APK는 GitHub Actions 수동 실행으로 빌드합니다.
+- Release AAB는 GitHub Actions 수동 실행으로 빌드합니다.
+- Android 기본 스플래시는 플랫폼 특성상 아이콘 중심으로 표시됩니다.
+- 실제 브랜드 스플래시는 앱 시작 직후 웹앱 내부 풀스크린 오버레이로 표시합니다.
+- Android 앱에서 API 호출은 `apps/web/src/features/home/api/apiBase.ts`를 통해 Cloudflare Pages 배포 주소로 연결합니다.
+
+관련 파일:
+
+```txt
+capacitor.config.ts
+resources/icon.png
+resources/splash.png
+.github/workflows/android-debug-apk.yml
+.github/workflows/android-release-aab.yml
+apps/web/src/shared/components/AppLaunchSplash.tsx
+apps/web/src/shared/components/AppLaunchSplash.css
+apps/web/src/features/home/api/apiBase.ts
+```
 
 ## 현재 구현된 주요 기능
 
@@ -107,6 +133,8 @@ avatar_url
 - 같은 두 유저는 같은 방 재사용
 - 채팅방 목록 제목은 내 기준 상대방 닉네임으로 표시
 - 기존 꼬인 방은 클라이언트에서 제목 보정
+- 채팅 탭 진입 시 기본적으로 채팅방 목록부터 표시
+- 프로필 모달/토크/사람 탭에서 대화 시작 시에만 특정 방으로 진입
 - 새 메시지 감지 시 채팅 탭 배지 표시
 - 채팅 탭 목록 화면에서도 자동 갱신
 - 목록의 마지막 메시지/시간 갱신
@@ -124,6 +152,7 @@ avatar_url
 - 내가 보낸 메시지는 `sender_profile_id` 우선 기준으로 오른쪽 말풍선 표시
 - 상대 메시지는 왼쪽 말풍선으로 표시
 - 닉네임은 말풍선에 직접 표시하지 않음
+- 채팅 입력창은 하단 네비게이션 위에 고정 표시
 
 ### 7. 채팅방 나가기
 
@@ -153,6 +182,20 @@ POST /api/chat-room-leave
 - 신고 상태를 `open`, `reviewing`, `closed`로 변경 가능
 - 운영자는 신고 대상의 프로필, 소개글, 프로필 사진, 토크 글, 관련 채팅방과 메시지 검토 자료를 조회할 수 있음
 
+### 9. Android 뒤로가기
+
+Android 네이티브 환경에서는 Capacitor App 플러그인으로 뒤로가기를 처리합니다.
+
+동작:
+
+```txt
+토크 작성 모달 열림 → 모달 닫기
+채팅방 내부 → 채팅 목록으로 이동
+채팅 목록 → 토크 탭으로 이동
+사람/설정 탭 → 토크 탭으로 이동
+토크 탭 → 앱 최소화
+```
+
 ## 주요 API
 
 ```txt
@@ -174,9 +217,11 @@ GET             /api/admin/user-review
 ## 클라이언트 주요 파일
 
 ```txt
+apps/web/src/main.tsx
 apps/web/src/features/auth/SignupGate.tsx
 apps/web/src/features/auth/authStorage.ts
 apps/web/src/features/home/HomeScreenNext.tsx
+apps/web/src/features/home/api/apiBase.ts
 apps/web/src/features/home/api/profileStorage.ts
 apps/web/src/features/home/api/profileId.ts
 apps/web/src/features/home/api/profileSync.ts
@@ -190,6 +235,9 @@ apps/web/src/features/home/api/userSafety.ts
 apps/web/src/features/home/api/reportsAdmin.ts
 apps/web/src/features/home/api/pollingIntervals.ts
 apps/web/src/features/home/api/admin.ts
+apps/web/src/features/home/api/useAndroidBackButton.ts
+apps/web/src/shared/components/AppLaunchSplash.tsx
+apps/web/src/shared/components/AppLaunchSplash.css
 apps/web/src/features/home/components/ProfileSettingsPanel.tsx
 apps/web/src/features/home/components/AvatarCropModal.tsx
 apps/web/src/features/home/components/UserAvatar.tsx
@@ -198,6 +246,7 @@ apps/web/src/features/home/components/TalkPanel2.tsx
 apps/web/src/features/home/components/RecentUsersPanel.tsx
 apps/web/src/features/home/components/ChatRoomsList.tsx
 apps/web/src/features/home/components/ChatRoomPanel.tsx
+apps/web/src/features/home/components/ChatRoomPanel.css
 apps/web/src/features/home/components/ChatMessageItem.tsx
 apps/web/src/features/home/components/ReportsAdminPanel.tsx
 apps/web/src/features/home/components/BlockedUsersPanel.tsx
@@ -209,6 +258,18 @@ apps/web/src/features/home/ProfileAvatar.css
 ### localStorage 기반 가입
 
 현재 가입은 진짜 계정 인증이 아니라 기기 localStorage 기반입니다. 브라우저 데이터를 지우거나 다른 브라우저를 사용하면 새 계정처럼 동작할 수 있습니다.
+
+### Native API 주소
+
+Android 앱은 `capacitor://localhost`에서 실행되므로 `/api/*` 상대 경로를 직접 쓰면 앱 내부 주소로 요청됩니다. 현재는 `apiBase.ts`에서 네이티브 플랫폼일 때 Cloudflare Pages 주소로 요청하도록 처리합니다.
+
+현재 Native API 기준 주소:
+
+```txt
+https://chat-509.pages.dev
+```
+
+커스텀 도메인을 붙이면 앱 업데이트 전에 `apiBase.ts` 값을 변경해야 합니다.
 
 ### 실시간 방식
 
@@ -257,8 +318,12 @@ ADMIN_PROFILE_IDS=운영자_profile_id
 
 ## 다음 작업 후보
 
-1. 로컬에서 `pnpm build`로 타입/빌드 확인
-2. Cloudflare Pages 환경변수 `ADMIN_PROFILE_IDS` 등록
-3. 채팅방 UI 2차 다듬기
-4. 실제 인증 체계 도입 검토
-5. WebSocket 또는 Durable Objects 기반 실시간화 검토
+1. Android Debug APK 재빌드 후 앱 이름/아이콘/스플래시 확인
+2. 실기기에서 토크/채팅/이미지 업로드/뒤로가기 테스트
+3. Cloudflare Pages 환경변수 `ADMIN_PROFILE_IDS` 등록
+4. 개인정보처리방침/이용약관 실제 운영자 정보 반영
+5. Play Store 스크린샷/피처 그래픽 제작
+6. release keystore 생성 및 GitHub Secrets 등록
+7. Release AAB 워크플로우 실제 실행 테스트
+8. 실제 인증 체계 도입 검토
+9. WebSocket 또는 Durable Objects 기반 실시간화 검토
