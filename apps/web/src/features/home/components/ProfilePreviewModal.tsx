@@ -1,7 +1,10 @@
+import { useEffect, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
+import { loadProfileById } from '../api/profileLookup';
 import { UserAvatar } from './UserAvatar';
 
 export type ProfilePreview = {
+  profile_id?: string | null;
   nickname: string;
   age?: number | string | null;
   location?: string | null;
@@ -10,15 +13,35 @@ export type ProfilePreview = {
 };
 
 export function ProfilePreviewModal({ onClose, onStartChat, profile }: { profile: ProfilePreview; onClose: () => void; onStartChat?: () => void }) {
+  const [displayProfile, setDisplayProfile] = useState(profile);
+
+  useEffect(() => {
+    setDisplayProfile(profile);
+
+    if (!profile.profile_id) return;
+
+    loadProfileById(profile.profile_id).then((loaded) => {
+      if (!loaded) return;
+      setDisplayProfile({
+        profile_id: loaded.id ?? profile.profile_id,
+        nickname: loaded.nickname || profile.nickname,
+        age: loaded.age ?? profile.age,
+        location: loaded.location ?? profile.location,
+        bio: loaded.bio ?? profile.bio,
+        avatar_url: loaded.avatar_url ?? profile.avatar_url,
+      });
+    });
+  }, [profile]);
+
   return (
     <div className="modal-backdrop" role="presentation" onClick={onClose}>
       <Card className="profile-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
         <div className="profile-preview-avatar">
-          <UserAvatar imageUrl={profile.avatar_url} name={profile.nickname} />
+          <UserAvatar imageUrl={displayProfile.avatar_url} name={displayProfile.nickname} />
         </div>
-        <strong>{profile.nickname}</strong>
-        <p>{profile.age ?? '-'}세 · {profile.location || '내 주변'}</p>
-        <p>{profile.bio || '소개글이 아직 없어요.'}</p>
+        <strong>{displayProfile.nickname}</strong>
+        <p>{displayProfile.age ?? '-'}세 · {displayProfile.location || '내 주변'}</p>
+        <p>{displayProfile.bio || '소개글이 아직 없어요.'}</p>
         <div className="talk-actions">
           <button type="button" onClick={onClose}>닫기</button>
           {onStartChat && <button type="button" onClick={onStartChat}>채팅 시작</button>}
