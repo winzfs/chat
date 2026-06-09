@@ -105,6 +105,16 @@ export function HomeScreenNext() {
   }, []);
 
   useEffect(() => {
+    if (!notice) return;
+
+    const timer = window.setTimeout(() => {
+      setNotice('');
+    }, 2600);
+
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
+  useEffect(() => {
     if (activeTab !== 'talk') return;
 
     const timer = window.setInterval(() => {
