@@ -1,22 +1,27 @@
 import { Card } from '../../../shared/components/Card';
-import type { recommendedUsers } from '../data/homeMockData';
+import { UserAvatar } from './UserAvatar';
 
-type RecommendedUser = (typeof recommendedUsers)[number];
+export type ProfilePreview = {
+  nickname: string;
+  age?: number | string | null;
+  location?: string | null;
+  bio?: string | null;
+  avatar_url?: string | null;
+};
 
-export function ProfilePreviewModal({ onClose, onStartChat, user }: { user: RecommendedUser; onClose: () => void; onStartChat: () => void }) {
+export function ProfilePreviewModal({ onClose, onStartChat, profile }: { profile: ProfilePreview; onClose: () => void; onStartChat?: () => void }) {
   return (
     <div className="modal-backdrop" role="presentation" onClick={onClose}>
       <Card className="profile-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
-        <div className="avatar-wrap">
-          <span className="avatar">{user.nickname.slice(0, 1)}</span>
-          <span className={user.online ? 'status-dot is-online' : 'status-dot'} />
+        <div className="profile-preview-avatar">
+          <UserAvatar imageUrl={profile.avatar_url} name={profile.nickname} />
         </div>
-        <strong>{user.nickname}</strong>
-        <p>{user.age}세 · {user.location} · 취향 매칭 {user.matchRate}%</p>
-        <p>가벼운 대화와 취미 공유를 좋아해요. 먼저 인사해보세요.</p>
+        <strong>{profile.nickname}</strong>
+        <p>{profile.age ?? '-'}세 · {profile.location || '내 주변'}</p>
+        <p>{profile.bio || '소개글이 아직 없어요.'}</p>
         <div className="talk-actions">
           <button type="button" onClick={onClose}>닫기</button>
-          <button type="button" onClick={onStartChat}>채팅 시작</button>
+          {onStartChat && <button type="button" onClick={onStartChat}>채팅 시작</button>}
         </div>
       </Card>
     </div>
