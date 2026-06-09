@@ -13,7 +13,8 @@ export type RecentUser = {
 };
 
 export async function loadRecentUsers(): Promise<RecentUser[]> {
-  const response = await fetch('/api/recent-users', { cache: 'no-store' });
+  const params = new URLSearchParams({ profile_id: getProfileId() });
+  const response = await fetch(`/api/recent-users?${params.toString()}`, { cache: 'no-store' });
 
   if (!response.ok) {
     return [];
