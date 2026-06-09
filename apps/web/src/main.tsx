@@ -9,7 +9,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <SignupGate>
       <HomeScreenNext />
-      <AppLaunchSplash />
     </SignupGate>
+    <AppLaunchSplash />
   </React.StrictMode>,
 );
