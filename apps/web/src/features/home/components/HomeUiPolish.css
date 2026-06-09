@@ -1,0 +1,158 @@
+.home-header {
+  align-items: flex-start;
+}
+
+.nav-dot {
+  position: absolute;
+  top: 8px;
+  right: 28px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #ff2f6d;
+  box-shadow: 0 0 0 4px rgba(255, 47, 109, 0.14), 0 6px 14px rgba(255, 47, 109, 0.34);
+}
+
+.chat-room-card {
+  padding: 22px !important;
+}
+
+.chat-room-card-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  gap: 14px;
+  align-items: center;
+}
+
+.chat-room-card-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  min-width: 0;
+}
+
+.chat-room-card-copy {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.chat-room-card-copy strong {
+  display: block;
+  color: var(--color-text-strong);
+  font-size: 17px;
+  font-weight: 950;
+  line-height: 1.2;
+}
+
+.chat-room-card-copy p {
+  overflow: hidden;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-room-card-copy > span {
+  color: #b4b6bf;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.chat-room-card-actions {
+  display: grid;
+  gap: 8px;
+  justify-items: stretch;
+}
+
+.chat-room-card-actions button {
+  min-width: 0;
+  min-height: 42px;
+  border-radius: 999px;
+  background: #f85b98;
+  color: white;
+  font-size: 13px;
+  font-weight: 950;
+  box-shadow: 0 12px 24px rgba(248, 91, 152, 0.22);
+}
+
+.chat-room-card-actions button:last-child {
+  background: #fff0f6;
+  color: var(--color-main-pink);
+  box-shadow: none;
+}
+
+.profile-summary-card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.profile-summary-card .profile-avatar-preview {
+  width: 116px;
+  height: 116px;
+  margin: 0;
+}
+
+.profile-summary-card strong {
+  color: var(--color-text-strong);
+  font-size: 22px;
+  font-weight: 950;
+}
+
+.profile-summary-card p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.profile-photo-input-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.profile-photo-input-row input[type='file'] {
+  min-width: 0;
+  padding: 10px;
+}
+
+.profile-photo-input-row .secondary-button {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.settings-legal-card {
+  margin-bottom: 96px;
+}
+
+@media (max-width: 420px) {
+  .chat-room-card-layout {
+    grid-template-columns: minmax(0, 1fr) 84px;
+    gap: 10px;
+  }
+
+  .chat-room-card {
+    padding: 18px !important;
+  }
+
+  .chat-room-card-main {
+    gap: 10px;
+  }
+
+  .chat-room-card-actions button {
+    min-height: 38px;
+    font-size: 12px;
+  }
+
+  .profile-photo-input-row {
+    grid-template-columns: 78px minmax(0, 1fr);
+  }
+}
