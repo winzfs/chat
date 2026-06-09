@@ -13,13 +13,36 @@ async function ensureChatMessageColumns(env: Env) {
   } catch {
     // column already exists
   }
+
+  await env.DB.prepare(
+    `create table if not exists chat_room_reads (
+      room_id text not null,
+      profile_id text not null,
+      last_read_at text not null default (datetime('now')),
+      updated_at text not null default (datetime('now')),
+      primary key (room_id, profile_id)
+    )`,
+  ).run();
+}
+
+async function markRoomAsRead(env: Env, roomId: string, profileId: string) {
+  if (!profileId) return;
+
+  await env.DB.prepare(
+    `insert into chat_room_reads (room_id, profile_id, last_read_at, updated_at)
+     values (?, ?, datetime('now'), datetime('now'))
+     on conflict(room_id, profile_id) do update set
+       last_read_at = datetime('now'),
+       updated_at = datetime('now')`,
+  ).bind(roomId, profileId).run();
 }
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   await ensureChatMessageColumns(env);
 
   const url = new URL(request.url);
-  const roomId = url.searchParams.get('room_id');
+  const roomId = url.searchParams.get('room_id')?.trim() ?? '';
+  const profileId = url.searchParams.get('profile_id')?.trim() ?? '';
 
   if (!roomId) {
     return Response.json({ error: 'room_id가 필요해요.' }, { status: 400 });
@@ -28,6 +51,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const { results } = await env.DB.prepare(
     'select id, room_id, sender_nickname, sender_profile_id, message_type, body, image_key, image_url, created_at from chat_messages where room_id = ? order by created_at asc limit 100',
   ).bind(roomId).all();
+
+  await markRoomAsRead(env, roomId, profileId);
 
   return Response.json({ messages: results ?? [] });
 };
@@ -62,6 +87,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   await env.DB.prepare(
     'update chat_rooms set last_message = ?, last_message_at = datetime("now"), updated_at = datetime("now") where id = ?',
   ).bind(body, roomId).run();
+
+  await markRoomAsRead(env, roomId, profileId);
 
   const message = await env.DB.prepare(
     'select id, room_id, sender_nickname, sender_profile_id, message_type, body, image_key, image_url, created_at from chat_messages where id = ?',
