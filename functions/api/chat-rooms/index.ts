@@ -3,6 +3,7 @@ type Env = { DB: D1Database };
 type ChatRoomBody = {
   title?: string;
   peer_nickname?: string;
+  profile_id?: string;
 };
 
 async function listRooms(env: Env) {
@@ -41,6 +42,12 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const body = await request.json() as ChatRoomBody;
+  const profileId = body.profile_id?.trim() ?? '';
+
+  if (!profileId) {
+    return Response.json({ error: '가입한 사용자만 채팅방을 만들 수 있어요.' }, { status: 401 });
+  }
+
   const directTitle = makeDirectTitle(body.peer_nickname);
   const title = directTitle || body.title?.trim() || '새 채팅방';
   const legacyTitle = body.peer_nickname ? `${body.peer_nickname.trim().slice(0, 20)} room` : title;
