@@ -17,6 +17,14 @@ async function uploadAvatar(image: File) {
   return data.avatar_url ?? null;
 }
 
+async function deleteAvatar(avatarUrl?: string) {
+  const params = new URLSearchParams({ profile_id: getProfileId() });
+  if (avatarUrl) params.set('avatar_url', avatarUrl);
+
+  const response = await fetch(`/api/profile-image?${params.toString()}`, { method: 'DELETE' });
+  return response.ok;
+}
+
 export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfile; onSave: (profile: MyProfile) => void }) {
   const [form, setForm] = useState<MyProfile>(myProfile);
   const [isUploading, setIsUploading] = useState(false);
@@ -51,6 +59,13 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
     }
   };
 
+  const resetAvatar = async () => {
+    setIsUploading(true);
+    await deleteAvatar(form.avatar_url);
+    setIsUploading(false);
+    setForm((current) => ({ ...current, avatar_url: '' }));
+  };
+
   return (
     <section className="talk-list" aria-label="프로필 설정">
       <Card className="settings-summary profile-summary-card">
@@ -72,8 +87,9 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
                 {form.avatar_url ? <img alt="프로필 사진 미리보기" src={form.avatar_url} /> : <span>{form.nickname.slice(0, 1) || '?'}</span>}
               </div>
               <input accept="image/*" onChange={(event) => handleAvatarPick(event.target.files?.[0])} type="file" />
+              {form.avatar_url && <button className="secondary-button" disabled={isUploading} onClick={resetAvatar} type="button">기본 이미지</button>}
             </div>
-            {isUploading && <span className="upload-hint">사진 업로드 중...</span>}
+            {isUploading && <span className="upload-hint">사진 처리 중...</span>}
           </label>
           <label>닉네임<input value={form.nickname} maxLength={12} onChange={(event) => setForm({ ...form, nickname: event.target.value })} /></label>
           <label>나이<input type="number" value={form.age} min={20} max={80} onChange={(event) => setForm({ ...form, age: Number(event.target.value) })} /></label>
