@@ -1,20 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
 import { createD1ChatRoom, type D1ChatRoom } from '../api/d1ChatRooms';
+import { loadMyProfile } from '../api/profileStorage';
 import { loadRecentUsers, type RecentUser } from '../api/recentUsers';
 
-export function RecentUsersPanel({ myNickname, onOpenRoom }: { myNickname: string; onOpenRoom: (room: D1ChatRoom) => void }) {
+export function RecentUsersPanel({ myNickname, onOpenRoom }: { myNickname?: string; onOpenRoom: (room: D1ChatRoom) => void }) {
   const [users, setUsers] = useState<RecentUser[]>([]);
   const [notice, setNotice] = useState('');
+  const currentNickname = myNickname || loadMyProfile().nickname;
 
   useEffect(() => {
     loadRecentUsers().then((loadedUsers) => {
-      setUsers(loadedUsers.filter((user) => user.nickname !== myNickname));
+      setUsers(loadedUsers.filter((user) => user.nickname !== currentNickname));
     });
-  }, [myNickname]);
+  }, [currentNickname]);
 
   const openChat = async (user: RecentUser) => {
-    if (user.nickname === myNickname) {
+    if (user.nickname === currentNickname) {
       setNotice('내 프로필에는 채팅을 걸 수 없어요.');
       return;
     }
