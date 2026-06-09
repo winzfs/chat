@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Card } from '../../shared/components/Card';
 import { loadD1ChatRooms, type D1ChatRoom } from './api/d1ChatRooms';
 import { createD1TalkPost, deleteD1TalkPost, loadD1TalkPosts, type D1TalkPost } from './api/d1TalkPosts';
+import { POLLING_INTERVALS } from './api/pollingIntervals';
 import { defaultProfile, loadMyProfile, saveMyProfile, type MyProfile } from './api/profileStorage';
 import { syncProfile } from './api/profileSync';
 import { touchRecentUser } from './api/recentUsers';
@@ -59,7 +60,7 @@ export function HomeScreenNext() {
     const timer = window.setInterval(() => {
       if (document.hidden || isComposeOpen) return;
       refreshTalkPosts();
-    }, 3000);
+    }, POLLING_INTERVALS.talkPosts);
 
     return () => window.clearInterval(timer);
   }, [activeTab, isComposeOpen]);
@@ -92,7 +93,7 @@ export function HomeScreenNext() {
     checkRooms().catch(() => undefined);
     const timer = window.setInterval(() => {
       checkRooms().catch(() => undefined);
-    }, 3000);
+    }, POLLING_INTERVALS.chatRooms);
 
     return () => window.clearInterval(timer);
   }, [activeTab]);
