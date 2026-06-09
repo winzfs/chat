@@ -43,13 +43,8 @@ jobs:
           test -n "$ANDROID_KEY_ALIAS" || (echo "Missing ANDROID_KEY_ALIAS" && exit 1)
           test -n "$ANDROID_KEY_PASSWORD" || (echo "Missing ANDROID_KEY_PASSWORD" && exit 1)
 
-      - name: Install web dependencies
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile=false
-
-      - name: Install Capacitor dependencies for CI
-        run: |
-          pnpm add -w @capacitor/core@latest @capacitor/android@latest
-          pnpm add -Dw @capacitor/cli@latest
 
       - name: Build web app
         run: pnpm build
