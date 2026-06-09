@@ -3,6 +3,24 @@ type Env = {
   IMAGES: R2Bucket;
 };
 
+async function ensureChatImageColumns(env: Env) {
+  try {
+    await env.DB.prepare('alter table chat_messages add column sender_profile_id text').run();
+  } catch {
+    // column already exists
+  }
+}
+
+async function hasRecentUser(env: Env, profileId: string) {
+  try {
+    const user = await env.DB.prepare('select id from recent_users where id = ? limit 1').bind(profileId).first();
+    return Boolean(user);
+  } catch {
+    // recent_users may not exist on a fresh DB yet. The required profile_id check still protects anonymous uploads.
+    return true;
+  }
+}
+
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const url = new URL(request.url);
   const key = url.searchParams.get('key');
@@ -26,9 +44,21 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 };
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
+  await ensureChatImageColumns(env);
+
   const formData = await request.formData();
   const roomId = String(formData.get('room_id') ?? '').trim();
+  const profileId = String(formData.get('profile_id') ?? '').trim();
+  const senderNickname = String(formData.get('sender_nickname') ?? '').trim().slice(0, 20) || '익명';
   const file = formData.get('image');
+
+  if (!profileId) {
+    return Response.json({ error: '가입한 사용자만 이미지를 보낼 수 있어요.' }, { status: 401 });
+  }
+
+  if (!(await hasRecentUser(env, profileId))) {
+    return Response.json({ error: '프로필 동기화 후 이미지를 보낼 수 있어요.' }, { status: 403 });
+  }
 
   if (!roomId) {
     return Response.json({ error: 'room_id가 필요해요.' }, { status: 400 });
@@ -47,7 +77,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   }
 
   const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-  const key = `chat/${roomId}/${crypto.randomUUID()}.${extension}`;
+  const key = `chat/${roomId}/${profileId}/${crypto.randomUUID()}.${extension}`;
   const imageUrl = `/api/chat-images?key=${encodeURIComponent(key)}`;
 
   await env.IMAGES.put(key, file.stream(), {
@@ -57,15 +87,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const id = crypto.randomUUID();
 
   await env.DB.prepare(
-    'insert into chat_messages (id, room_id, sender_nickname, message_type, image_key, image_url) values (?, ?, ?, ?, ?, ?)',
-  ).bind(id, roomId, '나', 'image', key, imageUrl).run();
+    'insert into chat_messages (id, room_id, sender_nickname, sender_profile_id, message_type, image_key, image_url) values (?, ?, ?, ?, ?, ?, ?)',
+  ).bind(id, roomId, senderNickname, profileId, 'image', key, imageUrl).run();
 
   await env.DB.prepare(
     'update chat_rooms set last_message = ?, last_message_at = datetime("now"), updated_at = datetime("now") where id = ?',
   ).bind('사진을 보냈어요.', roomId).run();
 
   const message = await env.DB.prepare(
-    'select id, room_id, sender_nickname, message_type, body, image_key, image_url, created_at from chat_messages where id = ?',
+    'select id, room_id, sender_nickname, sender_profile_id, message_type, body, image_key, image_url, created_at from chat_messages where id = ?',
   ).bind(id).first();
 
   return Response.json({ message }, { status: 201 });
