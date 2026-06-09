@@ -70,8 +70,11 @@
 }
 
 .chat-room-card-actions button {
+  appearance: none;
   min-width: 0;
   min-height: 42px;
+  border: 0 !important;
+  outline: 0;
   border-radius: 999px;
   background: #f85b98;
   color: white;
@@ -80,7 +83,13 @@
   box-shadow: 0 12px 24px rgba(248, 91, 152, 0.22);
 }
 
+.chat-room-card-actions button:focus,
+.chat-room-card-actions button:focus-visible {
+  outline: 0;
+}
+
 .chat-room-card-actions button:last-child {
+  border: 0 !important;
   background: #fff0f6;
   color: var(--color-main-pink);
   box-shadow: none;
