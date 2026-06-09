@@ -1,3 +1,4 @@
+import { apiUrl } from './apiBase';
 import type { D1ChatRoom } from './d1ChatRooms';
 import { getProfileId } from './profileId';
 
@@ -22,7 +23,7 @@ export function getPeerFromRoom(room: D1ChatRoom) {
 }
 
 export async function blockUser(peerId: string, peerNickname: string) {
-  const response = await fetch('/api/user-blocks', {
+  const response = await fetch(apiUrl('/api/user-blocks'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -37,7 +38,7 @@ export async function blockUser(peerId: string, peerNickname: string) {
 
 export async function listBlockedUsers() {
   const params = new URLSearchParams({ profile_id: getProfileId() });
-  const response = await fetch(`/api/user-blocks?${params.toString()}`);
+  const response = await fetch(apiUrl(`/api/user-blocks?${params.toString()}`));
   if (!response.ok) return [];
 
   const data = await response.json() as { blocks?: BlockedUser[] };
@@ -46,12 +47,12 @@ export async function listBlockedUsers() {
 
 export async function unblockUser(peerId: string) {
   const params = new URLSearchParams({ blocker_id: getProfileId(), blocked_id: peerId });
-  const response = await fetch(`/api/user-blocks?${params.toString()}`, { method: 'DELETE' });
+  const response = await fetch(apiUrl(`/api/user-blocks?${params.toString()}`), { method: 'DELETE' });
   return response.ok;
 }
 
 export async function reportUser(peerId: string, peerNickname: string, roomId?: string, reason = '채팅 신고') {
-  const response = await fetch('/api/reports', {
+  const response = await fetch(apiUrl('/api/reports'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
