@@ -19,3 +19,7 @@ export const KOREA_REGIONS = [
 ] as const;
 
 export type KoreaRegion = typeof KOREA_REGIONS[number];
+
+export function isKoreaRegion(value?: string | null): value is KoreaRegion {
+  return KOREA_REGIONS.some((region) => region === value);
+}
