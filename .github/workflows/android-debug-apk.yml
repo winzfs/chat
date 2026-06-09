@@ -40,6 +40,9 @@ jobs:
       - name: Generate Android project
         run: npx cap add android
 
+      - name: Generate Android icon
+        run: npx @capacitor/assets generate --android --iconBackgroundColor '#ff5b8f' --splashBackgroundColor '#ff5b8f'
+
       - name: Sync Android project
         run: npx cap sync android
 
@@ -52,5 +55,5 @@ jobs:
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: chitchat-debug-apk
+          name: flirting-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
