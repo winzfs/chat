@@ -46,6 +46,7 @@ avatar_url
 - 확대, 가로 위치, 세로 위치 조절 가능
 - 크롭 결과는 512x512 JPEG로 업로드
 - 프로필 사진을 기본 이미지로 되돌릴 수 있음
+- 프로필 사진 업로드/기본 이미지 되돌리기 후 즉시 프로필 저장까지 처리
 - 사진이 없으면 닉네임 첫 글자 아바타 표시
 
 적용 위치:
@@ -64,7 +65,7 @@ avatar_url
 - 내 글 삭제 가능
 - 다른 사람 글에서 대화하기 가능
 - 대화하기는 닉네임이 아니라 작성자 `profile_id` 기준으로 직접 채팅방 연결
-- 토크 탭을 보고 있을 때 3초마다 자동 갱신
+- 토크 탭을 보고 있을 때 자동 갱신
 - 토크 작성/삭제/프로필 저장 후 즉시 다시 불러오기
 
 ### 4. 사람 탭
@@ -76,7 +77,7 @@ avatar_url
 - 상대방에게 채팅 걸기 가능
 - 상대방 프로필 사진 표시
 - 사진이 없으면 닉네임 첫 글자 표시
-- 사람 탭을 보고 있을 때 3초마다 자동 갱신
+- 사람 탭을 보고 있을 때 자동 갱신
 
 ### 5. 채팅방
 
@@ -86,7 +87,7 @@ avatar_url
 - 채팅방 목록 제목은 내 기준 상대방 닉네임으로 표시
 - 기존 꼬인 방은 클라이언트에서 제목 보정
 - 새 메시지 감지 시 채팅 탭 배지 표시
-- 채팅 탭 목록 화면에서도 3초마다 자동 갱신
+- 채팅 탭 목록 화면에서도 자동 갱신
 - 목록의 마지막 메시지/시간 갱신
 - 방별 안 읽은 메시지 수 표시
 - 차단된 사용자와는 새 직접 채팅방 생성 차단
@@ -126,6 +127,8 @@ POST /api/chat-room-leave
 - 차단 정보는 `user_blocks` 테이블에 저장
 - 신고 정보는 `reports` 테이블에 저장
 - 차단된 관계는 최근 접속자 목록과 새 직접 채팅방 생성에서 제외
+- 설정 화면의 차단/신고 관리에서 신고 목록 조회 가능
+- 신고 상태를 `open`, `reviewing`, `closed`로 변경 가능
 
 ## 주요 API
 
@@ -139,7 +142,7 @@ GET/POST/DELETE /api/profile-image
 POST            /api/profile-sync
 POST            /api/chat-room-leave
 GET/POST/DELETE /api/user-blocks
-POST            /api/reports
+GET/POST/PATCH  /api/reports
 ```
 
 ## 클라이언트 주요 파일
@@ -156,6 +159,8 @@ apps/web/src/features/home/api/recentUsers.ts
 apps/web/src/features/home/api/d1ChatRooms.ts
 apps/web/src/features/home/api/d1ChatMessages.ts
 apps/web/src/features/home/api/userSafety.ts
+apps/web/src/features/home/api/reportsAdmin.ts
+apps/web/src/features/home/api/pollingIntervals.ts
 apps/web/src/features/home/components/ProfileSettingsPanel.tsx
 apps/web/src/features/home/components/AvatarCropModal.tsx
 apps/web/src/features/home/components/UserAvatar.tsx
@@ -163,6 +168,7 @@ apps/web/src/features/home/components/TalkPanel2.tsx
 apps/web/src/features/home/components/RecentUsersPanel.tsx
 apps/web/src/features/home/components/ChatRoomsList.tsx
 apps/web/src/features/home/components/ChatRoomPanel.tsx
+apps/web/src/features/home/components/ReportsAdminPanel.tsx
 apps/web/src/features/home/ProfileAvatar.css
 ```
 
@@ -174,24 +180,9 @@ apps/web/src/features/home/ProfileAvatar.css
 
 ### 실시간 방식
 
-현재 실시간 채팅은 WebSocket이 아니라 폴링 기반입니다.
+현재 실시간 채팅은 WebSocket이 아니라 폴링 기반입니다. 폴링 간격은 `apps/web/src/features/home/api/pollingIntervals.ts`에서 관리합니다.
 
-- 토크 탭 갱신: 3초 간격
-- 사람 탭 최근 접속자 갱신: 3초 간격
-- 전역 새 메시지 감지: 3초 간격
-- 채팅 목록 갱신: 3초 간격
-- 채팅방 메시지 갱신: 기존 메시지 패널의 폴링 흐름 사용
-- 채팅방 메시지 로딩 시 해당 방의 읽음 시간이 갱신됨
-
-현재 3초 폴링은 MVP/테스트 단계에서는 단순하고 빠르게 검증할 수 있는 장점이 있어 그대로 사용할 수 있습니다. 다만 모든 탭과 채팅 기능을 장기간 3초 간격으로 유지하면 사용자가 늘어날수록 Cloudflare Pages Functions 호출 수와 D1 쿼리 수가 증가하고, 모바일 배터리/데이터 사용량도 늘 수 있습니다.
-
-현재 코드에는 부담을 줄이기 위한 기본 장치가 일부 적용되어 있습니다.
-
-- 토크/사람 탭은 해당 탭을 보고 있을 때만 갱신
-- 브라우저 탭이 백그라운드 상태(`document.hidden`)일 때는 토크/사람 갱신 생략
-- 채팅방 메시지는 채팅방을 열었을 때만 갱신
-
-출시 전 권장 폴링 간격:
+현재 설정:
 
 ```txt
 채팅방 메시지: 3초
@@ -200,6 +191,14 @@ apps/web/src/features/home/ProfileAvatar.css
 사람 탭: 10초
 ```
 
+현재 코드에는 부담을 줄이기 위한 기본 장치가 일부 적용되어 있습니다.
+
+- 토크/사람 탭은 해당 탭을 보고 있을 때만 갱신
+- 브라우저 탭이 백그라운드 상태(`document.hidden`)일 때는 토크/사람/채팅 메시지 갱신 생략
+- 채팅방 메시지는 채팅방을 열었을 때만 갱신
+
+MVP/테스트 단계에서는 폴링 기반으로 유지해도 됩니다. 다만 사용자가 늘면 Cloudflare Pages Functions 호출 수와 D1 쿼리 수가 증가하고, 모바일 배터리/데이터 사용량도 늘 수 있습니다.
+
 운영 단계 확장 방향:
 
 ```txt
@@ -207,6 +206,10 @@ apps/web/src/features/home/ProfileAvatar.css
 사용자 증가: 폴링 간격 조정 + 필요한 탭만 갱신
 실시간 강화: WebSocket 또는 Cloudflare Durable Objects 검토
 ```
+
+### 신고 관리 보안
+
+현재 신고 관리 화면과 `GET/PATCH /api/reports`는 MVP 관리용 기능입니다. 실제 운영 전에는 관리자 인증 또는 서버 측 권한 검사가 반드시 필요합니다.
 
 ### 기존 데이터 보정
 
@@ -217,7 +220,7 @@ apps/web/src/features/home/ProfileAvatar.css
 ## 다음 작업 후보
 
 1. 로컬에서 `pnpm build`로 타입/빌드 확인
-2. 출시 전 폴링 간격을 채팅방 3초, 채팅 목록 5초, 토크 7초, 사람 10초 기준으로 조정
-3. 신고 관리용 관리자 화면 또는 조회 API 추가
+2. 신고 관리 화면/API에 관리자 인증 또는 서버 측 권한 검사 추가
+3. 차단 목록 조회/해제 UI 추가
 4. 실제 인증 체계 도입 검토
 5. WebSocket 또는 Durable Objects 기반 실시간화 검토
