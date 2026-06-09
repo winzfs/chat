@@ -2,20 +2,29 @@ import { useEffect, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
 import { openDirectD1ChatRoom, type D1ChatRoom } from '../api/d1ChatRooms';
 import { getProfileId } from '../api/profileId';
-import { loadMyProfile } from '../api/profileStorage';
 import { loadRecentUsers, type RecentUser } from '../api/recentUsers';
 import { UserAvatar } from './UserAvatar';
 
-export function RecentUsersPanel({ myNickname, onOpenRoom }: { myNickname?: string; onOpenRoom: (room: D1ChatRoom) => void }) {
+export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRoom: (room: D1ChatRoom) => void }) {
   const [users, setUsers] = useState<RecentUser[]>([]);
   const [notice, setNotice] = useState('');
-  const currentNickname = myNickname || loadMyProfile().nickname;
   const currentProfileId = getProfileId();
 
-  useEffect(() => {
+  const refreshUsers = () => {
     loadRecentUsers().then((loadedUsers) => {
       setUsers(loadedUsers.filter((user) => user.id !== currentProfileId));
     });
+  };
+
+  useEffect(() => {
+    refreshUsers();
+
+    const timer = window.setInterval(() => {
+      if (document.hidden) return;
+      refreshUsers();
+    }, 3000);
+
+    return () => window.clearInterval(timer);
   }, [currentProfileId]);
 
   const openChat = async (user: RecentUser) => {
@@ -36,7 +45,7 @@ export function RecentUsersPanel({ myNickname, onOpenRoom }: { myNickname?: stri
 
   return (
     <section className="talk-list" aria-label="최근 접속자">
-      <Card className="settings-summary"><strong>최근 접속자</strong><p>{users.length}명이 최근 접속했어요.</p></Card>
+      <Card className="settings-summary"><strong>최근 접속자</strong><p>{users.length}명이 최근 접속했어요. 자동으로 갱신돼요.</p></Card>
       {notice && <Card className="settings-summary"><strong>{notice}</strong></Card>}
       {users.length === 0 && <Card className="person-card"><strong>아직 다른 접속자가 없어요</strong><p>다른 탭이나 기기에서 다른 닉네임으로 프로필 저장 후 다시 확인해보세요.</p></Card>}
       {users.map((user) => (
