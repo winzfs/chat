@@ -103,6 +103,9 @@ function ReviewSummary({ data, onClose }: { data: NonNullable<ReviewData>; onClo
   const nickname = String(user.nickname ?? '알 수 없음');
   const avatarUrl = String(user.avatar_url ?? '');
   const bio = String(user.bio ?? '소개 없음');
+  const talks = data.talk_posts ?? [];
+  const rooms = data.rooms ?? [];
+  const sentMessages = data.sent_messages ?? [];
 
   return (
     <Card className="person-card">
@@ -114,11 +117,30 @@ function ReviewSummary({ data, onClose }: { data: NonNullable<ReviewData>; onClo
         </div>
       </div>
       <p>소개: {bio}</p>
-      <p>토크 {data.talk_posts?.length ?? 0}개 · 채팅방 {data.rooms?.length ?? 0}개 · 방 메시지 {data.room_messages?.length ?? 0}개 · 작성 메시지 {data.sent_messages?.length ?? 0}개</p>
+      <p>토크 {talks.length}개 · 채팅방 {rooms.length}개 · 작성 메시지 {sentMessages.length}개</p>
+      <ReviewList title="최근 토크" items={talks} textKey="text" />
+      <ReviewList title="최근 작성 메시지" items={sentMessages} textKey="body" />
+      <ReviewList title="관련 채팅방" items={rooms} textKey="last_message" />
       <div className="talk-actions">
         <span>운영자 검토 자료</span>
         <button type="button" onClick={onClose}>닫기</button>
       </div>
     </Card>
+  );
+}
+
+function ReviewList({ items, textKey, title }: { items: Array<Record<string, unknown>>; textKey: string; title: string }) {
+  if (items.length === 0) return null;
+
+  return (
+    <div className="talk-list">
+      <strong>{title}</strong>
+      {items.slice(0, 5).map((item, index) => (
+        <Card className="settings-summary" key={`${title}-${index}`}>
+          <p>{String(item[textKey] ?? '내용 없음')}</p>
+          {item.created_at && <p>{new Date(String(item.created_at)).toLocaleString()}</p>}
+        </Card>
+      ))}
+    </div>
   );
 }
