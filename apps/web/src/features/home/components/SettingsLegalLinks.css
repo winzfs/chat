@@ -1,0 +1,32 @@
+.settings-legal-card {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-legal-card p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.legal-link-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.legal-link-row a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border: 1px solid rgba(255, 107, 157, 0.2);
+  border-radius: 999px;
+  background: #fff0f6;
+  color: var(--color-main-pink);
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+}
