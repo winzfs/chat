@@ -18,6 +18,7 @@ API: Cloudflare Pages Functions
 DB: Cloudflare D1
 Image Storage: Cloudflare R2
 Mobile Wrapper: Capacitor
+CI Build: GitHub Actions
 ```
 
 ## 현재 구현된 기능
@@ -101,6 +102,9 @@ Mobile Wrapper: Capacitor
 
 ```txt
 chat/
+ ├─ .github/
+ │  └─ workflows/
+ │     └─ android-debug-apk.yml
  ├─ apps/
  │  └─ web/
  │     ├─ src/
@@ -123,12 +127,14 @@ chat/
 docs/03-deployment.md
 docs/04-auth-and-permissions-plan.md
 docs/05-android-capacitor.md
+docs/06-mobile-only-android-build.md
 docs/current-implementation-status.md
 ```
 
 현재 구현 상태와 주의사항은 `docs/current-implementation-status.md`를 기준으로 확인합니다.
 실제 인증/권한 전환 계획은 `docs/04-auth-and-permissions-plan.md`를 기준으로 확인합니다.
 Android 패키징 절차는 `docs/05-android-capacitor.md`를 기준으로 확인합니다.
+모바일만으로 APK를 만드는 방법은 `docs/06-mobile-only-android-build.md`를 기준으로 확인합니다.
 
 ## 로컬 실행
 
@@ -151,6 +157,8 @@ apps/web/dist
 
 ## Android 패키징
 
+PC가 있다면 아래 명령을 사용합니다.
+
 ```bash
 pnpm add @capacitor/core @capacitor/android
 pnpm add -D @capacitor/cli
@@ -159,6 +167,8 @@ npx cap add android
 npx cap sync android
 npx cap open android
 ```
+
+모바일만 있다면 GitHub Actions에서 `Android Debug APK` 워크플로우를 실행하고 `chitchat-debug-apk` artifact를 다운로드합니다.
 
 ## Cloudflare Pages 배포 설정
 
@@ -193,8 +203,8 @@ ADMIN_PROFILE_IDS=운영자_profile_id
 
 ## 다음 작업 후보
 
-- 로컬에서 `pnpm build` 실행 후 타입/빌드 확인
-- Capacitor 의존성 설치 후 Android 프로젝트 생성
+- GitHub Actions에서 Android Debug APK 워크플로우 실행 후 빌드 로그 확인
 - Android 실기기에서 키보드/입력창/이미지 업로드 테스트
+- 앱 아이콘/스플래시 추가
+- release AAB 자동 빌드 추가
 - 실제 인증 체계 도입
-- WebSocket 또는 Durable Objects 기반 실시간화 검토
