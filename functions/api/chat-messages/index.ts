@@ -7,7 +7,17 @@ type MessageBody = {
   profile_id?: string;
 };
 
+async function ensureChatMessageColumns(env: Env) {
+  try {
+    await env.DB.prepare('alter table chat_messages add column sender_profile_id text').run();
+  } catch {
+    // column already exists
+  }
+}
+
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
+  await ensureChatMessageColumns(env);
+
   const url = new URL(request.url);
   const roomId = url.searchParams.get('room_id');
 
@@ -16,13 +26,15 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   }
 
   const { results } = await env.DB.prepare(
-    'select id, room_id, sender_nickname, message_type, body, image_key, image_url, created_at from chat_messages where room_id = ? order by created_at asc limit 100',
+    'select id, room_id, sender_nickname, sender_profile_id, message_type, body, image_key, image_url, created_at from chat_messages where room_id = ? order by created_at asc limit 100',
   ).bind(roomId).all();
 
   return Response.json({ messages: results ?? [] });
 };
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
+  await ensureChatMessageColumns(env);
+
   const data = await request.json() as MessageBody;
   const roomId = data.room_id?.trim() ?? '';
   const body = data.body?.trim() ?? '';
@@ -44,15 +56,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const id = crypto.randomUUID();
 
   await env.DB.prepare(
-    'insert into chat_messages (id, room_id, sender_nickname, message_type, body) values (?, ?, ?, ?, ?)',
-  ).bind(id, roomId, senderNickname, 'text', body).run();
+    'insert into chat_messages (id, room_id, sender_nickname, sender_profile_id, message_type, body) values (?, ?, ?, ?, ?, ?)',
+  ).bind(id, roomId, senderNickname, profileId, 'text', body).run();
 
   await env.DB.prepare(
     'update chat_rooms set last_message = ?, last_message_at = datetime("now"), updated_at = datetime("now") where id = ?',
   ).bind(body, roomId).run();
 
   const message = await env.DB.prepare(
-    'select id, room_id, sender_nickname, message_type, body, image_key, image_url, created_at from chat_messages where id = ?',
+    'select id, room_id, sender_nickname, sender_profile_id, message_type, body, image_key, image_url, created_at from chat_messages where id = ?',
   ).bind(id).first();
 
   return Response.json({ message }, { status: 201 });
