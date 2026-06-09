@@ -41,10 +41,11 @@ avatar_url
 
 - 설정 화면에서 프로필 사진 업로드 가능
 - 이미지는 R2에 저장
-- `/api/profile-image`로 업로드/조회
+- `/api/profile-image`로 업로드/조회/삭제 가능
 - 업로드 전 1:1 정사각형 크롭 모달 제공
 - 확대, 가로 위치, 세로 위치 조절 가능
 - 크롭 결과는 512x512 JPEG로 업로드
+- 프로필 사진을 기본 이미지로 되돌릴 수 있음
 - 사진이 없으면 닉네임 첫 글자 아바타 표시
 
 적용 위치:
@@ -69,6 +70,7 @@ avatar_url
 - 최근 접속자 목록 조회
 - 최근 접속자는 `profile_id`를 id로 저장
 - 내 계정은 목록에서 제외
+- 차단한 사용자 또는 나를 차단한 사용자는 목록에서 제외
 - 상대방에게 채팅 걸기 가능
 - 상대방 프로필 사진 표시
 - 사진이 없으면 닉네임 첫 글자 표시
@@ -83,7 +85,8 @@ avatar_url
 - 새 메시지 감지 시 채팅 탭 배지 표시
 - 채팅 탭 목록 화면에서도 3초마다 자동 갱신
 - 목록의 마지막 메시지/시간 갱신
-- 새 메시지가 온 방에 `새 메시지` 배지 표시
+- 방별 안 읽은 메시지 수 표시
+- 차단된 사용자와는 새 직접 채팅방 생성 차단
 
 ### 6. 채팅 메시지
 
@@ -91,7 +94,9 @@ avatar_url
 - 이미지 메시지 전송
 - 메시지 전송 시 `profile_id` 포함
 - 텍스트 메시지 API는 가입한 사용자만 전송 가능하도록 `profile_id` 검사
-- 내가 보낸 메시지는 오른쪽 말풍선으로 표시
+- 이미지 메시지 API도 `profile_id` 필수 검사 및 `sender_profile_id` 저장
+- 메시지 로딩 시 방별 읽음 시간이 저장됨
+- 내가 보낸 메시지는 `sender_profile_id` 우선 기준으로 오른쪽 말풍선 표시
 - 상대 메시지는 왼쪽 말풍선으로 표시
 - 닉네임은 말풍선에 직접 표시하지 않음
 
@@ -111,6 +116,14 @@ avatar_url
 POST /api/chat-room-leave
 ```
 
+### 8. 차단/신고
+
+- 채팅방 안에서 상대방 신고 가능
+- 채팅방 안에서 상대방 차단 가능
+- 차단 정보는 `user_blocks` 테이블에 저장
+- 신고 정보는 `reports` 테이블에 저장
+- 차단된 관계는 최근 접속자 목록과 새 직접 채팅방 생성에서 제외
+
 ## 주요 API
 
 ```txt
@@ -119,9 +132,11 @@ GET/POST        /api/recent-users
 GET/POST/DELETE /api/chat-rooms
 GET/POST        /api/chat-messages
 GET/POST        /api/chat-images
-GET/POST        /api/profile-image
+GET/POST/DELETE /api/profile-image
 POST            /api/profile-sync
 POST            /api/chat-room-leave
+GET/POST/DELETE /api/user-blocks
+POST            /api/reports
 ```
 
 ## 클라이언트 주요 파일
@@ -137,6 +152,7 @@ apps/web/src/features/home/api/d1TalkPosts.ts
 apps/web/src/features/home/api/recentUsers.ts
 apps/web/src/features/home/api/d1ChatRooms.ts
 apps/web/src/features/home/api/d1ChatMessages.ts
+apps/web/src/features/home/api/userSafety.ts
 apps/web/src/features/home/components/ProfileSettingsPanel.tsx
 apps/web/src/features/home/components/AvatarCropModal.tsx
 apps/web/src/features/home/components/UserAvatar.tsx
@@ -160,17 +176,18 @@ apps/web/src/features/home/ProfileAvatar.css
 - 전역 새 메시지 감지: 3초 간격
 - 채팅 목록 갱신: 3초 간격
 - 채팅방 메시지 갱신: 기존 메시지 패널의 폴링 흐름 사용
+- 채팅방 메시지 로딩 시 해당 방의 읽음 시간이 갱신됨
 
 ### 기존 데이터 보정
 
 개발 중 닉네임 기반으로 만들어진 오래된 방은 `participant_a/b` 정보가 없을 수 있습니다. 이런 방은 클라이언트에서 제목을 보정하거나 `상대방과의 대화`로 fallback 표시될 수 있습니다.
 
+오래된 메시지는 `sender_profile_id`가 비어 있을 수 있습니다. 이 경우 클라이언트는 닉네임 기준으로 내 메시지 여부를 보정합니다.
+
 ## 다음 작업 후보
 
-1. 읽음/안읽음 수 정교화
-2. 방별 마지막 읽은 시간 저장
-3. 차단/신고 기능
-4. 프로필 사진 삭제/기본 이미지 되돌리기
-5. 이미지 메시지 서버도 `profile_id` 필수 검사로 강화
-6. 실제 인증 체계 도입 검토
-7. Cloudflare D1 마이그레이션 파일 정리
+1. 로컬에서 `pnpm build`로 타입/빌드 확인
+2. Cloudflare D1 운영 DB에 최신 `apps/web/schema/d1.sql` 반영
+3. 신고 관리용 관리자 화면 또는 조회 API 추가
+4. 실제 인증 체계 도입 검토
+5. WebSocket 또는 Durable Objects 기반 실시간화 검토
