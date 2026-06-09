@@ -116,7 +116,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
 
       <Card className="setting-item"><strong>포인트 충전</strong><span>›</span></Card>
       <Card className="setting-item"><strong>알림 설정</strong><span>›</span></Card>
-      <button className="setting-item" onClick={() => setIsReportAdminOpen(true)} type="button"><strong>차단/신고 관리</strong><span>›</span></button>
+      <Card className="setting-item"><strong>차단/신고 관리</strong><button className="secondary-button" onClick={() => setIsReportAdminOpen(true)} type="button">열기</button></Card>
     </section>
   );
 }
