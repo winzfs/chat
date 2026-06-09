@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card } from '../../shared/components/Card';
-import type { D1ChatRoom } from './api/d1ChatRooms';
+import { loadD1ChatRooms, type D1ChatRoom } from './api/d1ChatRooms';
 import { createD1TalkPost, deleteD1TalkPost, loadD1TalkPosts, type D1TalkPost } from './api/d1TalkPosts';
 import { defaultProfile, loadMyProfile, saveMyProfile, type MyProfile } from './api/profileStorage';
 import { syncProfile } from './api/profileSync';
@@ -31,6 +31,9 @@ export function HomeScreenNext() {
   const [profile, setProfile] = useState<MyProfile>(defaultProfile);
   const [openRoom, setOpenRoom] = useState<D1ChatRoom | null>(null);
   const [notice, setNotice] = useState('');
+  const [hasNewChat, setHasNewChat] = useState(false);
+  const lastRoomTimesRef = useRef<Record<string, string>>({});
+  const initializedChatWatchRef = useRef(false);
 
   const refreshTalkPosts = () => {
     loadD1TalkPosts().then((loaded) => { if (loaded.length > 0) setPosts(loaded); });
@@ -39,6 +42,7 @@ export function HomeScreenNext() {
   const changeTab = (tab: HomeTab) => {
     setActiveTab(tab);
     if (tab === 'talk') refreshTalkPosts();
+    if (tab === 'chats') setHasNewChat(false);
   };
 
   useEffect(() => {
@@ -47,6 +51,39 @@ export function HomeScreenNext() {
     touchRecentUser(savedProfile).catch(() => undefined);
     refreshTalkPosts();
   }, []);
+
+  useEffect(() => {
+    const checkRooms = async () => {
+      const rooms = await loadD1ChatRooms();
+      const previous = lastRoomTimesRef.current;
+      let hasNew = false;
+
+      for (const room of rooms) {
+        const currentTime = room.last_message_at ?? '';
+        const previousTime = previous[room.id];
+
+        if (initializedChatWatchRef.current && currentTime && previousTime && currentTime !== previousTime) {
+          hasNew = true;
+        }
+
+        previous[room.id] = currentTime;
+      }
+
+      initializedChatWatchRef.current = true;
+
+      if (hasNew && activeTab !== 'chats') {
+        setHasNewChat(true);
+        setNotice('새 메시지가 도착했어요. 채팅 탭에서 확인해보세요.');
+      }
+    };
+
+    checkRooms().catch(() => undefined);
+    const timer = window.setInterval(() => {
+      checkRooms().catch(() => undefined);
+    }, 3000);
+
+    return () => window.clearInterval(timer);
+  }, [activeTab]);
 
   const submitTalk = async (values: TalkComposeValues) => {
     await touchRecentUser(profile).catch(() => undefined);
@@ -72,6 +109,7 @@ export function HomeScreenNext() {
 
   const openDirectRoom = (room: D1ChatRoom) => {
     setOpenRoom(room);
+    setHasNewChat(false);
     setActiveTab('chats');
   };
 
@@ -85,7 +123,7 @@ export function HomeScreenNext() {
         {activeTab === 'chats' && <ChatRoomsList initialRoom={openRoom} />}
         {activeTab === 'settings' && <ProfileSettingsPanel myProfile={profile} onSave={saveProfile} />}
       </section>
-      <nav className="bottom-nav" aria-label="주요 메뉴">{tabs.map((tab) => <button className={activeTab === tab.id ? 'nav-item is-active' : 'nav-item'} key={tab.id} onClick={() => changeTab(tab.id)} type="button"><span>{tab.icon}</span>{tab.label}</button>)}</nav>
+      <nav className="bottom-nav" aria-label="주요 메뉴">{tabs.map((tab) => <button className={activeTab === tab.id ? 'nav-item is-active' : 'nav-item'} key={tab.id} onClick={() => changeTab(tab.id)} type="button"><span>{tab.icon}</span>{tab.label}{tab.id === 'chats' && hasNewChat ? <em className="nav-badge">새</em> : null}</button>)}</nav>
       <TalkComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} onSubmit={submitTalk} />
     </main>
   );
