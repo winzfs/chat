@@ -8,6 +8,7 @@
     "build": "pnpm --filter @chat/web build",
     "preview": "pnpm --filter @chat/web preview",
     "android:sync": "pnpm build && npx cap sync android",
+    "android:assets": "npx @capacitor/assets generate --android",
     "android:open": "npx cap open android"
   },
   "dependencies": {
@@ -16,6 +17,7 @@
     "@capacitor/core": "latest"
   },
   "devDependencies": {
+    "@capacitor/assets": "latest",
     "@capacitor/cli": "latest"
   },
   "packageManager": "pnpm@9.15.0",
