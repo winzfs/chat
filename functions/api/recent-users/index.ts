@@ -31,16 +31,38 @@ async function ensureRecentUsersTable(env: Env) {
   }
 
   await env.DB.prepare(
+    `create table if not exists user_blocks (
+      blocker_id text not null,
+      blocked_id text not null,
+      blocked_nickname text,
+      created_at text not null default (datetime('now')),
+      primary key (blocker_id, blocked_id)
+    )`,
+  ).run();
+
+  await env.DB.prepare(
     'create index if not exists recent_users_last_seen_idx on recent_users(last_seen_at desc)',
   ).run();
+  await env.DB.prepare('create index if not exists user_blocks_blocked_idx on user_blocks(blocked_id)').run();
 }
 
-export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
+export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   await ensureRecentUsersTable(env);
 
+  const viewerId = new URL(request.url).searchParams.get('profile_id')?.trim() ?? '';
+
   const { results } = await env.DB.prepare(
-    'select id, nickname, age, location, bio, avatar_url, online, last_seen_at from recent_users order by last_seen_at desc limit 30',
-  ).all();
+    `select id, nickname, age, location, bio, avatar_url, online, last_seen_at
+     from recent_users u
+     where ? = ''
+        or not exists (
+          select 1 from user_blocks b
+          where (b.blocker_id = ? and b.blocked_id = u.id)
+             or (b.blocked_id = ? and b.blocker_id = u.id)
+        )
+     order by last_seen_at desc
+     limit 30`,
+  ).bind(viewerId, viewerId, viewerId).all();
 
   const users = (results ?? []).map((row) => ({
     ...row,
