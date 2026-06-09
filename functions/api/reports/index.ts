@@ -1,4 +1,4 @@
-type Env = { DB: D1Database };
+type Env = { DB: D1Database; ADMIN_PROFILE_IDS?: string };
 
 type ReportBody = {
   reporter_id?: string;
@@ -15,6 +15,24 @@ type ReportStatusBody = {
 };
 
 const allowedStatuses = new Set(['open', 'reviewing', 'closed']);
+
+function getRequesterProfileId(request: Request) {
+  const url = new URL(request.url);
+  return request.headers.get('x-profile-id')?.trim() || url.searchParams.get('admin_profile_id')?.trim() || '';
+}
+
+function isAdmin(env: Env, profileId: string) {
+  const adminIds = (env.ADMIN_PROFILE_IDS ?? '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+
+  return Boolean(profileId && adminIds.includes(profileId));
+}
+
+function requireAdmin(env: Env, request: Request) {
+  return isAdmin(env, getRequesterProfileId(request));
+}
 
 async function ensureReportsTable(env: Env) {
   await env.DB.prepare(
@@ -37,6 +55,10 @@ async function ensureReportsTable(env: Env) {
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   await ensureReportsTable(env);
+
+  if (!requireAdmin(env, request)) {
+    return Response.json({ error: '운영자만 신고 목록에 접근할 수 있어요.' }, { status: 403 });
+  }
 
   const url = new URL(request.url);
   const status = url.searchParams.get('status')?.trim() ?? '';
@@ -92,6 +114,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
 export const onRequestPatch: PagesFunction<Env> = async ({ env, request }) => {
   await ensureReportsTable(env);
+
+  if (!requireAdmin(env, request)) {
+    return Response.json({ error: '운영자만 신고 상태를 변경할 수 있어요.' }, { status: 403 });
+  }
 
   const body = await request.json() as ReportStatusBody;
   const id = body.id?.trim() ?? '';
