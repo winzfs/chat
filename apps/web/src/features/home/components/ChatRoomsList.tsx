@@ -96,7 +96,8 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
       next.delete(room.id);
       return next;
     });
-    setSelectedRoom(room);
+    setRooms((current) => current.map((item) => item.id === room.id ? { ...item, unread_count: 0 } : item));
+    setSelectedRoom({ ...room, unread_count: 0 });
   };
 
   const closeRoom = () => {
@@ -126,11 +127,13 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
     return <section className="talk-list" aria-label="채팅 목록"><Card className="person-card"><strong>채팅 목록을 불러오는 중...</strong></Card></section>;
   }
 
+  const totalUnread = rooms.reduce((sum, room) => sum + Number(room.unread_count ?? 0), 0);
+
   return (
     <section className="talk-list" aria-label="채팅 목록">
       <Card className="settings-summary">
         <strong>내 채팅 목록</strong>
-        <p>{rooms.length}개 채팅방을 불러왔어요. 새 메시지는 자동으로 표시돼요.</p>
+        <p>{rooms.length}개 채팅방 · 안 읽은 메시지 {totalUnread}개</p>
       </Card>
       {rooms.map((room) => <ChatRoomCard hasNewMessage={newRoomIds.has(room.id)} key={room.id} onLeave={() => leaveRoom(room)} onOpen={() => openRoom(room)} room={room} />)}
     </section>
@@ -139,16 +142,18 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
 
 function ChatRoomCard({ hasNewMessage, onLeave, onOpen, room }: { hasNewMessage: boolean; onLeave: () => void; onOpen: () => void; room: D1ChatRoom }) {
   const title = room.title ?? '새 채팅방';
+  const unreadCount = Number(room.unread_count ?? 0);
+  const shouldHighlight = hasNewMessage || unreadCount > 0;
 
   return (
-    <Card className={hasNewMessage ? 'person-card chat-room-card has-new-message' : 'person-card chat-room-card'}>
+    <Card className={shouldHighlight ? 'person-card chat-room-card has-new-message' : 'person-card chat-room-card'}>
       <div className="talk-card-header">
         <div className="avatar-wrap">
           <span className="avatar">{title.slice(0, 1)}</span>
           <span className="status-dot is-online" />
         </div>
         <div>
-          <strong>{title}{hasNewMessage ? <em className="chat-new-badge">새 메시지</em> : null}</strong>
+          <strong>{title}{shouldHighlight ? <em className="chat-new-badge">{unreadCount > 0 ? `${unreadCount}개` : '새 메시지'}</em> : null}</strong>
           <p>{room.last_message ?? '아직 메시지가 없어요.'}</p>
         </div>
       </div>
