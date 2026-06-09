@@ -47,6 +47,11 @@
   font-weight: 800;
 }
 
+.talk-card.is-mine {
+  border: 1px solid rgba(255, 107, 157, 0.3);
+  background: linear-gradient(135deg, rgba(255, 107, 157, 0.18), rgba(255, 255, 255, 0.96));
+}
+
 .chat-message.is-me {
   background: linear-gradient(135deg, rgba(255, 107, 157, 0.16), rgba(255, 255, 255, 0.95));
 }
