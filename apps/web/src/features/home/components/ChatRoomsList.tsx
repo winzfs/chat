@@ -3,6 +3,7 @@ import { Card } from '../../../shared/components/Card';
 import { leaveD1ChatRoom, loadD1ChatRooms, type D1ChatRoom } from '../api/d1ChatRooms';
 import { POLLING_INTERVALS } from '../api/pollingIntervals';
 import { ChatRoomPanel } from './ChatRoomPanel';
+import { ProfilePreviewModal, type ProfilePreview } from './ProfilePreviewModal';
 
 function readRoomIdFromHash() {
   const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
@@ -24,6 +25,7 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
   const [selectedRoom, setSelectedRoom] = useState<D1ChatRoom | null>(initialRoom ?? null);
   const [isLoading, setIsLoading] = useState(true);
   const [newRoomIds, setNewRoomIds] = useState<Set<string>>(new Set());
+  const [previewProfile, setPreviewProfile] = useState<ProfilePreview | null>(null);
   const lastRoomTimesRef = useRef<Record<string, string>>({});
   const initializedRef = useRef(false);
 
@@ -136,12 +138,13 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
         <strong>내 채팅 목록</strong>
         <p>{rooms.length}개 채팅방 · 안 읽은 메시지 {totalUnread}개</p>
       </Card>
-      {rooms.map((room) => <ChatRoomCard hasNewMessage={newRoomIds.has(room.id)} key={room.id} onLeave={() => leaveRoom(room)} onOpen={() => openRoom(room)} room={room} />)}
+      {rooms.map((room) => <ChatRoomCard hasNewMessage={newRoomIds.has(room.id)} key={room.id} onLeave={() => leaveRoom(room)} onOpen={() => openRoom(room)} onPreview={() => setPreviewProfile({ nickname: room.title ?? '상대방' })} room={room} />)}
+      {previewProfile && <ProfilePreviewModal profile={previewProfile} onClose={() => setPreviewProfile(null)} />}
     </section>
   );
 }
 
-function ChatRoomCard({ hasNewMessage, onLeave, onOpen, room }: { hasNewMessage: boolean; onLeave: () => void; onOpen: () => void; room: D1ChatRoom }) {
+function ChatRoomCard({ hasNewMessage, onLeave, onOpen, onPreview, room }: { hasNewMessage: boolean; onLeave: () => void; onOpen: () => void; onPreview: () => void; room: D1ChatRoom }) {
   const title = room.title ?? '새 채팅방';
   const unreadCount = Number(room.unread_count ?? 0);
   const shouldHighlight = hasNewMessage || unreadCount > 0;
@@ -149,10 +152,10 @@ function ChatRoomCard({ hasNewMessage, onLeave, onOpen, room }: { hasNewMessage:
   return (
     <Card className={shouldHighlight ? 'person-card chat-room-card has-new-message' : 'person-card chat-room-card'}>
       <div className="talk-card-header">
-        <div className="avatar-wrap">
+        <button className="profile-icon-button" type="button" onClick={onPreview}>
           <span className="avatar">{title.slice(0, 1)}</span>
           <span className="status-dot is-online" />
-        </div>
+        </button>
         <div>
           <strong>{title}{shouldHighlight ? <em className="chat-new-badge">{unreadCount > 0 ? `${unreadCount}개` : '새 메시지'}</em> : null}</strong>
           <p>{room.last_message ?? '아직 메시지가 없어요.'}</p>
