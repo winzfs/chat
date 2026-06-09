@@ -1,4 +1,13 @@
-type Env = { IMAGES: R2Bucket };
+type Env = { DB: D1Database; IMAGES: R2Bucket };
+
+function keyFromAvatarUrl(avatarUrl: string) {
+  try {
+    const url = new URL(avatarUrl, 'https://local.invalid');
+    return url.pathname === '/api/profile-image' ? url.searchParams.get('key') : null;
+  } catch {
+    return null;
+  }
+}
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const key = new URL(request.url).searchParams.get('key');
@@ -51,4 +60,29 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   });
 
   return Response.json({ avatar_url: avatarUrl });
+};
+
+export const onRequestDelete: PagesFunction<Env> = async ({ env, request }) => {
+  const url = new URL(request.url);
+  const profileId = url.searchParams.get('profile_id')?.trim() ?? '';
+  const avatarUrl = url.searchParams.get('avatar_url')?.trim() ?? '';
+
+  if (!profileId) {
+    return Response.json({ error: 'profile_id가 필요해요.' }, { status: 401 });
+  }
+
+  const key = keyFromAvatarUrl(avatarUrl);
+
+  if (key?.startsWith(`profiles/${profileId}/`)) {
+    await env.IMAGES.delete(key);
+  }
+
+  try {
+    await env.DB.prepare('update recent_users set avatar_url = ?, updated_at = datetime("now") where id = ?').bind('', profileId).run();
+    await env.DB.prepare('update talk_posts set avatar_url = ? where profile_id = ?').bind('', profileId).run();
+  } catch {
+    // Profile image deletion should still succeed for fresh DBs that do not have synced profile rows yet.
+  }
+
+  return Response.json({ avatar_url: '' });
 };
