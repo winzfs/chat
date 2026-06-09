@@ -43,7 +43,7 @@ export function ProfilePreviewModal({ onClose, onStartChat, profile }: { profile
           <UserAvatar imageUrl={displayProfile.avatar_url} name={displayProfile.nickname} />
         </div>
         <strong>{displayProfile.nickname}</strong>
-        <p>{displayProfile.age ?? '-'}세 · {displayProfile.location || '내 주변'}</p>
+        <p>{displayProfile.age ?? '-'}세 · {displayProfile.location || '지역 없음'}</p>
         <p>{displayProfile.bio || '소개글이 아직 없어요.'}</p>
         <div className="talk-actions profile-modal-actions">
           <button type="button" onClick={onClose}>닫기</button>
