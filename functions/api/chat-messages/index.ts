@@ -58,6 +58,16 @@ async function unhideRoom(env: Env, roomId: string, profileId: string) {
   ).bind(roomId, profileId).run();
 }
 
+async function unhideRoomParticipants(env: Env, roomId: string) {
+  const room = await env.DB.prepare(
+    'select participant_a_id, participant_b_id from chat_rooms where id = ? limit 1',
+  ).bind(roomId).first<{ participant_a_id?: string | null; participant_b_id?: string | null }>();
+
+  for (const profileId of [room?.participant_a_id, room?.participant_b_id]) {
+    if (profileId) await unhideRoom(env, roomId, profileId);
+  }
+}
+
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   await ensureChatMessageColumns(env);
 
@@ -105,7 +115,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     return Response.json({ error: '메시지는 1자 이상 500자 이하로 입력해야 해요.' }, { status: 400 });
   }
 
-  await unhideRoom(env, roomId, profileId);
+  await unhideRoomParticipants(env, roomId);
 
   const id = crypto.randomUUID();
 
