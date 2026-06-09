@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
+import { apiUrl } from '../api/apiBase';
 import { loadAdminStatus } from '../api/admin';
 import { isKoreaRegion, KOREA_REGIONS } from '../api/koreaRegions';
 import { getProfileId } from '../api/profileId';
@@ -14,7 +15,7 @@ async function uploadAvatar(image: File) {
   formData.append('profile_id', getProfileId());
   formData.append('image', image);
 
-  const response = await fetch('/api/profile-image', { method: 'POST', body: formData });
+  const response = await fetch(apiUrl('/api/profile-image'), { method: 'POST', body: formData });
   if (!response.ok) return null;
 
   const data = await response.json() as { avatar_url?: string };
@@ -25,7 +26,7 @@ async function deleteAvatar(avatarUrl?: string) {
   const params = new URLSearchParams({ profile_id: getProfileId() });
   if (avatarUrl) params.set('avatar_url', avatarUrl);
 
-  const response = await fetch(`/api/profile-image?${params.toString()}`, { method: 'DELETE' });
+  const response = await fetch(apiUrl(`/api/profile-image?${params.toString()}`), { method: 'DELETE' });
   return response.ok;
 }
 
