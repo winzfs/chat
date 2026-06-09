@@ -7,6 +7,7 @@ import type { D1ChatRoom } from '../api/d1ChatRooms';
 import { blockUser, getPeerFromRoom, reportUser } from '../api/userSafety';
 import { useMessagePolling } from '../api/useMessagePolling';
 import { ChatMessageItem } from './ChatMessageItem';
+import './ChatRoomPanel.css';
 
 export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: () => void }) {
   const [messages, setMessages] = useState<D1ChatMessage[]>([]);
