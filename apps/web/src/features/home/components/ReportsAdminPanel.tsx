@@ -135,12 +135,15 @@ function ReviewList({ items, textKey, title }: { items: Array<Record<string, unk
   return (
     <div className="talk-list">
       <strong>{title}</strong>
-      {items.slice(0, 5).map((item, index) => (
-        <Card className="settings-summary" key={`${title}-${index}`}>
-          <p>{String(item[textKey] ?? '내용 없음')}</p>
-          {item.created_at && <p>{new Date(String(item.created_at)).toLocaleString()}</p>}
-        </Card>
-      ))}
+      {items.slice(0, 5).map((item, index) => {
+        const createdAt = item.created_at ? String(item.created_at) : '';
+        return (
+          <Card className="settings-summary" key={`${title}-${index}`}>
+            <p>{String(item[textKey] ?? '내용 없음')}</p>
+            {createdAt ? <p>{new Date(createdAt).toLocaleString()}</p> : null}
+          </Card>
+        );
+      })}
     </div>
   );
 }
