@@ -59,7 +59,7 @@ export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRo
         <Card className="person-card" key={user.id}>
           <div className="talk-card-header">
             <button className="profile-icon-button" type="button" onClick={() => previewUser(user)}><UserAvatar imageUrl={user.avatar_url} name={user.nickname} /><span className={user.online ? 'status-dot is-online' : 'status-dot'} /></button>
-            <div><strong>{user.nickname}</strong><p>{user.age ?? '-'} · {user.location ?? '내 주변'} · 최근 접속</p></div>
+            <div><strong>{user.nickname}</strong><p>{user.age ?? '-'} · {user.location || '지역 없음'} · 최근 접속</p></div>
           </div>
           <div className="talk-actions"><span>{user.bio || '대화 가능한 사용자'}</span><button type="button" onClick={() => openChat(user)}>채팅 걸기</button></div>
         </Card>
