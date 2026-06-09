@@ -1,4 +1,4 @@
-# Chat
+# 플러팅
 
 모바일 웹 우선의 1:1 채팅 앱 프로젝트입니다. 현재는 React + Vite 프론트엔드와 Cloudflare Pages Functions, D1, R2를 기반으로 구현하고 있습니다.
 
@@ -6,7 +6,7 @@
 
 - 모바일 웹앱을 먼저 완성합니다.
 - Cloudflare Pages로 배포합니다.
-- 이후 Capacitor를 사용해 Android 앱으로 패키징할 수 있도록 구조를 유지합니다.
+- Capacitor를 사용해 Android 앱으로 패키징합니다.
 - 유지보수와 확장이 쉽도록 기능을 작은 모듈로 분리합니다.
 
 ## 현재 기술 스택
@@ -98,13 +98,22 @@ CI Build: GitHub Actions
 - 설정 화면에서 차단 목록 조회/해제
 - 신고 관리 API와 화면은 운영자 전용
 
+### Android 앱 리소스
+
+- 앱 이름: 플러팅
+- Android 패키지명: `com.flirting.app`
+- 앱 아이콘 원본: `resources/icon.png`
+- 앱 스플래시 원본: `resources/splash.png`
+- Android 기본 스플래시 이후 웹앱 내부 풀스크린 스플래시 표시
+
 ## 프로젝트 구조
 
 ```txt
 chat/
  ├─ .github/
  │  └─ workflows/
- │     └─ android-debug-apk.yml
+ │     ├─ android-debug-apk.yml
+ │     └─ android-release-aab.yml
  ├─ apps/
  │  └─ web/
  │     ├─ src/
@@ -115,6 +124,9 @@ chat/
  │     └─ package.json
  ├─ functions/
  │  └─ api/
+ ├─ resources/
+ │  ├─ icon.png
+ │  └─ splash.png
  ├─ docs/
  ├─ capacitor.config.ts
  ├─ package.json
@@ -128,6 +140,8 @@ docs/03-deployment.md
 docs/04-auth-and-permissions-plan.md
 docs/05-android-capacitor.md
 docs/06-mobile-only-android-build.md
+docs/07-play-store-release-checklist.md
+docs/08-play-store-listing-draft.md
 docs/current-implementation-status.md
 ```
 
@@ -135,6 +149,7 @@ docs/current-implementation-status.md
 실제 인증/권한 전환 계획은 `docs/04-auth-and-permissions-plan.md`를 기준으로 확인합니다.
 Android 패키징 절차는 `docs/05-android-capacitor.md`를 기준으로 확인합니다.
 모바일만으로 APK를 만드는 방법은 `docs/06-mobile-only-android-build.md`를 기준으로 확인합니다.
+Play Store 등록 문구 초안은 `docs/08-play-store-listing-draft.md`를 기준으로 확인합니다.
 
 ## 로컬 실행
 
@@ -160,15 +175,15 @@ apps/web/dist
 PC가 있다면 아래 명령을 사용합니다.
 
 ```bash
-pnpm add @capacitor/core @capacitor/android
-pnpm add -D @capacitor/cli
+pnpm install
 pnpm build
 npx cap add android
+npx @capacitor/assets generate --android --iconBackgroundColor '#ff5b8f' --splashBackgroundColor '#ff5b8f'
 npx cap sync android
 npx cap open android
 ```
 
-모바일만 있다면 GitHub Actions에서 `Android Debug APK` 워크플로우를 실행하고 `chitchat-debug-apk` artifact를 다운로드합니다.
+모바일만 있다면 GitHub Actions에서 `Android Debug APK` 워크플로우를 실행하고 `flirting-debug-apk` artifact를 다운로드합니다.
 
 ## Cloudflare Pages 배포 설정
 
@@ -176,7 +191,7 @@ npx cap open android
 Root directory: /
 Build command: pnpm install --frozen-lockfile=false && pnpm build
 Build output directory: apps/web/dist
-Node.js version: 20
+Node.js version: 22
 ```
 
 ## Cloudflare 바인딩
@@ -200,11 +215,12 @@ ADMIN_PROFILE_IDS=운영자_profile_id
 - 실시간 기능은 WebSocket이 아니라 폴링 기반입니다.
 - 개발 중 만들어진 오래된 채팅방은 participant 정보가 없어 제목이 보정 표시될 수 있습니다.
 - 오래된 메시지는 `sender_profile_id`가 비어 있을 수 있어 닉네임 기준으로 보정 표시됩니다.
+- Play Store 업로드 후 Android 패키지명은 변경하기 어렵습니다.
 
 ## 다음 작업 후보
 
 - GitHub Actions에서 Android Debug APK 워크플로우 실행 후 빌드 로그 확인
 - Android 실기기에서 키보드/입력창/이미지 업로드 테스트
-- 앱 아이콘/스플래시 추가
-- release AAB 자동 빌드 추가
+- release AAB 서명 키 생성 및 GitHub Secrets 등록
+- Play Store 등록 정보 작성
 - 실제 인증 체계 도입
