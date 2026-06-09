@@ -20,7 +20,13 @@ const fallbackRooms: D1ChatRoom[] = [
 ];
 
 export async function loadD1ChatRooms(): Promise<D1ChatRoom[]> {
-  const response = await fetch(`/api/chat-rooms?profile_id=${encodeURIComponent(getProfileId())}`, { cache: 'no-store' });
+  const profile = loadMyProfile();
+  const params = new URLSearchParams({
+    profile_id: getProfileId(),
+    viewer_nickname: profile.nickname,
+  });
+
+  const response = await fetch(`/api/chat-rooms?${params.toString()}`, { cache: 'no-store' });
 
   if (!response.ok) {
     return fallbackRooms;
