@@ -1,3 +1,4 @@
+import { apiUrl } from './apiBase';
 import { getAdminRequestHeaders } from './admin';
 
 export type ReportStatus = 'open' | 'reviewing' | 'closed';
@@ -18,7 +19,7 @@ export async function loadReports(status?: ReportStatus) {
   const params = new URLSearchParams({ limit: '50' });
   if (status) params.set('status', status);
 
-  const response = await fetch(`/api/reports?${params.toString()}`, { headers: getAdminRequestHeaders() });
+  const response = await fetch(apiUrl(`/api/reports?${params.toString()}`), { headers: getAdminRequestHeaders() });
   if (!response.ok) return [];
 
   const data = await response.json() as { reports?: AdminReport[] };
@@ -26,7 +27,7 @@ export async function loadReports(status?: ReportStatus) {
 }
 
 export async function updateReportStatus(id: string, status: ReportStatus) {
-  const response = await fetch('/api/reports', {
+  const response = await fetch(apiUrl('/api/reports'), {
     method: 'PATCH',
     headers: { ...getAdminRequestHeaders(), 'content-type': 'application/json' },
     body: JSON.stringify({ id, status }),
