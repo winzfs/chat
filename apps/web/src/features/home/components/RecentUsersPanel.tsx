@@ -4,6 +4,7 @@ import { openDirectD1ChatRoom, type D1ChatRoom } from '../api/d1ChatRooms';
 import { getProfileId } from '../api/profileId';
 import { loadMyProfile } from '../api/profileStorage';
 import { loadRecentUsers, type RecentUser } from '../api/recentUsers';
+import { UserAvatar } from './UserAvatar';
 
 export function RecentUsersPanel({ myNickname, onOpenRoom }: { myNickname?: string; onOpenRoom: (room: D1ChatRoom) => void }) {
   const [users, setUsers] = useState<RecentUser[]>([]);
@@ -41,7 +42,7 @@ export function RecentUsersPanel({ myNickname, onOpenRoom }: { myNickname?: stri
       {users.map((user) => (
         <Card className="person-card" key={user.id}>
           <div className="talk-card-header">
-            <div className="avatar-wrap"><span className="avatar">{user.nickname.slice(0, 1)}</span><span className={user.online ? 'status-dot is-online' : 'status-dot'} /></div>
+            <div className="avatar-wrap"><UserAvatar imageUrl={user.avatar_url} name={user.nickname} /><span className={user.online ? 'status-dot is-online' : 'status-dot'} /></div>
             <div><strong>{user.nickname}</strong><p>{user.age ?? '-'} · {user.location ?? '내 주변'} · 최근 접속</p></div>
           </div>
           <div className="talk-actions"><span>{user.bio || '대화 가능한 사용자'}</span><button type="button" onClick={() => openChat(user)}>채팅 걸기</button></div>
