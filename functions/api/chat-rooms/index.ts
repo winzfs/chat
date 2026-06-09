@@ -2,16 +2,71 @@ type Env = { DB: D1Database };
 
 type ChatRoomBody = {
   title?: string;
-  peer_nickname?: string;
   profile_id?: string;
+  peer_id?: string;
+  peer_nickname?: string;
+  viewer_nickname?: string;
 };
 
-async function listRooms(env: Env) {
-  const { results } = await env.DB.prepare(
-    'select id, title, last_message, last_message_at, created_at from chat_rooms order by last_message_at desc limit 50',
-  ).all();
+type ChatRoomRow = {
+  id: string;
+  title: string | null;
+  last_message: string | null;
+  last_message_at: string | null;
+  created_at: string;
+  direct_key?: string | null;
+  participant_a_id?: string | null;
+  participant_a_nickname?: string | null;
+  participant_b_id?: string | null;
+  participant_b_nickname?: string | null;
+};
 
-  return results ?? [];
+async function ensureChatRoomColumns(env: Env) {
+  const columns = [
+    'alter table chat_rooms add column direct_key text',
+    'alter table chat_rooms add column participant_a_id text',
+    'alter table chat_rooms add column participant_a_nickname text',
+    'alter table chat_rooms add column participant_b_id text',
+    'alter table chat_rooms add column participant_b_nickname text',
+  ];
+
+  for (const query of columns) {
+    try {
+      await env.DB.prepare(query).run();
+    } catch {
+      // column already exists
+    }
+  }
+}
+
+function directKey(a: string, b: string) {
+  return [a, b].sort().join(':');
+}
+
+function displayRoomForViewer(room: ChatRoomRow, viewerId: string) {
+  if (!room.direct_key || !viewerId) return room;
+
+  const otherNickname = room.participant_a_id === viewerId
+    ? room.participant_b_nickname
+    : room.participant_b_id === viewerId
+      ? room.participant_a_nickname
+      : null;
+
+  return otherNickname ? { ...room, title: `${otherNickname}님과의 대화` } : room;
+}
+
+async function listRooms(env: Env, viewerId: string) {
+  await ensureChatRoomColumns(env);
+
+  const { results } = await env.DB.prepare(
+    `select id, title, last_message, last_message_at, created_at,
+      direct_key, participant_a_id, participant_a_nickname, participant_b_id, participant_b_nickname
+     from chat_rooms
+     order by last_message_at desc
+     limit 50`,
+  ).all<ChatRoomRow>();
+
+  return (results ?? []).map((room) => displayRoomForViewer(room, viewerId));
 }
 
 async function seedRooms(env: Env) {
@@ -24,45 +79,77 @@ async function seedRooms(env: Env) {
   ).bind('room-image-test', 'R2 이미지 전송 테스트방', '이미지 전송은 R2로 붙일 예정이에요.').run();
 }
 
-function makeDirectTitle(peerNickname?: string) {
-  const peer = peerNickname?.trim().slice(0, 20);
-  return peer ? `${peer}님과의 대화` : null;
-}
-
-export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
-  let rooms = await listRooms(env);
+export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
+  const viewerId = new URL(request.url).searchParams.get('profile_id')?.trim() ?? '';
+  let rooms = await listRooms(env, viewerId);
 
   if (rooms.length === 0) {
     await seedRooms(env);
-    rooms = await listRooms(env);
+    rooms = await listRooms(env, viewerId);
   }
 
   return Response.json({ rooms });
 };
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
-  const body = await request.json() as ChatRoomBody;
-  const profileId = body.profile_id?.trim() ?? '';
+  await ensureChatRoomColumns(env);
 
-  if (!profileId) {
+  const body = await request.json() as ChatRoomBody;
+  const viewerId = body.profile_id?.trim() ?? '';
+  const peerId = body.peer_id?.trim() ?? '';
+  const viewerNickname = body.viewer_nickname?.trim().slice(0, 20) || '나';
+  const peerNickname = body.peer_nickname?.trim().slice(0, 20) || '상대';
+
+  if (!viewerId) {
     return Response.json({ error: '가입한 사용자만 채팅방을 만들 수 있어요.' }, { status: 401 });
   }
 
-  const directTitle = makeDirectTitle(body.peer_nickname);
-  const title = directTitle || body.title?.trim() || '새 채팅방';
-  const legacyTitle = body.peer_nickname ? `${body.peer_nickname.trim().slice(0, 20)} room` : title;
-
-  const existingRoom = await env.DB.prepare(
-    'select id, title, last_message, last_message_at, created_at from chat_rooms where title = ? or title = ? order by created_at desc limit 1',
-  ).bind(title, legacyTitle).first();
-
-  if (existingRoom) {
-    if (existingRoom.title !== title) {
-      await env.DB.prepare('update chat_rooms set title = ?, updated_at = datetime("now") where id = ?').bind(title, existingRoom.id).run();
-      return Response.json({ ...existingRoom, title });
-    }
-    return Response.json(existingRoom);
+  if (peerId && peerId === viewerId) {
+    return Response.json({ error: '내 프로필에는 채팅을 걸 수 없어요.' }, { status: 400 });
   }
+
+  if (peerId) {
+    const key = directKey(viewerId, peerId);
+    const existingDirectRoom = await env.DB.prepare(
+      `select id, title, last_message, last_message_at, created_at,
+        direct_key, participant_a_id, participant_a_nickname, participant_b_id, participant_b_nickname
+       from chat_rooms
+       where direct_key = ?
+       limit 1`,
+    ).bind(key).first<ChatRoomRow>();
+
+    if (existingDirectRoom) {
+      return Response.json(displayRoomForViewer(existingDirectRoom, viewerId));
+    }
+
+    const id = crypto.randomUUID();
+    const [aId, bId] = [viewerId, peerId].sort();
+    const aNickname = aId === viewerId ? viewerNickname : peerNickname;
+    const bNickname = bId === viewerId ? viewerNickname : peerNickname;
+    const title = `${peerNickname}님과의 대화`;
+
+    await env.DB.prepare(
+      `insert into chat_rooms (
+        id, title, last_message, last_message_at, direct_key,
+        participant_a_id, participant_a_nickname, participant_b_id, participant_b_nickname
+      ) values (?, ?, ?, datetime("now"), ?, ?, ?, ?, ?)`,
+    ).bind(id, title, '아직 메시지가 없어요.', key, aId, aNickname, bId, bNickname).run();
+
+    const room = await env.DB.prepare(
+      `select id, title, last_message, last_message_at, created_at,
+        direct_key, participant_a_id, participant_a_nickname, participant_b_id, participant_b_nickname
+       from chat_rooms where id = ?`,
+    ).bind(id).first<ChatRoomRow>();
+
+    return Response.json(room ? displayRoomForViewer(room, viewerId) : null, { status: 201 });
+  }
+
+  const title = body.title?.trim() || '새 채팅방';
+  const existingRoom = await env.DB.prepare(
+    'select id, title, last_message, last_message_at, created_at from chat_rooms where title = ? order by created_at desc limit 1',
+  ).bind(title).first();
+
+  if (existingRoom) return Response.json(existingRoom);
 
   const id = crypto.randomUUID();
 
