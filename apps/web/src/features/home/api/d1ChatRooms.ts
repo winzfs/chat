@@ -46,3 +46,11 @@ export async function createD1ChatRoom(title: string): Promise<D1ChatRoom | null
 
   return data;
 }
+
+export async function leaveD1ChatRoom(id: string): Promise<boolean> {
+  const response = await fetch(`/api/chat-rooms?id=${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+
+  return response.ok;
+}
