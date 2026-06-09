@@ -1,6 +1,12 @@
 import type { D1ChatRoom } from './d1ChatRooms';
 import { getProfileId } from './profileId';
 
+export type BlockedUser = {
+  blocked_id: string;
+  blocked_nickname?: string | null;
+  created_at?: string | null;
+};
+
 export function getPeerFromRoom(room: D1ChatRoom) {
   const myId = getProfileId();
 
@@ -26,6 +32,21 @@ export async function blockUser(peerId: string, peerNickname: string) {
     }),
   });
 
+  return response.ok;
+}
+
+export async function listBlockedUsers() {
+  const params = new URLSearchParams({ profile_id: getProfileId() });
+  const response = await fetch(`/api/user-blocks?${params.toString()}`);
+  if (!response.ok) return [];
+
+  const data = await response.json() as { blocks?: BlockedUser[] };
+  return data.blocks ?? [];
+}
+
+export async function unblockUser(peerId: string) {
+  const params = new URLSearchParams({ blocker_id: getProfileId(), blocked_id: peerId });
+  const response = await fetch(`/api/user-blocks?${params.toString()}`, { method: 'DELETE' });
   return response.ok;
 }
 
