@@ -1,0 +1,23 @@
+.app-launch-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: linear-gradient(145deg, #ff5b8f 0%, #ff7fa4 48%, #ffe5c4 100%);
+  opacity: 1;
+  transition: opacity 280ms ease;
+}
+
+.app-launch-splash.is-fading {
+  opacity: 0;
+}
+
+.app-launch-splash__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
