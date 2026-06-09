@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
-import { loadD1ChatRooms, type D1ChatRoom } from '../api/d1ChatRooms';
+import { leaveD1ChatRoom, loadD1ChatRooms, type D1ChatRoom } from '../api/d1ChatRooms';
 import { ChatRoomPanel } from './ChatRoomPanel';
 
 function readRoomIdFromHash() {
@@ -14,7 +14,7 @@ function writeRoomIdToHash(roomId: string) {
 
 function clearRoomHash() {
   if (window.location.hash.startsWith('#room=')) {
-    history.replaceState(null, '', window.location.pathname + window.location.search);
+    history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
   }
 }
 
@@ -56,7 +56,15 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
   const closeRoom = () => {
     clearRoomHash();
     setSelectedRoom(null);
-    loadRooms();
+    setIsLoading(true);
+    loadD1ChatRooms().then(setRooms).finally(() => setIsLoading(false));
+  };
+
+  const leaveRoom = async (room: D1ChatRoom) => {
+    clearRoomHash();
+    if (selectedRoom?.id === room.id) setSelectedRoom(null);
+    setRooms((current) => current.filter((item) => item.id !== room.id));
+    await leaveD1ChatRoom(room.id);
   };
 
   if (selectedRoom) {
@@ -73,12 +81,12 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
         <strong>Cloudflare D1 모드</strong>
         <p>{rooms.length}개 채팅방을 불러왔어요.</p>
       </Card>
-      {rooms.map((room) => <ChatRoomCard key={room.id} onOpen={() => openRoom(room)} room={room} />)}
+      {rooms.map((room) => <ChatRoomCard key={room.id} onLeave={() => leaveRoom(room)} onOpen={() => openRoom(room)} room={room} />)}
     </section>
   );
 }
 
-function ChatRoomCard({ onOpen, room }: { onOpen: () => void; room: D1ChatRoom }) {
+function ChatRoomCard({ onLeave, onOpen, room }: { onLeave: () => void; onOpen: () => void; room: D1ChatRoom }) {
   const title = room.title ?? '새 채팅방';
 
   return (
@@ -96,6 +104,7 @@ function ChatRoomCard({ onOpen, room }: { onOpen: () => void; room: D1ChatRoom }
       <div className="talk-actions">
         <span>최근 대화</span>
         <button type="button" onClick={onOpen}>열기</button>
+        <button type="button" onClick={onLeave}>나가기</button>
       </div>
     </Card>
   );
