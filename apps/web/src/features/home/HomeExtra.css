@@ -209,7 +209,18 @@
 
 .message-bubble-body {
   display: grid;
-  gap: 3px;
+  grid-template-columns: auto 1fr;
+  gap: 4px 8px;
+  align-items: center;
+}
+
+.message-bubble-body .image-message-button,
+.message-bubble-body > p {
+  grid-column: 1 / -1;
+}
+
+.message-profile-button + .message-time {
+  justify-self: end;
 }
 
 .chat-message p,
