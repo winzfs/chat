@@ -26,7 +26,8 @@
 - 같은 기기에서는 localStorage 기준으로 한 계정만 사용
 - 프로필 정보는 localStorage에 저장
 - 서버에는 `profile_id` 기준으로 최근 접속자/토크/채팅방 정보 동기화
-- 토크, 사람, 채팅 목록, 채팅방 메시지에서 프로필 아이콘을 눌러 간단한 프로필 정보를 확인할 수 있음
+- 토크, 사람, 채팅 목록, 채팅방 메시지에서 프로필 아이콘을 눌러 프로필 정보를 확인할 수 있음
+- 프로필 모달은 `profile_id`가 있으면 `/api/profile-lookup`으로 최신 프로필 정보를 다시 불러옴
 
 현재 프로필 필드:
 
@@ -144,6 +145,7 @@ POST /api/chat-room-leave
 ```txt
 GET/POST/DELETE /api/talk-posts
 GET/POST        /api/recent-users
+GET             /api/profile-lookup
 GET/POST/DELETE /api/chat-rooms
 GET/POST        /api/chat-messages
 GET/POST        /api/chat-images
@@ -165,6 +167,7 @@ apps/web/src/features/home/HomeScreenNext.tsx
 apps/web/src/features/home/api/profileStorage.ts
 apps/web/src/features/home/api/profileId.ts
 apps/web/src/features/home/api/profileSync.ts
+apps/web/src/features/home/api/profileLookup.ts
 apps/web/src/features/home/api/d1TalkPosts.ts
 apps/web/src/features/home/api/recentUsers.ts
 apps/web/src/features/home/api/d1ChatRooms.ts
@@ -242,6 +245,6 @@ ADMIN_PROFILE_IDS=운영자_profile_id
 
 1. 로컬에서 `pnpm build`로 타입/빌드 확인
 2. Cloudflare Pages 환경변수 `ADMIN_PROFILE_IDS` 등록
-3. 프로필 모달에 실제 상대방 최신 프로필 API 연결
+3. 프로필 모달에서 채팅 시작 버튼 연결 범위 확대
 4. 실제 인증 체계 도입 검토
 5. WebSocket 또는 Durable Objects 기반 실시간화 검토
