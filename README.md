@@ -29,6 +29,8 @@ Mobile Wrapper: Capacitor 예정
 - 같은 기기 localStorage 기준 1계정 사용
 - 프로필 저장/수정
 - 닉네임, 나이, 지역, 소개, 프로필 사진 동기화
+- `profile_id` 또는 닉네임 기반 최신 프로필 조회 API 제공
+- 토크/사람/채팅 화면의 프로필 아이콘에서 프로필 미리보기 표시
 
 ### 프로필 사진
 
@@ -37,11 +39,13 @@ Mobile Wrapper: Capacitor 예정
 - 확대/위치 조절 후 업로드
 - R2 저장
 - 프로필 사진 삭제/기본 이미지 되돌리기
-- 토크/사람/상단 프로필 아이콘에 표시
+- 토크/사람/상단/채팅 프로필 아이콘에 표시
 
 ### 토크
 
 - 한줄 토크 작성
+- 분위기 선택 없이 내용만 입력
+- 목록에서 분위기/태그 표시 숨김
 - 내 글 강조 표시
 - 내 글 삭제
 - 토크 글에서 바로 대화 시작
@@ -60,7 +64,7 @@ Mobile Wrapper: Capacitor 예정
 - D1 기반 채팅방 목록
 - `profile_id` 조합으로 직접대화방 재사용
 - 내 기준 상대방 이름으로 채팅방 제목 표시
-- 채팅방 목록 3초 폴링
+- 채팅방 목록 5초 폴링
 - 전역 새 메시지 알림
 - 채팅 탭 배지
 - 방별 안 읽은 메시지 수 표시
@@ -81,6 +85,8 @@ Mobile Wrapper: Capacitor 예정
 - 채팅방에서 상대방 차단
 - 차단된 사용자와 새 직접 채팅방 생성 제한
 - 차단 관계 사용자는 최근 접속자 목록에서 제외
+- 설정 화면에서 차단 목록 조회/해제
+- 신고 관리 API와 화면은 운영자 전용
 
 ## 프로젝트 구조
 
@@ -105,10 +111,12 @@ chat/
 
 ```txt
 docs/03-deployment.md
+docs/04-auth-and-permissions-plan.md
 docs/current-implementation-status.md
 ```
 
 현재 구현 상태와 주의사항은 `docs/current-implementation-status.md`를 기준으로 확인합니다.
+실제 인증/권한 전환 계획은 `docs/04-auth-and-permissions-plan.md`를 기준으로 확인합니다.
 
 ## 로컬 실행
 
@@ -145,10 +153,17 @@ D1 binding: DB
 R2 binding: IMAGES
 ```
 
+## Cloudflare 환경변수
+
+```txt
+ADMIN_PROFILE_IDS=운영자_profile_id
+```
+
 ## 현재 주의사항
 
 - 가입은 아직 실제 인증이 아니라 localStorage 기반입니다.
 - 같은 기기 1계정 제한은 브라우저 데이터 삭제나 다른 브라우저 사용 시 우회될 수 있습니다.
+- 운영자 권한은 현재 `ADMIN_PROFILE_IDS` 기반이므로 실제 운영 전 로그인 기반 권한 검사가 필요합니다.
 - 실시간 기능은 WebSocket이 아니라 폴링 기반입니다.
 - 개발 중 만들어진 오래된 채팅방은 participant 정보가 없어 제목이 보정 표시될 수 있습니다.
 - 오래된 메시지는 `sender_profile_id`가 비어 있을 수 있어 닉네임 기준으로 보정 표시됩니다.
@@ -156,7 +171,6 @@ R2 binding: IMAGES
 ## 다음 작업 후보
 
 - 로컬에서 `pnpm build` 실행 후 타입/빌드 확인
-- Cloudflare D1 운영 DB에 최신 `apps/web/schema/d1.sql` 반영
-- 신고 관리용 관리자 화면 또는 조회 API 추가
-- 실제 인증 체계 도입 검토
+- 프로필 모달에서 채팅 시작 버튼 연결 범위 추가 확대
+- 실제 인증 체계 도입
 - WebSocket 또는 Durable Objects 기반 실시간화 검토
