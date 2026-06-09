@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { Button } from '../../shared/components/Button';
-import { KOREA_REGIONS } from '../home/api/koreaRegions';
+import { isKoreaRegion, KOREA_REGIONS } from '../home/api/koreaRegions';
 import { defaultProfile, saveMyProfile, type MyProfile } from '../home/api/profileStorage';
 import { touchRecentUser } from '../home/api/recentUsers';
 import { completeSignup, hasCompletedSignup } from './authStorage';
@@ -37,7 +37,7 @@ export function SignupGate({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (!KOREA_REGIONS.includes(location as typeof KOREA_REGIONS[number])) {
+    if (!isKoreaRegion(location)) {
       setError('지역을 선택해주세요.');
       return;
     }
