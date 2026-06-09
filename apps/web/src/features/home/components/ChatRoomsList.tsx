@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
 import { leaveD1ChatRoom, loadD1ChatRooms, type D1ChatRoom } from '../api/d1ChatRooms';
+import { getProfileId } from '../api/profileId';
 import { POLLING_INTERVALS } from '../api/pollingIntervals';
 import { ChatRoomPanel } from './ChatRoomPanel';
 import { ProfilePreviewModal, type ProfilePreview } from './ProfilePreviewModal';
@@ -18,6 +19,20 @@ function clearRoomHash() {
   if (window.location.hash.startsWith('#room=')) {
     history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
   }
+}
+
+function getRoomPeerProfile(room: D1ChatRoom): ProfilePreview {
+  const myId = getProfileId();
+
+  if (room.participant_a_id === myId && room.participant_b_id) {
+    return { profile_id: room.participant_b_id, nickname: room.participant_b_nickname || room.title || '상대방' };
+  }
+
+  if (room.participant_b_id === myId && room.participant_a_id) {
+    return { profile_id: room.participant_a_id, nickname: room.participant_a_nickname || room.title || '상대방' };
+  }
+
+  return { nickname: room.title ?? '상대방' };
 }
 
 export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null }) {
@@ -138,7 +153,7 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
         <strong>내 채팅 목록</strong>
         <p>{rooms.length}개 채팅방 · 안 읽은 메시지 {totalUnread}개</p>
       </Card>
-      {rooms.map((room) => <ChatRoomCard hasNewMessage={newRoomIds.has(room.id)} key={room.id} onLeave={() => leaveRoom(room)} onOpen={() => openRoom(room)} onPreview={() => setPreviewProfile({ nickname: room.title ?? '상대방' })} room={room} />)}
+      {rooms.map((room) => <ChatRoomCard hasNewMessage={newRoomIds.has(room.id)} key={room.id} onLeave={() => leaveRoom(room)} onOpen={() => openRoom(room)} onPreview={() => setPreviewProfile(getRoomPeerProfile(room))} room={room} />)}
       {previewProfile && <ProfilePreviewModal profile={previewProfile} onClose={() => setPreviewProfile(null)} />}
     </section>
   );
