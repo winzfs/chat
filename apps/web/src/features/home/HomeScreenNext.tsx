@@ -57,7 +57,7 @@ export function HomeScreenNext() {
     const checkRooms = async () => {
       const rooms = await loadD1ChatRooms();
       const previous = lastRoomTimesRef.current;
-      let hasNew = false;
+      let hasNew = rooms.some((room) => Number(room.unread_count ?? 0) > 0);
 
       for (const room of rooms) {
         const currentTime = room.last_message_at ?? '';
