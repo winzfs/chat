@@ -1,27 +1,75 @@
 # Chat
 
-남녀 간 1:1 채팅 기반 수익형 웹앱 프로젝트입니다.
+모바일 웹 우선의 1:1 채팅 앱 프로젝트입니다. 현재는 React + Vite 프론트엔드와 Cloudflare Pages Functions, D1, R2를 기반으로 구현하고 있습니다.
 
 ## 목표
 
 - 모바일 웹앱을 먼저 완성합니다.
 - Cloudflare Pages로 배포합니다.
-- 이후 Capacitor를 사용해 Android 앱으로 패키징합니다.
+- 이후 Capacitor를 사용해 Android 앱으로 패키징할 수 있도록 구조를 유지합니다.
 - 유지보수와 확장이 쉽도록 기능을 작은 모듈로 분리합니다.
 
-## 초기 기술 방향
+## 현재 기술 스택
 
-- Frontend: React + Vite
-- Deploy: Cloudflare Pages
-- Mobile wrapper: Capacitor
-- Realtime/Auth/DB: 추후 Supabase 또는 Cloudflare 기반으로 결정
+```txt
+Frontend: React + Vite
+Deploy: Cloudflare Pages
+API: Cloudflare Pages Functions
+DB: Cloudflare D1
+Image Storage: Cloudflare R2
+Mobile Wrapper: Capacitor 예정
+```
 
-## 개발 원칙
+## 현재 구현된 기능
 
-- 한 파일에 많은 기능을 몰아넣지 않습니다.
-- 기능 단위로 폴더를 분리합니다.
-- 작은 작업 단위로 커밋합니다.
-- 먼저 배포 가능한 최소 버전을 만들고 점진적으로 확장합니다.
+### 가입/프로필
+
+- 닉네임, 성별, 나이만 입력하는 간단 가입
+- 20세 이상 가입 제한
+- 같은 기기 localStorage 기준 1계정 사용
+- 프로필 저장/수정
+- 닉네임, 나이, 지역, 소개, 프로필 사진 동기화
+
+### 프로필 사진
+
+- 설정 화면에서 이미지 업로드
+- 1:1 정사각형 크롭 모달 제공
+- 확대/위치 조절 후 업로드
+- R2 저장
+- 토크/사람/상단 프로필 아이콘에 표시
+
+### 토크
+
+- 한줄 토크 작성
+- 내 글 강조 표시
+- 내 글 삭제
+- 토크 글에서 바로 대화 시작
+- 대화 연결은 닉네임이 아니라 작성자 `profile_id` 기준
+
+### 사람
+
+- 최근 접속자 목록
+- 내 프로필 제외
+- 상대방 프로필 사진 표시
+- 상대방에게 채팅 걸기
+
+### 채팅
+
+- D1 기반 채팅방 목록
+- `profile_id` 조합으로 직접대화방 재사용
+- 내 기준 상대방 이름으로 채팅방 제목 표시
+- 채팅방 목록 3초 폴링
+- 전역 새 메시지 알림
+- 채팅 탭 배지
+- 목록 안의 새 메시지 배지
+- 텍스트/이미지 메시지 전송
+- 내 메시지/상대 메시지 말풍선 분리
+
+### 채팅방 나가기
+
+- 방 전체 삭제가 아니라 내 목록에서만 숨김
+- 상대방에게는 `닉네임님이 나갔습니다.` 시스템 메시지 표시
+- 상대방 채팅 목록 마지막 메시지도 나감 문구로 갱신
 
 ## 프로젝트 구조
 
@@ -31,12 +79,25 @@ chat/
  │  └─ web/
  │     ├─ src/
  │     │  ├─ features/
+ │     │  │  ├─ auth/
+ │     │  │  └─ home/
  │     │  └─ shared/
  │     └─ package.json
+ ├─ functions/
+ │  └─ api/
  ├─ docs/
  ├─ package.json
  └─ pnpm-workspace.yaml
 ```
+
+## 주요 문서
+
+```txt
+docs/03-deployment.md
+docs/current-implementation-status.md
+```
+
+현재 구현 상태와 주의사항은 `docs/current-implementation-status.md`를 기준으로 확인합니다.
 
 ## 로컬 실행
 
@@ -66,4 +127,25 @@ Build output directory: apps/web/dist
 Node.js version: 20
 ```
 
-자세한 내용은 `docs/03-deployment.md`를 참고합니다.
+## Cloudflare 바인딩
+
+```txt
+D1 binding: DB
+R2 binding: IMAGES
+```
+
+## 현재 주의사항
+
+- 가입은 아직 실제 인증이 아니라 localStorage 기반입니다.
+- 같은 기기 1계정 제한은 브라우저 데이터 삭제나 다른 브라우저 사용 시 우회될 수 있습니다.
+- 실시간 기능은 WebSocket이 아니라 폴링 기반입니다.
+- 개발 중 만들어진 오래된 채팅방은 participant 정보가 없어 제목이 보정 표시될 수 있습니다.
+
+## 다음 작업 후보
+
+- 방별 읽음/안읽음 수 정교화
+- 차단/신고 기능
+- 프로필 사진 삭제/기본 이미지 되돌리기
+- 이미지 메시지 전송 API의 `profile_id` 검사 강화
+- 실제 인증 체계 도입 검토
+- D1 마이그레이션 정리
