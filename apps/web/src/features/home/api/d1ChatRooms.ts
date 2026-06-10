@@ -14,6 +14,7 @@ export type D1ChatRoom = {
   participant_a_nickname?: string | null;
   participant_b_id?: string | null;
   participant_b_nickname?: string | null;
+  peer_avatar_url?: string | null;
 };
 
 function hiddenRoomsKey() {
