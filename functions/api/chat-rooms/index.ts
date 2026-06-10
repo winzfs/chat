@@ -32,6 +32,7 @@ async function ensureChatRoomColumns(env: Env) {
     'alter table chat_rooms add column participant_a_nickname text',
     'alter table chat_rooms add column participant_b_id text',
     'alter table chat_rooms add column participant_b_nickname text',
+    'alter table chat_rooms add column updated_at text',
     'alter table chat_messages add column sender_profile_id text',
   ];
 
