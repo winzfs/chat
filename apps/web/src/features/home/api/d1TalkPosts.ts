@@ -18,6 +18,15 @@ export type D1TalkPost = {
   created_at: string;
 };
 
+export type D1TalkPostCreateResult = {
+  post: D1TalkPost;
+  point_reward?: {
+    awarded: boolean;
+    amount: number;
+    balance: number;
+  };
+};
+
 export async function loadD1TalkPosts(): Promise<D1TalkPost[]> {
   const response = await fetch(apiUrl('/api/talk-posts'), { cache: 'no-store' });
 
@@ -29,7 +38,7 @@ export async function loadD1TalkPosts(): Promise<D1TalkPost[]> {
   return data.posts ?? [];
 }
 
-export async function createD1TalkPost(text: string, mood: string, profile?: MyProfile): Promise<D1TalkPost | null> {
+export async function createD1TalkPost(text: string, mood: string, profile?: MyProfile): Promise<D1TalkPostCreateResult | null> {
   const profileId = getProfileId();
   const response = await fetch(apiUrl('/api/talk-posts'), {
     method: 'POST',
@@ -49,8 +58,7 @@ export async function createD1TalkPost(text: string, mood: string, profile?: MyP
     return null;
   }
 
-  const data = await response.json() as { post: D1TalkPost };
-  return data.post;
+  return response.json() as Promise<D1TalkPostCreateResult>;
 }
 
 export async function deleteD1TalkPost(id: string): Promise<boolean> {
