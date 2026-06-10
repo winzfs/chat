@@ -14,6 +14,12 @@ async function ensureChatMessageColumns(env: Env) {
     // column already exists
   }
 
+  try {
+    await env.DB.prepare('alter table chat_rooms add column updated_at text').run();
+  } catch {
+    // column already exists
+  }
+
   await env.DB.prepare(
     `create table if not exists chat_room_reads (
       room_id text not null,
