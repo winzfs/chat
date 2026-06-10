@@ -166,6 +166,7 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
         <strong>내 채팅 목록</strong>
         <p>{rooms.length}개 채팅방 · 안 읽은 메시지 {totalUnread}개</p>
       </Card>
+      {rooms.length === 0 && <Card className="person-card chat-empty-card"><strong>아직 대화가 없어요.</strong><p>토크나 사람 탭에서 마음에 드는 사람에게 먼저 대화를 걸어보세요.</p></Card>}
       {rooms.map((room) => <ChatRoomCard hasNewMessage={newRoomIds.has(room.id)} key={room.id} onLeave={() => leaveRoom(room)} onOpen={() => openRoom(room)} onPreview={() => previewRoomProfile(room)} room={room} />)}
       {previewProfile && <ProfilePreviewModal profile={previewProfile} onClose={() => setPreviewProfile(null)} onStartChat={openPreviewRoom} />}
     </section>
