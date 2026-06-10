@@ -33,9 +33,11 @@ async function deleteAvatar(avatarUrl?: string) {
 }
 
 const pointProducts = [
-  { label: '500P', price: '₩4,900', hint: '쪽지 5회' },
-  { label: '1,100P', price: '₩9,900', hint: '100P 보너스' },
-  { label: '3,500P', price: '₩29,000', hint: '500P 보너스' },
+  { label: '1,000P', price: '₩1,200', hint: '기본 충전' },
+  { label: '5,300P', price: '₩6,000', hint: '300P 보너스' },
+  { label: '10,800P', price: '₩12,000', hint: '800P 보너스' },
+  { label: '33,000P', price: '₩36,000', hint: '3,000P 보너스' },
+  { label: '57,000P', price: '₩60,000', hint: '7,000P 보너스' },
 ];
 
 export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfile; onSave: (profile: MyProfile) => void }) {
@@ -172,7 +174,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
       {isChargeOpen && (
         <Card className="person-card">
           <strong>포인트 충전</strong>
-          <p>결제 연동 전까지는 상품만 미리 보여줘요.</p>
+          <p>기본 1,000P는 1,200원이고, 많이 충전할수록 보너스 포인트가 붙어요.</p>
           {pointProducts.map((product) => (
             <button className="setting-item" key={product.label} type="button" onClick={() => showChargeNotice(product.label)}>
               <strong>{product.label}</strong>
