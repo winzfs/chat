@@ -1,0 +1,62 @@
+.chat-leave-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  align-items: end;
+  padding: 20px;
+  background: rgba(36, 18, 28, 0.28);
+  backdrop-filter: blur(8px);
+}
+
+.chat-leave-sheet {
+  width: min(100%, 420px);
+  margin: 0 auto calc(86px + env(safe-area-inset-bottom, 0px));
+  padding: 24px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 22px 60px rgba(255, 91, 143, 0.24);
+  display: grid;
+  gap: 12px;
+}
+
+.chat-leave-sheet strong {
+  color: var(--color-text-strong);
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.chat-leave-sheet p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.55;
+}
+
+.chat-leave-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.chat-leave-actions button {
+  min-height: 48px;
+  border: 0 !important;
+  outline: 0;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.chat-leave-cancel {
+  background: #fff0f6;
+  color: var(--color-main-pink);
+}
+
+.chat-leave-confirm {
+  background: #f85b98;
+  color: #fff;
+  box-shadow: 0 14px 28px rgba(248, 91, 152, 0.24);
+}
