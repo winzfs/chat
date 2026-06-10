@@ -119,19 +119,13 @@ async function markRoomAsRead(env: Env, roomId: string, profileId: string) {
   ).bind(roomId, profileId).run();
 }
 
-async function unhideRoomForProfile(env: Env, roomId: string, profileId: string) {
-  if (!profileId) return;
-
-  await env.DB.prepare(
-    `update chat_room_exits
-     set is_hidden = 0, updated_at = datetime('now')
-     where room_id = ? and profile_id = ?`,
-  ).bind(roomId, profileId).run();
-}
-
-async function unhideRoomForParticipants(env: Env, roomId: string, profileIds: string[]) {
+async function resetExitedProfilesForNewConversation(env: Env, roomId: string, profileIds: string[]) {
   for (const profileId of [...new Set(profileIds.filter(Boolean))]) {
-    await unhideRoomForProfile(env, roomId, profileId);
+    await env.DB.prepare(
+      `update chat_room_exits
+       set exited_at = datetime('now'), is_hidden = 0, updated_at = datetime('now')
+       where room_id = ? and profile_id = ?`,
+    ).bind(roomId, profileId).run();
   }
 }
 
@@ -171,24 +165,9 @@ async function listRooms(env: Env, viewerId: string) {
   return (results ?? []).map((room) => displayRoomForViewer(room, viewerId));
 }
 
-async function seedRooms(env: Env) {
-  await env.DB.prepare(
-    'insert or ignore into chat_rooms (id, title, last_message, last_message_at) values (?, ?, ?, datetime("now"))',
-  ).bind('room-db-test', 'D1 테스트 채팅방', '이 방은 Cloudflare D1에서 불러온 실제 채팅방이에요.').run();
-
-  await env.DB.prepare(
-    'insert or ignore into chat_rooms (id, title, last_message, last_message_at) values (?, ?, ?, datetime("now", "-5 minutes"))',
-  ).bind('room-image-test', 'R2 이미지 전송 테스트방', '이미지 전송은 R2로 붙일 예정이에요.').run();
-}
-
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const viewerId = new URL(request.url).searchParams.get('profile_id')?.trim() ?? '';
-  let rooms = await listRooms(env, viewerId);
-
-  if (rooms.length === 0) {
-    await seedRooms(env);
-    rooms = await listRooms(env, viewerId);
-  }
+  const rooms = await listRooms(env, viewerId);
 
   return Response.json({ rooms });
 };
@@ -226,7 +205,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     ).bind(key).first<ChatRoomRow>();
 
     if (existingDirectRoom) {
-      await unhideRoomForParticipants(env, existingDirectRoom.id, [viewerId, peerId]);
+      await resetExitedProfilesForNewConversation(env, existingDirectRoom.id, [viewerId, peerId]);
       await markRoomAsRead(env, existingDirectRoom.id, viewerId);
       return Response.json(displayRoomForViewer(existingDirectRoom, viewerId));
     }
