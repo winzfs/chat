@@ -1,12 +1,22 @@
 import { apiUrl } from './apiBase';
 import { getProfileId } from './profileId';
 
+export type PointHistoryItem = {
+  id: string;
+  amount: number;
+  reason: string;
+  reference_id?: string | null;
+  description?: string | null;
+  created_at: string;
+};
+
 export type PointStatus = {
   balance: number;
   today: string;
   attendance_claimed: boolean;
   talk_reward_claimed: boolean;
   ad_reward_claimed: boolean;
+  history: PointHistoryItem[];
 };
 
 export type PointClaimResult = {
@@ -32,6 +42,7 @@ const emptyStatus: PointStatus = {
   attendance_claimed: false,
   talk_reward_claimed: false,
   ad_reward_claimed: false,
+  history: [],
 };
 
 export async function loadPointStatus(): Promise<PointStatus> {
@@ -43,7 +54,7 @@ export async function loadPointStatus(): Promise<PointStatus> {
   }
 
   const data = await response.json() as Partial<PointStatus>;
-  return { ...emptyStatus, ...data };
+  return { ...emptyStatus, ...data, history: data.history ?? [] };
 }
 
 async function claimPoints(action: 'attendance' | 'ad_reward'): Promise<PointClaimResult | null> {
