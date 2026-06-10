@@ -8,6 +8,7 @@
 - Cloudflare Pages로 배포합니다.
 - Capacitor를 사용해 Android 앱으로 패키징합니다.
 - 유지보수와 확장이 쉽도록 기능을 작은 모듈로 분리합니다.
+- 포인트 기반 쪽지/수익화 구조를 단계적으로 도입합니다.
 
 ## 현재 기술 스택
 
@@ -33,7 +34,8 @@ CI Build: GitHub Actions
 - 프로필 저장/수정
 - 닉네임, 나이, 지역, 소개, 프로필 사진 동기화
 - `profile_id` 또는 닉네임 기반 최신 프로필 조회 API 제공
-- 토크/사람/채팅 화면의 프로필 아이콘에서 프로필 미리보기 표시
+- 토크/사람/채팅 목록의 프로필 아이콘에서 프로필 미리보기 표시
+- 채팅방 말풍선 안에서는 프로필 아이콘을 표시하지 않음
 
 지역 목록:
 
@@ -49,7 +51,8 @@ CI Build: GitHub Actions
 - 확대/위치 조절 후 업로드
 - R2 저장
 - 프로필 사진 삭제/기본 이미지 되돌리기
-- 토크/사람/상단/채팅 프로필 아이콘에 표시
+- 토크/사람/채팅 목록/프로필 모달에 표시
+- 채팅방 목록은 상대방 `peer_avatar_url`을 사용해 상대 프로필 이미지를 표시
 
 ### 토크
 
@@ -58,8 +61,10 @@ CI Build: GitHub Actions
 - 목록에서 분위기/태그 표시 숨김
 - 내 글 강조 표시
 - 내 글 삭제
-- 토크 글에서 바로 대화 시작
+- 토크 글에서 바로 쪽지 시작
 - 대화 연결은 닉네임이 아니라 작성자 `profile_id` 기준
+- 토크 작성 시 하루 1회 100P 보상 지급
+- API 실패 시 목업 글을 만들지 않고 실패 안내만 표시
 
 ### 사람
 
@@ -67,7 +72,29 @@ CI Build: GitHub Actions
 - 내 프로필 제외
 - 차단 관계 사용자 제외
 - 상대방 프로필 사진 표시
-- 상대방에게 채팅 걸기
+- 상대방에게 쪽지 보내기
+- 쪽지 시작 비용은 100P
+- 포인트 부족 시 쪽지 시작을 막고 안내 표시
+
+### 포인트
+
+- D1 기반 포인트 잔액 저장
+- 설정 탭에서 내 포인트 표시
+- 출석체크: 하루 1회 100P 지급
+- 광고보기 보상: 하루 1회 100P 지급
+- 토크 작성 보상: 하루 1회 100P 지급
+- 쪽지/1:1 대화 시작 시 100P 차감
+- 이미 존재하고 내가 나가지 않은 1:1 방을 단순히 다시 여는 경우는 중복 차감하지 않음
+- 포인트 충전 메뉴와 상품 UI 제공
+- 실제 결제 PG 및 광고 SDK는 아직 미연동
+
+현재 임시 충전 상품 UI:
+
+```txt
+500P   / ₩4,900
+1,100P / ₩9,900
+3,500P / ₩29,000
+```
 
 ### 채팅
 
@@ -75,19 +102,21 @@ CI Build: GitHub Actions
 - `profile_id` 조합으로 직접대화방 재사용
 - 내 기준 상대방 이름으로 채팅방 제목 표시
 - 채팅방 목록 5초 폴링
-- 전역 새 메시지 알림
-- 채팅 탭 배지
+- 전역 새 메시지 알림은 하단 채팅 탭 점으로 표시
 - 방별 안 읽은 메시지 수 표시
 - 목록 안의 새 메시지 배지
 - 텍스트/이미지 메시지 전송
 - 이미지 메시지 `profile_id` 검사 강화
 - 내 메시지/상대 메시지 말풍선 분리
+- 말풍선 안에는 프로필 아이콘을 표시하지 않음
 
 ### 채팅방 나가기
 
 - 방 전체 삭제가 아니라 내 목록에서만 숨김
 - 상대방에게는 `닉네임님이 나갔습니다.` 시스템 메시지 표시
 - 상대방 채팅 목록 마지막 메시지도 나감 문구로 갱신
+- 나간 사용자가 다시 대화를 시작하면 이전 메시지와 이전 나감 시스템 메시지는 보이지 않음
+- 양쪽 모두 나간 뒤 다시 대화가 시작되면 목록 요약도 `아직 메시지가 없어요.`로 초기화
 
 ### 차단/신고
 
@@ -207,20 +236,49 @@ R2 binding: IMAGES
 ADMIN_PROFILE_IDS=운영자_profile_id
 ```
 
+## 주요 API
+
+```txt
+GET/POST/DELETE /api/talk-posts
+GET/POST        /api/recent-users
+GET             /api/profile-lookup
+GET/POST/DELETE /api/chat-rooms
+GET/POST        /api/chat-messages
+GET/POST        /api/chat-images
+GET/POST        /api/points
+GET/POST/DELETE /api/profile-image
+POST            /api/profile-sync
+POST            /api/chat-room-leave
+GET/POST/DELETE /api/user-blocks
+GET/POST/PATCH  /api/reports
+GET             /api/admin/me
+GET             /api/admin/user-review
+```
+
+## 현재 화면 구조
+
+- 현재 앱 화면은 `HomeScreenNext.tsx` 기준입니다.
+- 구버전 `HomeScreen.tsx`는 빌드 호환을 위해 `HomeScreenNext`를 위임합니다.
+
 ## 현재 주의사항
 
 - 가입은 아직 실제 인증이 아니라 localStorage 기반입니다.
 - 같은 기기 1계정 제한은 브라우저 데이터 삭제나 다른 브라우저 사용 시 우회될 수 있습니다.
 - 운영자 권한은 현재 `ADMIN_PROFILE_IDS` 기반이므로 실제 운영 전 로그인 기반 권한 검사가 필요합니다.
 - 실시간 기능은 WebSocket이 아니라 폴링 기반입니다.
+- 포인트 충전 상품 UI는 있으나 실제 결제 PG는 아직 연결되지 않았습니다.
+- 광고보기 보상 API/UI는 있으나 실제 광고 SDK는 아직 연결되지 않았습니다.
 - 개발 중 만들어진 오래된 채팅방은 participant 정보가 없어 제목이 보정 표시될 수 있습니다.
 - 오래된 메시지는 `sender_profile_id`가 비어 있을 수 있어 닉네임 기준으로 보정 표시됩니다.
 - Play Store 업로드 후 Android 패키지명은 변경하기 어렵습니다.
 
 ## 다음 작업 후보
 
+- GitHub Actions에서 Cloudflare Pages 배포 빌드 로그 확인
 - GitHub Actions에서 Android Debug APK 워크플로우 실행 후 빌드 로그 확인
 - Android 실기기에서 키보드/입력창/이미지 업로드 테스트
+- 포인트 충전 PG 연동
+- 보상형 광고 SDK 연동
 - release AAB 서명 키 생성 및 GitHub Secrets 등록
 - Play Store 등록 정보 작성
 - 실제 인증 체계 도입
