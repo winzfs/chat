@@ -7,6 +7,10 @@ import { loadRecentUsers, type RecentUser } from '../api/recentUsers';
 import { ProfilePreviewModal, type ProfilePreview } from './ProfilePreviewModal';
 import { UserAvatar } from './UserAvatar';
 
+function confirmPointSpend() {
+  return window.confirm('쪽지를 시작하면 100P가 사용될 수 있어요. 계속할까요?');
+}
+
 export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRoom: (room: D1ChatRoom) => void }) {
   const [users, setUsers] = useState<RecentUser[]>([]);
   const [notice, setNotice] = useState('');
@@ -36,6 +40,8 @@ export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRo
       return;
     }
 
+    if (!confirmPointSpend()) return;
+
     setNotice(`${user.nickname}님과 연결하는 중...`);
 
     try {
@@ -52,7 +58,7 @@ export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRo
   };
 
   const openPreviewChat = async () => {
-    if (!previewProfile) return;
+    if (!previewProfile || !confirmPointSpend()) return;
 
     try {
       const room = await openDirectD1ChatRoom(previewProfile.nickname, previewProfile.profile_id || undefined);
