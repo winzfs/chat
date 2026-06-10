@@ -62,7 +62,7 @@ export function SignupGate({ children }: { children: ReactNode }) {
   return (
     <main className="signup-shell">
       <section className="signup-card" aria-labelledby="signup-title">
-        <p className="home-kicker">ChitChat</p>
+        <p className="home-kicker">플러팅</p>
         <h1 id="signup-title">20세 이상 가입</h1>
         <p className="signup-copy">닉네임, 성별, 나이, 지역을 설정하면 바로 시작할 수 있어요. 같은 기기에서는 한 계정만 사용할 수 있어요.</p>
 
