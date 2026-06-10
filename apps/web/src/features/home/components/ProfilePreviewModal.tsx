@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
 import { loadProfile } from '../api/profileLookup';
 import { UserAvatar } from './UserAvatar';
+import './ProfilePreviewModal.css';
 
 export type ProfilePreview = {
   profile_id?: string | null;
@@ -37,7 +38,7 @@ export function ProfilePreviewModal({ onClose, onStartChat, profile }: { profile
   }, [profile]);
 
   return (
-    <div className="modal-backdrop" role="presentation" onClick={onClose}>
+    <div className="modal-backdrop profile-preview-backdrop" role="presentation" onClick={onClose}>
       <Card className="profile-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
         <div className="profile-preview-avatar">
           <UserAvatar imageUrl={displayProfile.avatar_url} name={displayProfile.nickname} />
