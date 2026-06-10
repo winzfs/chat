@@ -20,6 +20,9 @@ type ChatRoomRow = {
   participant_a_nickname?: string | null;
   participant_b_id?: string | null;
   participant_b_nickname?: string | null;
+  participant_a_avatar_url?: string | null;
+  participant_b_avatar_url?: string | null;
+  peer_avatar_url?: string | null;
 };
 
 async function ensureChatRoomColumns(env: Env) {
@@ -38,6 +41,12 @@ async function ensureChatRoomColumns(env: Env) {
     } catch {
       // column already exists
     }
+  }
+
+  try {
+    await env.DB.prepare('alter table recent_users add column avatar_url text').run();
+  } catch {
+    // column already exists or table not ready yet
   }
 
   await env.DB.prepare(
@@ -87,13 +96,15 @@ function displayRoomForViewer(room: ChatRoomRow, viewerId: string) {
   const normalized = normalizeRoom(room);
   if (!normalized.direct_key || !viewerId) return normalized;
 
-  const otherNickname = normalized.participant_a_id === viewerId
+  const isA = normalized.participant_a_id === viewerId;
+  const otherNickname = isA
     ? normalized.participant_b_nickname
     : normalized.participant_b_id === viewerId
       ? normalized.participant_a_nickname
       : null;
+  const peerAvatarUrl = isA ? normalized.participant_b_avatar_url : normalized.participant_a_avatar_url;
 
-  return otherNickname ? { ...normalized, title: `${otherNickname}님과의 대화` } : normalized;
+  return otherNickname ? { ...normalized, title: `${otherNickname}님과의 대화`, peer_avatar_url: peerAvatarUrl ?? '' } : normalized;
 }
 
 async function hasBlockBetween(env: Env, viewerId: string, peerId: string) {
@@ -135,6 +146,8 @@ async function listRooms(env: Env, viewerId: string) {
   const { results } = await env.DB.prepare(
     `select r.id, r.title, r.last_message, r.last_message_at, r.created_at,
        r.direct_key, r.participant_a_id, r.participant_a_nickname, r.participant_b_id, r.participant_b_nickname,
+       au.avatar_url as participant_a_avatar_url,
+       bu.avatar_url as participant_b_avatar_url,
        (
          select count(*)
          from chat_messages m
@@ -147,6 +160,8 @@ async function listRooms(env: Env, viewerId: string) {
            and (ex.exited_at is null or datetime(m.created_at) > datetime(ex.exited_at))
        ) as unread_count
      from chat_rooms r
+     left join recent_users au on au.id = r.participant_a_id
+     left join recent_users bu on bu.id = r.participant_b_id
      where (? = ''
         or r.direct_key is null
         or not exists (
@@ -196,11 +211,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   if (peerId) {
     const key = directKey(viewerId, peerId);
     const existingDirectRoom = await env.DB.prepare(
-      `select id, title, last_message, last_message_at, created_at,
-        direct_key, participant_a_id, participant_a_nickname, participant_b_id, participant_b_nickname,
+      `select r.id, r.title, r.last_message, r.last_message_at, r.created_at,
+        r.direct_key, r.participant_a_id, r.participant_a_nickname, r.participant_b_id, r.participant_b_nickname,
+        au.avatar_url as participant_a_avatar_url,
+        bu.avatar_url as participant_b_avatar_url,
         0 as unread_count
-       from chat_rooms
-       where direct_key = ?
+       from chat_rooms r
+       left join recent_users au on au.id = r.participant_a_id
+       left join recent_users bu on bu.id = r.participant_b_id
+       where r.direct_key = ?
        limit 1`,
     ).bind(key).first<ChatRoomRow>();
 
@@ -224,10 +243,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     ).bind(id, title, '아직 메시지가 없어요.', key, aId, aNickname, bId, bNickname).run();
 
     const room = await env.DB.prepare(
-      `select id, title, last_message, last_message_at, created_at,
-        direct_key, participant_a_id, participant_a_nickname, participant_b_id, participant_b_nickname,
+      `select r.id, r.title, r.last_message, r.last_message_at, r.created_at,
+        r.direct_key, r.participant_a_id, r.participant_a_nickname, r.participant_b_id, r.participant_b_nickname,
+        au.avatar_url as participant_a_avatar_url,
+        bu.avatar_url as participant_b_avatar_url,
         0 as unread_count
-       from chat_rooms where id = ?`,
+       from chat_rooms r
+       left join recent_users au on au.id = r.participant_a_id
+       left join recent_users bu on bu.id = r.participant_b_id
+       where r.id = ?`,
     ).bind(id).first<ChatRoomRow>();
 
     await markRoomAsRead(env, id, viewerId);
