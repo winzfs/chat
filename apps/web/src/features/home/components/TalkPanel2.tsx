@@ -7,11 +7,17 @@ import { ProfilePreviewModal, type ProfilePreview } from './ProfilePreviewModal'
 
 type OpenRoom = (room: D1ChatRoom) => void;
 
+function confirmPointSpend() {
+  return window.confirm('쪽지를 시작하면 100P가 사용될 수 있어요. 계속할까요?');
+}
+
 export function TalkPanel2({ myNickname, onDeletePost, onOpenCompose, onOpenRoom, posts }: { posts: D1TalkPost[]; myNickname: string; onDeletePost: (id: string) => void; onOpenCompose: () => void; onOpenRoom: OpenRoom }) {
   const [previewProfile, setPreviewProfile] = useState<ProfilePreview | null>(null);
   const [notice, setNotice] = useState('');
 
   const startTalk = async (post: D1TalkPost) => {
+    if (!confirmPointSpend()) return;
+
     try {
       const room = await openDirectD1ChatRoom(post.nickname, post.profile_id || undefined);
       if (room) onOpenRoom(room);
@@ -21,7 +27,7 @@ export function TalkPanel2({ myNickname, onDeletePost, onOpenCompose, onOpenRoom
   };
 
   const openPreviewChat = async () => {
-    if (!previewProfile) return;
+    if (!previewProfile || !confirmPointSpend()) return;
 
     try {
       const room = await openDirectD1ChatRoom(previewProfile.nickname, previewProfile.profile_id || undefined);
