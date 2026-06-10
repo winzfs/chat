@@ -11,6 +11,88 @@ type TalkPostBody = {
   location?: string;
 };
 
+const TALK_DAILY_REWARD = 100;
+
+async function ensurePointTables(env: Env) {
+  await env.DB.prepare(
+    `create table if not exists user_points (
+      profile_id text primary key,
+      balance integer not null default 0,
+      created_at text not null default (datetime('now')),
+      updated_at text not null default (datetime('now'))
+    )`,
+  ).run();
+
+  await env.DB.prepare(
+    `create table if not exists point_transactions (
+      id text primary key,
+      profile_id text not null,
+      amount integer not null,
+      reason text not null,
+      reference_id text,
+      description text,
+      created_at text not null default (datetime('now'))
+    )`,
+  ).run();
+
+  await env.DB.prepare(
+    `create table if not exists daily_point_claims (
+      profile_id text not null,
+      claim_type text not null,
+      claim_date text not null,
+      amount integer not null,
+      created_at text not null default (datetime('now')),
+      primary key (profile_id, claim_type, claim_date)
+    )`,
+  ).run();
+}
+
+async function ensurePointAccount(env: Env, profileId: string) {
+  await env.DB.prepare(
+    `insert into user_points (profile_id, balance, created_at, updated_at)
+     values (?, 0, datetime('now'), datetime('now'))
+     on conflict(profile_id) do nothing`,
+  ).bind(profileId).run();
+}
+
+async function getToday(env: Env) {
+  const row = await env.DB.prepare("select date('now', '+9 hours') as today").first<{ today: string }>();
+  return row?.today ?? new Date().toISOString().slice(0, 10);
+}
+
+async function getBalance(env: Env, profileId: string) {
+  const row = await env.DB.prepare('select balance from user_points where profile_id = ?').bind(profileId).first<{ balance: number }>();
+  return Number(row?.balance ?? 0);
+}
+
+async function awardDailyTalkPoints(env: Env, profileId: string, postId: string) {
+  await ensurePointTables(env);
+  await ensurePointAccount(env, profileId);
+  const today = await getToday(env);
+
+  const inserted = await env.DB.prepare(
+    `insert or ignore into daily_point_claims (profile_id, claim_type, claim_date, amount)
+     values (?, 'talk_daily', ?, ?)`,
+  ).bind(profileId, today, TALK_DAILY_REWARD).run();
+
+  if ((inserted.meta.changes ?? 0) < 1) {
+    return { awarded: false, amount: 0, balance: await getBalance(env, profileId) };
+  }
+
+  await env.DB.prepare(
+    `update user_points
+     set balance = balance + ?, updated_at = datetime('now')
+     where profile_id = ?`,
+  ).bind(TALK_DAILY_REWARD, profileId).run();
+
+  await env.DB.prepare(
+    `insert into point_transactions (id, profile_id, amount, reason, reference_id, description)
+     values (?, ?, ?, 'talk_daily', ?, '토크 작성 보상')`,
+  ).bind(crypto.randomUUID(), profileId, TALK_DAILY_REWARD, postId).run();
+
+  return { awarded: true, amount: TALK_DAILY_REWARD, balance: await getBalance(env, profileId) };
+}
+
 async function ensureTalkPostColumns(env: Env) {
   const columns = [
     'alter table talk_posts add column profile_id text',
@@ -69,6 +151,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     'insert into talk_posts (id, profile_id, avatar_url, nickname, age, location, mood, text, tags, likes, replies, online) values (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 1)',
   ).bind(id, profileId, avatarUrl, nickname, age, location, mood, text, tags).run();
 
+  const point_reward = await awardDailyTalkPoints(env, profileId, id);
+
   const post = await env.DB.prepare(
     'select id, profile_id, avatar_url, nickname, age, location, mood, text, tags, likes, replies, online, created_at from talk_posts where id = ?',
   ).bind(id).first();
@@ -79,6 +163,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       tags: typeof post?.tags === 'string' ? JSON.parse(post.tags) : [],
       online: Boolean(post?.online),
     },
+    point_reward,
   }, { status: 201 });
 };
 
