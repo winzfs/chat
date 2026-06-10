@@ -182,7 +182,7 @@ function LeaveConfirmDialog({ onCancel, onConfirm, room }: { onCancel: () => voi
     <div className="chat-leave-overlay" role="dialog" aria-modal="true" aria-labelledby="chat-leave-title">
       <div className="chat-leave-sheet">
         <strong id="chat-leave-title">채팅방을 나갈까요?</strong>
-        <p>{room.title ?? '이 채팅방'}에서 나가면 내 목록에서 사라지고, 다시 대화하기 전까지 이전 메시지는 보이지 않아요.</p>
+        <p>{room.title ?? '이 채팅방'}에서 나가면 내 목록에서 사라지고, 이전 대화 내용은 다시 볼 수 없어요.</p>
         <div className="chat-leave-actions">
           <button className="chat-leave-cancel" type="button" onClick={onCancel}>취소</button>
           <button className="chat-leave-confirm" type="button" onClick={onConfirm}>나가기</button>
