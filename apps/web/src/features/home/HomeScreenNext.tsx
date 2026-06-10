@@ -12,7 +12,6 @@ import { RecentUsersPanel } from './components/RecentUsersPanel';
 import { ProfileSettingsPanel } from './components/ProfileSettingsPanel';
 import { TalkComposeModal, type TalkComposeValues } from './components/TalkComposeModal';
 import { TalkPanel2 } from './components/TalkPanel2';
-import { talkPosts } from './data/homeMockData';
 import './HomePage.css';
 import './HomeExtra.css';
 import './ProfileAvatar.css';
@@ -26,7 +25,6 @@ const tabs: { id: HomeTab; label: string; icon: string }[] = [
   { id: 'settings', label: '설정', icon: '⚙️' },
 ];
 const titles: Record<HomeTab, string> = { talk: '지금 대화하고 싶은 사람들', people: '최근 접속자', chats: '내 대화 목록', settings: '내 설정' };
-const fallbackPosts: D1TalkPost[] = talkPosts.map((post) => ({ ...post, id: String(post.id), created_at: new Date().toISOString() }));
 
 function hasRoomHash() {
   return window.location.hash.startsWith('#room=');
@@ -41,7 +39,7 @@ function clearRoomHash() {
 export function HomeScreenNext() {
   const [activeTab, setActiveTab] = useState<HomeTab>('talk');
   const [isComposeOpen, setIsComposeOpen] = useState(false);
-  const [posts, setPosts] = useState<D1TalkPost[]>(fallbackPosts);
+  const [posts, setPosts] = useState<D1TalkPost[]>([]);
   const [profile, setProfile] = useState<MyProfile>(defaultProfile);
   const [openRoom, setOpenRoom] = useState<D1ChatRoom | null>(null);
   const [chatListKey, setChatListKey] = useState(0);
@@ -51,7 +49,7 @@ export function HomeScreenNext() {
   const initializedChatWatchRef = useRef(false);
 
   const refreshTalkPosts = () => {
-    loadD1TalkPosts().then((loaded) => { if (loaded.length > 0) setPosts(loaded); });
+    loadD1TalkPosts().then(setPosts);
   };
 
   const changeTab = (tab: HomeTab) => {
@@ -160,6 +158,12 @@ export function HomeScreenNext() {
   const submitTalk = async (values: TalkComposeValues) => {
     await touchRecentUser(profile).catch(() => undefined);
     const saved = await createD1TalkPost(values.text, values.mood, profile);
+
+    if (!saved) {
+      setNotice('토크를 등록하지 못했어요. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
     setPosts((current) => [saved, ...current]);
     setIsComposeOpen(false);
     setActiveTab('talk');
