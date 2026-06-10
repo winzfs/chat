@@ -146,7 +146,6 @@ export function HomeScreenNext() {
 
       if (hasNew && activeTab !== 'chats') {
         setHasNewChat(true);
-        setNotice('새 메시지가 도착했어요. 채팅 탭에서 확인해보세요.');
       }
     };
 
