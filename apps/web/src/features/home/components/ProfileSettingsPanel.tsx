@@ -40,6 +40,12 @@ const pointProducts = [
   { label: '57,000P', price: '₩60,000', hint: '7,000P 보너스' },
 ];
 
+function formatPointDate(value: string) {
+  const date = new Date(value.replace(' ', 'T') + 'Z');
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
 export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfile; onSave: (profile: MyProfile) => void }) {
   const [form, setForm] = useState<MyProfile>(myProfile);
   const [isUploading, setIsUploading] = useState(false);
@@ -47,6 +53,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
   const [isReportAdminOpen, setIsReportAdminOpen] = useState(false);
   const [isBlockListOpen, setIsBlockListOpen] = useState(false);
   const [isChargeOpen, setIsChargeOpen] = useState(false);
+  const [isPointHistoryOpen, setIsPointHistoryOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [pointStatus, setPointStatus] = useState<PointStatus | null>(null);
   const [pointNotice, setPointNotice] = useState('');
@@ -138,6 +145,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
 
   const regionValue = isKoreaRegion(form.location) ? form.location : '';
   const profileLocation = isKoreaRegion(myProfile.location) ? myProfile.location : '지역 재선택 필요';
+  const pointHistory = pointStatus?.history ?? [];
 
   if (isReportAdminOpen) {
     return <ReportsAdminPanel onClose={() => setIsReportAdminOpen(false)} />;
@@ -168,8 +176,22 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
           <button type="button" disabled={isCheckingAttendance || Boolean(pointStatus?.attendance_claimed)} onClick={checkAttendance}>{pointStatus?.attendance_claimed ? '출석완료' : isCheckingAttendance ? '처리 중' : '출석체크 100P'}</button>
           <button type="button" disabled={isWatchingAd || Boolean(pointStatus?.ad_reward_claimed)} onClick={watchAd}>{pointStatus?.ad_reward_claimed ? '광고보상 완료' : isWatchingAd ? '처리 중' : '광고보기 100P'}</button>
           <button type="button" onClick={() => setIsChargeOpen((value) => !value)}>포인트 충전</button>
+          <button type="button" onClick={() => setIsPointHistoryOpen((value) => !value)}>포인트 내역</button>
         </div>
       </Card>
+
+      {isPointHistoryOpen && (
+        <Card className="person-card">
+          <strong>포인트 내역</strong>
+          {pointHistory.length === 0 && <p>아직 포인트 내역이 없어요.</p>}
+          {pointHistory.map((item) => (
+            <div className="setting-item" key={item.id}>
+              <strong>{item.amount > 0 ? `+${item.amount.toLocaleString()}P` : `${item.amount.toLocaleString()}P`}</strong>
+              <span>{item.description || item.reason} · {formatPointDate(item.created_at)}</span>
+            </div>
+          ))}
+        </Card>
+      )}
 
       {isChargeOpen && (
         <Card className="person-card">
@@ -210,6 +232,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
 
       <Card className="setting-item"><strong>알림 설정</strong><span>›</span></Card>
       <Card className="setting-item"><strong>차단 관리</strong><button className="secondary-button" onClick={() => setIsBlockListOpen(true)} type="button">열기</button></Card>
+      <Card className="person-card"><strong>안전 기능</strong><p>불쾌한 상대는 채팅방에서 바로 신고하거나 차단할 수 있어요. 차단한 사용자는 사람 목록과 새 쪽지에서 제외돼요.</p></Card>
       {isAdmin && <Card className="setting-item"><strong>신고 관리</strong><button className="secondary-button" onClick={() => setIsReportAdminOpen(true)} type="button">열기</button></Card>}
 
       <Card className="person-card settings-legal-card">
