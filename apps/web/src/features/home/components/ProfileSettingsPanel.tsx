@@ -4,7 +4,7 @@ import { Card } from '../../../shared/components/Card';
 import { apiUrl } from '../api/apiBase';
 import { loadAdminStatus } from '../api/admin';
 import { isKoreaRegion, KOREA_REGIONS } from '../api/koreaRegions';
-import { claimAttendancePoints, loadPointStatus, type PointStatus } from '../api/points';
+import { claimAdRewardPoints, claimAttendancePoints, loadPointStatus, type PointStatus } from '../api/points';
 import { getProfileId } from '../api/profileId';
 import type { MyProfile } from '../api/profileStorage';
 import { AvatarCropModal } from './AvatarCropModal';
@@ -32,16 +32,24 @@ async function deleteAvatar(avatarUrl?: string) {
   return response.ok;
 }
 
+const pointProducts = [
+  { label: '500P', price: '₩4,900', hint: '쪽지 5회' },
+  { label: '1,100P', price: '₩9,900', hint: '100P 보너스' },
+  { label: '3,500P', price: '₩29,000', hint: '500P 보너스' },
+];
+
 export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfile; onSave: (profile: MyProfile) => void }) {
   const [form, setForm] = useState<MyProfile>(myProfile);
   const [isUploading, setIsUploading] = useState(false);
   const [cropImageUrl, setCropImageUrl] = useState('');
   const [isReportAdminOpen, setIsReportAdminOpen] = useState(false);
   const [isBlockListOpen, setIsBlockListOpen] = useState(false);
+  const [isChargeOpen, setIsChargeOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [pointStatus, setPointStatus] = useState<PointStatus | null>(null);
   const [pointNotice, setPointNotice] = useState('');
   const [isCheckingAttendance, setIsCheckingAttendance] = useState(false);
+  const [isWatchingAd, setIsWatchingAd] = useState(false);
 
   const refreshPoints = () => {
     loadPointStatus().then(setPointStatus).catch(() => setPointStatus(null));
@@ -108,6 +116,24 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
     refreshPoints();
   };
 
+  const watchAd = async () => {
+    setIsWatchingAd(true);
+    const result = await claimAdRewardPoints();
+    setIsWatchingAd(false);
+
+    if (!result) {
+      setPointNotice('광고 보상을 처리하지 못했어요. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    setPointNotice(result.message);
+    refreshPoints();
+  };
+
+  const showChargeNotice = (productLabel: string) => {
+    setPointNotice(`${productLabel} 충전 결제는 아직 준비 중이에요.`);
+  };
+
   const regionValue = isKoreaRegion(form.location) ? form.location : '';
   const profileLocation = isKoreaRegion(myProfile.location) ? myProfile.location : '지역 재선택 필요';
 
@@ -130,6 +156,31 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
         <p>{myProfile.gender === 'female' ? '여성' : myProfile.gender === 'male' ? '남성' : '성별 선택 안 함'}</p>
         <p>{myProfile.bio}</p>
       </Card>
+
+      <Card className="person-card">
+        <strong>포인트</strong>
+        <p>{pointStatus ? `${pointStatus.balance.toLocaleString()}P 보유 중` : '포인트를 불러오는 중...'}</p>
+        <p>쪽지를 보낼 때 100P가 사용돼요.</p>
+        {pointNotice && <p>{pointNotice}</p>}
+        <div className="chat-room-card-actions">
+          <button type="button" disabled={isCheckingAttendance || Boolean(pointStatus?.attendance_claimed)} onClick={checkAttendance}>{pointStatus?.attendance_claimed ? '출석완료' : isCheckingAttendance ? '처리 중' : '출석체크 100P'}</button>
+          <button type="button" disabled={isWatchingAd || Boolean(pointStatus?.ad_reward_claimed)} onClick={watchAd}>{pointStatus?.ad_reward_claimed ? '광고보상 완료' : isWatchingAd ? '처리 중' : '광고보기 100P'}</button>
+          <button type="button" onClick={() => setIsChargeOpen((value) => !value)}>포인트 충전</button>
+        </div>
+      </Card>
+
+      {isChargeOpen && (
+        <Card className="person-card">
+          <strong>포인트 충전</strong>
+          <p>결제 연동 전까지는 상품만 미리 보여줘요.</p>
+          {pointProducts.map((product) => (
+            <button className="setting-item" key={product.label} type="button" onClick={() => showChargeNotice(product.label)}>
+              <strong>{product.label}</strong>
+              <span>{product.price} · {product.hint}</span>
+            </button>
+          ))}
+        </Card>
+      )}
 
       <Card className="person-card">
         <form className="profile-form" onSubmit={handleSubmit}>
@@ -155,17 +206,6 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
 
       {cropImageUrl && <AvatarCropModal imageUrl={cropImageUrl} onApply={uploadCroppedAvatar} onClose={() => setCropImageUrl('')} />}
 
-      <Card className="person-card">
-        <strong>내 포인트</strong>
-        <p>{pointStatus ? `${pointStatus.balance.toLocaleString()}P` : '포인트를 불러오는 중...'}</p>
-        <p>쪽지 보내기에는 100P가 필요해요. 토크 작성과 출석체크로 하루 1회씩 100P를 받을 수 있어요.</p>
-        {pointNotice && <p>{pointNotice}</p>}
-        <button className="secondary-button" disabled={isCheckingAttendance || Boolean(pointStatus?.attendance_claimed)} onClick={checkAttendance} type="button">
-          {pointStatus?.attendance_claimed ? '오늘 출석완료' : isCheckingAttendance ? '처리 중...' : '출석체크 100P 받기'}
-        </button>
-      </Card>
-
-      <Card className="setting-item"><strong>포인트 충전</strong><span>준비 중</span></Card>
       <Card className="setting-item"><strong>알림 설정</strong><span>›</span></Card>
       <Card className="setting-item"><strong>차단 관리</strong><button className="secondary-button" onClick={() => setIsBlockListOpen(true)} type="button">열기</button></Card>
       {isAdmin && <Card className="setting-item"><strong>신고 관리</strong><button className="secondary-button" onClick={() => setIsReportAdminOpen(true)} type="button">열기</button></Card>}
