@@ -43,10 +43,25 @@ async function ensureChatRoomColumns(env: Env) {
     }
   }
 
+  await env.DB.prepare(
+    `create table if not exists recent_users (
+      id text primary key,
+      nickname text not null,
+      age integer,
+      location text,
+      bio text,
+      avatar_url text,
+      online integer not null default 1,
+      last_seen_at text not null default (datetime('now')),
+      created_at text not null default (datetime('now')),
+      updated_at text not null default (datetime('now'))
+    )`,
+  ).run();
+
   try {
     await env.DB.prepare('alter table recent_users add column avatar_url text').run();
   } catch {
-    // column already exists or table not ready yet
+    // column already exists
   }
 
   await env.DB.prepare(
@@ -138,6 +153,12 @@ async function resetExitedProfilesForNewConversation(env: Env, roomId: string, p
        where room_id = ? and profile_id = ?`,
     ).bind(roomId, profileId).run();
   }
+
+  await env.DB.prepare(
+    `update chat_rooms
+     set last_message = '아직 메시지가 없어요.', last_message_at = datetime('now'), updated_at = datetime('now')
+     where id = ?`,
+  ).bind(roomId).run();
 }
 
 async function listRooms(env: Env, viewerId: string) {
@@ -226,7 +247,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     if (existingDirectRoom) {
       await resetExitedProfilesForNewConversation(env, existingDirectRoom.id, [viewerId, peerId]);
       await markRoomAsRead(env, existingDirectRoom.id, viewerId);
-      return Response.json(displayRoomForViewer(existingDirectRoom, viewerId));
+      return Response.json(displayRoomForViewer({ ...existingDirectRoom, last_message: '아직 메시지가 없어요.', last_message_at: new Date().toISOString() }, viewerId));
     }
 
     const id = crypto.randomUUID();
