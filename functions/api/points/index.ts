@@ -2,10 +2,10 @@ type Env = { DB: D1Database };
 
 type PointActionBody = {
   profile_id?: string;
-  action?: 'attendance';
+  action?: 'attendance' | 'ad_reward';
 };
 
-const ATTENDANCE_REWARD = 100;
+const DAILY_REWARD = 100;
 
 async function ensurePointTables(env: Env) {
   await env.DB.prepare(
@@ -110,8 +110,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const balance = await getBalance(env, profileId);
   const attendance_claimed = await hasClaimedToday(env, profileId, 'attendance', today);
   const talk_reward_claimed = await hasClaimedToday(env, profileId, 'talk_daily', today);
+  const ad_reward_claimed = await hasClaimedToday(env, profileId, 'ad_reward', today);
 
-  return Response.json({ balance, today, attendance_claimed, talk_reward_claimed });
+  return Response.json({ balance, today, attendance_claimed, talk_reward_claimed, ad_reward_claimed });
 };
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
@@ -122,15 +123,23 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     return Response.json({ error: 'profile_id가 필요해요.' }, { status: 400 });
   }
 
-  if (body.action !== 'attendance') {
-    return Response.json({ error: '지원하지 않는 포인트 요청이에요.' }, { status: 400 });
+  if (body.action === 'attendance') {
+    const result = await claimDailyReward(env, profileId, 'attendance', DAILY_REWARD, '출석체크 보상');
+    return Response.json({
+      ...result,
+      amount: result.awarded ? DAILY_REWARD : 0,
+      message: result.awarded ? '출석체크로 100포인트를 받았어요.' : '오늘 출석체크 보상은 이미 받았어요.',
+    });
   }
 
-  const result = await claimDailyReward(env, profileId, 'attendance', ATTENDANCE_REWARD, '출석체크 보상');
+  if (body.action === 'ad_reward') {
+    const result = await claimDailyReward(env, profileId, 'ad_reward', DAILY_REWARD, '광고보기 보상');
+    return Response.json({
+      ...result,
+      amount: result.awarded ? DAILY_REWARD : 0,
+      message: result.awarded ? '광고보기로 100포인트를 받았어요.' : '오늘 광고보기 보상은 이미 받았어요.',
+    });
+  }
 
-  return Response.json({
-    ...result,
-    amount: result.awarded ? ATTENDANCE_REWARD : 0,
-    message: result.awarded ? '출석체크로 100포인트를 받았어요.' : '오늘 출석체크 보상은 이미 받았어요.',
-  });
+  return Response.json({ error: '지원하지 않는 포인트 요청이에요.' }, { status: 400 });
 };
