@@ -6,6 +6,7 @@ export type PointStatus = {
   today: string;
   attendance_claimed: boolean;
   talk_reward_claimed: boolean;
+  ad_reward_claimed: boolean;
 };
 
 export type PointClaimResult = {
@@ -25,24 +26,41 @@ export class PointError extends Error {
   }
 }
 
+const emptyStatus: PointStatus = {
+  balance: 0,
+  today: '',
+  attendance_claimed: false,
+  talk_reward_claimed: false,
+  ad_reward_claimed: false,
+};
+
 export async function loadPointStatus(): Promise<PointStatus> {
   const params = new URLSearchParams({ profile_id: getProfileId() });
   const response = await fetch(apiUrl(`/api/points?${params.toString()}`), { cache: 'no-store' });
 
   if (!response.ok) {
-    return { balance: 0, today: '', attendance_claimed: false, talk_reward_claimed: false };
+    return emptyStatus;
   }
 
-  return response.json() as Promise<PointStatus>;
+  const data = await response.json() as Partial<PointStatus>;
+  return { ...emptyStatus, ...data };
 }
 
-export async function claimAttendancePoints(): Promise<PointClaimResult | null> {
+async function claimPoints(action: 'attendance' | 'ad_reward'): Promise<PointClaimResult | null> {
   const response = await fetch(apiUrl('/api/points'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ profile_id: getProfileId(), action: 'attendance' }),
+    body: JSON.stringify({ profile_id: getProfileId(), action }),
   });
 
   if (!response.ok) return null;
   return response.json() as Promise<PointClaimResult>;
+}
+
+export function claimAttendancePoints() {
+  return claimPoints('attendance');
+}
+
+export function claimAdRewardPoints() {
+  return claimPoints('ad_reward');
 }
