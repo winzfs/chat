@@ -25,6 +25,66 @@ type ChatRoomRow = {
   peer_avatar_url?: string | null;
 };
 
+const DIRECT_CHAT_COST = 100;
+
+async function ensurePointTables(env: Env) {
+  await env.DB.prepare(
+    `create table if not exists user_points (
+      profile_id text primary key,
+      balance integer not null default 0,
+      created_at text not null default (datetime('now')),
+      updated_at text not null default (datetime('now'))
+    )`,
+  ).run();
+
+  await env.DB.prepare(
+    `create table if not exists point_transactions (
+      id text primary key,
+      profile_id text not null,
+      amount integer not null,
+      reason text not null,
+      reference_id text,
+      description text,
+      created_at text not null default (datetime('now'))
+    )`,
+  ).run();
+}
+
+async function ensurePointAccount(env: Env, profileId: string) {
+  await ensurePointTables(env);
+  await env.DB.prepare(
+    `insert into user_points (profile_id, balance, created_at, updated_at)
+     values (?, 0, datetime('now'), datetime('now'))
+     on conflict(profile_id) do nothing`,
+  ).bind(profileId).run();
+}
+
+async function getPointBalance(env: Env, profileId: string) {
+  await ensurePointAccount(env, profileId);
+  const row = await env.DB.prepare('select balance from user_points where profile_id = ?').bind(profileId).first<{ balance: number }>();
+  return Number(row?.balance ?? 0);
+}
+
+async function consumePoints(env: Env, profileId: string, amount: number, reason: string, referenceId: string, description: string) {
+  await ensurePointAccount(env, profileId);
+  const result = await env.DB.prepare(
+    `update user_points
+     set balance = balance - ?, updated_at = datetime('now')
+     where profile_id = ? and balance >= ?`,
+  ).bind(amount, profileId, amount).run();
+
+  if ((result.meta.changes ?? 0) < 1) {
+    return { ok: false, balance: await getPointBalance(env, profileId) };
+  }
+
+  await env.DB.prepare(
+    `insert into point_transactions (id, profile_id, amount, reason, reference_id, description)
+     values (?, ?, ?, ?, ?, ?)`,
+  ).bind(crypto.randomUUID(), profileId, -amount, reason, referenceId, description).run();
+
+  return { ok: true, balance: await getPointBalance(env, profileId) };
+}
+
 async function ensureChatRoomColumns(env: Env) {
   const columns = [
     'alter table chat_rooms add column direct_key text',
@@ -96,6 +156,7 @@ async function ensureChatRoomColumns(env: Env) {
     )`,
   ).run();
 
+  await ensurePointTables(env);
   await env.DB.prepare('create index if not exists user_blocks_blocked_idx on user_blocks(blocked_id)').run();
   await env.DB.prepare('create index if not exists chat_room_exits_profile_idx on chat_room_exits(profile_id, is_hidden)').run();
 }
@@ -144,6 +205,16 @@ async function markRoomAsRead(env: Env, roomId: string, profileId: string) {
        last_read_at = datetime('now'),
        updated_at = datetime('now')`,
   ).bind(roomId, profileId).run();
+}
+
+async function viewerNeedsDirectChatCharge(env: Env, roomId: string | null, viewerId: string) {
+  if (!roomId) return true;
+
+  const exit = await env.DB.prepare(
+    'select is_hidden from chat_room_exits where room_id = ? and profile_id = ? limit 1',
+  ).bind(roomId, viewerId).first<{ is_hidden: number }>();
+
+  return Boolean(exit?.is_hidden);
 }
 
 async function resetExitedProfilesForNewConversation(env: Env, roomId: string, profileIds: string[]) {
@@ -250,6 +321,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
        where r.direct_key = ?
        limit 1`,
     ).bind(key).first<ChatRoomRow>();
+
+    const shouldCharge = await viewerNeedsDirectChatCharge(env, existingDirectRoom?.id ?? null, viewerId);
+
+    if (shouldCharge) {
+      const payment = await consumePoints(env, viewerId, DIRECT_CHAT_COST, 'direct_chat', key, '쪽지 보내기');
+      if (!payment.ok) {
+        return Response.json({ error: `포인트가 부족해요. 쪽지를 보내려면 ${DIRECT_CHAT_COST}포인트가 필요해요.`, balance: payment.balance }, { status: 402 });
+      }
+    }
 
     if (existingDirectRoom) {
       await resetExitedProfilesForNewConversation(env, existingDirectRoom.id, [viewerId, peerId]);
