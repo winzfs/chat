@@ -70,6 +70,18 @@ async function hasClaimedToday(env: Env, profileId: string, claimType: string, t
   return Boolean(row?.claimed);
 }
 
+async function getPointHistory(env: Env, profileId: string) {
+  const { results } = await env.DB.prepare(
+    `select id, amount, reason, reference_id, description, created_at
+     from point_transactions
+     where profile_id = ?
+     order by created_at desc
+     limit 30`,
+  ).bind(profileId).all();
+
+  return results ?? [];
+}
+
 async function claimDailyReward(env: Env, profileId: string, claimType: string, amount: number, description: string) {
   await ensurePointTables(env);
   await ensurePointAccount(env, profileId);
@@ -111,8 +123,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const attendance_claimed = await hasClaimedToday(env, profileId, 'attendance', today);
   const talk_reward_claimed = await hasClaimedToday(env, profileId, 'talk_daily', today);
   const ad_reward_claimed = await hasClaimedToday(env, profileId, 'ad_reward', today);
+  const history = await getPointHistory(env, profileId);
 
-  return Response.json({ balance, today, attendance_claimed, talk_reward_claimed, ad_reward_claimed });
+  return Response.json({ balance, today, attendance_claimed, talk_reward_claimed, ad_reward_claimed, history });
 };
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
