@@ -157,16 +157,21 @@ export function HomeScreenNext() {
 
   const submitTalk = async (values: TalkComposeValues) => {
     await touchRecentUser(profile).catch(() => undefined);
-    const saved = await createD1TalkPost(values.text, values.mood, profile);
+    const result = await createD1TalkPost(values.text, values.mood, profile);
 
-    if (!saved) {
+    if (!result) {
       setNotice('토크를 등록하지 못했어요. 잠시 후 다시 시도해주세요.');
       return;
     }
 
-    setPosts((current) => [saved, ...current]);
+    setPosts((current) => [result.post, ...current]);
     setIsComposeOpen(false);
     setActiveTab('talk');
+
+    if (result.point_reward?.awarded) {
+      setNotice('토크 작성 보상으로 100포인트를 받았어요.');
+    }
+
     refreshTalkPosts();
   };
 
