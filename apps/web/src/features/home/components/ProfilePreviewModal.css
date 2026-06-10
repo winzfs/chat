@@ -1,0 +1,51 @@
+.profile-preview-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(36, 18, 28, 0.32);
+  backdrop-filter: blur(8px);
+}
+
+.profile-preview-backdrop .profile-modal {
+  width: min(100%, 420px);
+  max-height: min(76vh, 620px);
+  overflow-y: auto;
+  margin: 0;
+  padding: 26px 22px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 24px 70px rgba(255, 91, 143, 0.26);
+}
+
+.profile-preview-backdrop .profile-modal-actions {
+  position: static;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  margin-top: 18px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.profile-preview-backdrop .profile-modal-actions button {
+  min-height: 46px;
+  border: 0 !important;
+  border-radius: 999px;
+  font-weight: 950;
+}
+
+.profile-preview-backdrop .profile-modal-actions button:first-child {
+  background: #fff0f6;
+  color: var(--color-main-pink);
+}
+
+.profile-preview-backdrop .profile-modal-actions button:last-child {
+  background: #f85b98;
+  color: #fff;
+  box-shadow: 0 14px 28px rgba(248, 91, 152, 0.24);
+}
