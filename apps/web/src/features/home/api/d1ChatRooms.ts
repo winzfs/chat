@@ -1,6 +1,7 @@
 import { apiUrl } from './apiBase';
 import { getProfileId } from './profileId';
 import { loadMyProfile } from './profileStorage';
+import { PointError } from './points';
 
 export type D1ChatRoom = {
   id: string;
@@ -107,7 +108,8 @@ export async function openDirectD1ChatRoom(peerNickname: string, peerId?: string
   });
 
   if (!response.ok) {
-    return null;
+    const data = await response.json().catch(() => null) as { error?: string; balance?: number } | null;
+    throw new PointError(data?.error || '채팅방을 열지 못했어요.', data?.balance);
   }
 
   const data = await response.json() as D1ChatRoom;
