@@ -37,21 +37,31 @@ export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRo
     }
 
     setNotice(`${user.nickname}님과 연결하는 중...`);
-    const room = await openDirectD1ChatRoom(user.nickname, user.id);
-    if (room) {
-      setNotice('');
-      onOpenRoom(room);
-      return;
+
+    try {
+      const room = await openDirectD1ChatRoom(user.nickname, user.id);
+      if (room) {
+        setNotice('');
+        onOpenRoom(room);
+        return;
+      }
+      setNotice('채팅방을 열지 못했어요. 잠시 후 다시 시도해주세요.');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : '채팅방을 열지 못했어요.');
     }
-    setNotice('채팅방을 열지 못했어요. 잠시 후 다시 시도해주세요.');
   };
 
   const openPreviewChat = async () => {
     if (!previewProfile) return;
-    const room = await openDirectD1ChatRoom(previewProfile.nickname, previewProfile.profile_id || undefined);
-    if (room) {
-      setPreviewProfile(null);
-      onOpenRoom(room);
+
+    try {
+      const room = await openDirectD1ChatRoom(previewProfile.nickname, previewProfile.profile_id || undefined);
+      if (room) {
+        setPreviewProfile(null);
+        onOpenRoom(room);
+      }
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : '채팅방을 열지 못했어요.');
     }
   };
 
@@ -61,7 +71,7 @@ export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRo
 
   return (
     <section className="talk-list" aria-label="최근 접속자">
-      <Card className="settings-summary"><strong>최근 접속자</strong><p>{users.length}명이 최근 접속했어요. 자동으로 갱신돼요.</p></Card>
+      <Card className="settings-summary"><strong>최근 접속자</strong><p>{users.length}명이 최근 접속했어요. 쪽지는 100포인트를 사용해요.</p></Card>
       {notice && <Card className="settings-summary"><strong>{notice}</strong></Card>}
       {users.length === 0 && <Card className="person-card"><strong>아직 다른 접속자가 없어요</strong><p>다른 탭이나 기기에서 다른 닉네임으로 프로필 저장 후 다시 확인해보세요.</p></Card>}
       {users.map((user) => (
@@ -70,7 +80,7 @@ export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRo
             <button className="profile-icon-button" type="button" onClick={() => previewUser(user)}><UserAvatar imageUrl={user.avatar_url} name={user.nickname} /><span className={user.online ? 'status-dot is-online' : 'status-dot'} /></button>
             <div><strong>{user.nickname}</strong><p>{user.age ?? '-'} · {user.location || '지역 없음'} · 최근 접속</p></div>
           </div>
-          <div className="talk-actions"><span>{user.bio || '대화 가능한 사용자'}</span><button type="button" onClick={() => openChat(user)}>채팅 걸기</button></div>
+          <div className="talk-actions"><span>{user.bio || '대화 가능한 사용자'}</span><button type="button" onClick={() => openChat(user)}>쪽지 100P</button></div>
         </Card>
       ))}
       {previewProfile && <ProfilePreviewModal profile={previewProfile} onClose={() => setPreviewProfile(null)} onStartChat={openPreviewChat} />}
