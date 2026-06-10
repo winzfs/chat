@@ -10,6 +10,12 @@ async function ensureChatImageColumns(env: Env) {
     // column already exists
   }
 
+  try {
+    await env.DB.prepare('alter table chat_rooms add column updated_at text').run();
+  } catch {
+    // column already exists
+  }
+
   await env.DB.prepare(
     `create table if not exists chat_room_exits (
       room_id text not null,
@@ -27,7 +33,6 @@ async function hasRecentUser(env: Env, profileId: string) {
     const user = await env.DB.prepare('select id from recent_users where id = ? limit 1').bind(profileId).first();
     return Boolean(user);
   } catch {
-    // recent_users may not exist on a fresh DB yet. The required profile_id check still protects anonymous uploads.
     return true;
   }
 }
