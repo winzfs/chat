@@ -4,6 +4,7 @@ import { Card } from '../../../shared/components/Card';
 import { apiUrl } from '../api/apiBase';
 import { loadAdminStatus } from '../api/admin';
 import { isKoreaRegion, KOREA_REGIONS } from '../api/koreaRegions';
+import { claimAttendancePoints, loadPointStatus, type PointStatus } from '../api/points';
 import { getProfileId } from '../api/profileId';
 import type { MyProfile } from '../api/profileStorage';
 import { AvatarCropModal } from './AvatarCropModal';
@@ -38,6 +39,13 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
   const [isReportAdminOpen, setIsReportAdminOpen] = useState(false);
   const [isBlockListOpen, setIsBlockListOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [pointStatus, setPointStatus] = useState<PointStatus | null>(null);
+  const [pointNotice, setPointNotice] = useState('');
+  const [isCheckingAttendance, setIsCheckingAttendance] = useState(false);
+
+  const refreshPoints = () => {
+    loadPointStatus().then(setPointStatus).catch(() => setPointStatus(null));
+  };
 
   useEffect(() => {
     setForm(myProfile);
@@ -45,6 +53,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
 
   useEffect(() => {
     loadAdminStatus().then(setIsAdmin).catch(() => setIsAdmin(false));
+    refreshPoints();
   }, []);
 
   useEffect(() => () => {
@@ -83,6 +92,20 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
     const next = { ...form, avatar_url: '' };
     setForm(next);
     onSave(next);
+  };
+
+  const checkAttendance = async () => {
+    setIsCheckingAttendance(true);
+    const result = await claimAttendancePoints();
+    setIsCheckingAttendance(false);
+
+    if (!result) {
+      setPointNotice('출석체크를 처리하지 못했어요. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    setPointNotice(result.message);
+    refreshPoints();
   };
 
   const regionValue = isKoreaRegion(form.location) ? form.location : '';
@@ -132,7 +155,17 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
 
       {cropImageUrl && <AvatarCropModal imageUrl={cropImageUrl} onApply={uploadCroppedAvatar} onClose={() => setCropImageUrl('')} />}
 
-      <Card className="setting-item"><strong>포인트 충전</strong><span>›</span></Card>
+      <Card className="person-card">
+        <strong>내 포인트</strong>
+        <p>{pointStatus ? `${pointStatus.balance.toLocaleString()}P` : '포인트를 불러오는 중...'}</p>
+        <p>쪽지 보내기에는 100P가 필요해요. 토크 작성과 출석체크로 하루 1회씩 100P를 받을 수 있어요.</p>
+        {pointNotice && <p>{pointNotice}</p>}
+        <button className="secondary-button" disabled={isCheckingAttendance || Boolean(pointStatus?.attendance_claimed)} onClick={checkAttendance} type="button">
+          {pointStatus?.attendance_claimed ? '오늘 출석완료' : isCheckingAttendance ? '처리 중...' : '출석체크 100P 받기'}
+        </button>
+      </Card>
+
+      <Card className="setting-item"><strong>포인트 충전</strong><span>준비 중</span></Card>
       <Card className="setting-item"><strong>알림 설정</strong><span>›</span></Card>
       <Card className="setting-item"><strong>차단 관리</strong><button className="secondary-button" onClick={() => setIsBlockListOpen(true)} type="button">열기</button></Card>
       {isAdmin && <Card className="setting-item"><strong>신고 관리</strong><button className="secondary-button" onClick={() => setIsReportAdminOpen(true)} type="button">열기</button></Card>}
