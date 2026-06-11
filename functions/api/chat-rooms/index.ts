@@ -22,6 +22,8 @@ type ChatRoomRow = {
   participant_b_nickname?: string | null;
   participant_a_avatar_url?: string | null;
   participant_b_avatar_url?: string | null;
+  room_owner_profile_id?: string | null;
+  room_owner_nickname?: string | null;
   peer_avatar_url?: string | null;
 };
 
@@ -92,6 +94,8 @@ async function ensureChatRoomColumns(env: Env) {
     'alter table chat_rooms add column participant_a_nickname text',
     'alter table chat_rooms add column participant_b_id text',
     'alter table chat_rooms add column participant_b_nickname text',
+    'alter table chat_rooms add column room_owner_profile_id text',
+    'alter table chat_rooms add column room_owner_nickname text',
     'alter table chat_rooms add column updated_at text',
     'alter table chat_messages add column sender_profile_id text',
   ];
@@ -166,7 +170,12 @@ function directKey(a: string, b: string) {
 }
 
 function normalizeRoom(room: ChatRoomRow): ChatRoomRow {
-  return { ...room, unread_count: Number(room.unread_count ?? 0) };
+  return {
+    ...room,
+    unread_count: Number(room.unread_count ?? 0),
+    room_owner_profile_id: room.room_owner_profile_id || room.participant_a_id || null,
+    room_owner_nickname: room.room_owner_nickname || room.participant_a_nickname || null,
+  };
 }
 
 function displayRoomForViewer(room: ChatRoomRow, viewerId: string) {
@@ -239,12 +248,16 @@ async function resetExitedProfilesForNewConversation(env: Env, roomId: string, p
   }
 }
 
+const roomSelectColumns = `r.id, r.title, r.last_message, r.last_message_at, r.created_at,
+  r.direct_key, r.participant_a_id, r.participant_a_nickname, r.participant_b_id, r.participant_b_nickname,
+  coalesce(r.room_owner_profile_id, r.participant_a_id) as room_owner_profile_id,
+  coalesce(r.room_owner_nickname, r.participant_a_nickname) as room_owner_nickname`;
+
 async function listRooms(env: Env, viewerId: string) {
   await ensureChatRoomColumns(env);
 
   const { results } = await env.DB.prepare(
-    `select r.id, r.title, r.last_message, r.last_message_at, r.created_at,
-       r.direct_key, r.participant_a_id, r.participant_a_nickname, r.participant_b_id, r.participant_b_nickname,
+    `select ${roomSelectColumns},
        au.avatar_url as participant_a_avatar_url,
        bu.avatar_url as participant_b_avatar_url,
        (
@@ -310,8 +323,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   if (peerId) {
     const key = directKey(viewerId, peerId);
     const existingDirectRoom = await env.DB.prepare(
-      `select r.id, r.title, r.last_message, r.last_message_at, r.created_at,
-        r.direct_key, r.participant_a_id, r.participant_a_nickname, r.participant_b_id, r.participant_b_nickname,
+      `select ${roomSelectColumns},
         au.avatar_url as participant_a_avatar_url,
         bu.avatar_url as participant_b_avatar_url,
         0 as unread_count
@@ -346,13 +358,13 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     await env.DB.prepare(
       `insert into chat_rooms (
         id, title, last_message, last_message_at, direct_key,
-        participant_a_id, participant_a_nickname, participant_b_id, participant_b_nickname
-      ) values (?, ?, ?, datetime("now"), ?, ?, ?, ?, ?)`,
-    ).bind(id, title, '아직 메시지가 없어요.', key, aId, aNickname, bId, bNickname).run();
+        participant_a_id, participant_a_nickname, participant_b_id, participant_b_nickname,
+        room_owner_profile_id, room_owner_nickname
+      ) values (?, ?, ?, datetime("now"), ?, ?, ?, ?, ?, ?, ?)`,
+    ).bind(id, title, '아직 메시지가 없어요.', key, aId, aNickname, bId, bNickname, viewerId, viewerNickname).run();
 
     const room = await env.DB.prepare(
-      `select r.id, r.title, r.last_message, r.last_message_at, r.created_at,
-        r.direct_key, r.participant_a_id, r.participant_a_nickname, r.participant_b_id, r.participant_b_nickname,
+      `select ${roomSelectColumns},
         au.avatar_url as participant_a_avatar_url,
         bu.avatar_url as participant_b_avatar_url,
         0 as unread_count
@@ -368,20 +380,25 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
   const title = body.title?.trim() || '새 채팅방';
   const existingRoom = await env.DB.prepare(
-    'select id, title, last_message, last_message_at, created_at, 0 as unread_count from chat_rooms where title = ? order by created_at desc limit 1',
-  ).bind(title).first();
+    `select ${roomSelectColumns}, 0 as unread_count
+     from chat_rooms r
+     where r.title = ?
+     order by r.created_at desc
+     limit 1`,
+  ).bind(title).first<ChatRoomRow>();
 
   if (existingRoom) return Response.json(existingRoom);
 
   const id = crypto.randomUUID();
 
   await env.DB.prepare(
-    'insert into chat_rooms (id, title, last_message, last_message_at) values (?, ?, ?, datetime("now"))',
-  ).bind(id, title, '아직 메시지가 없어요.').run();
+    `insert into chat_rooms (id, title, last_message, last_message_at, room_owner_profile_id, room_owner_nickname)
+     values (?, ?, ?, datetime("now"), ?, ?)`,
+  ).bind(id, title, '아직 메시지가 없어요.', viewerId, viewerNickname).run();
 
   const room = await env.DB.prepare(
-    'select id, title, last_message, last_message_at, created_at, 0 as unread_count from chat_rooms where id = ?',
-  ).bind(id).first();
+    `select ${roomSelectColumns}, 0 as unread_count from chat_rooms r where r.id = ?`,
+  ).bind(id).first<ChatRoomRow>();
 
   return Response.json(room, { status: 201 });
 };
