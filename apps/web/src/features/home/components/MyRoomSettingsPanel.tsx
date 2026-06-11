@@ -4,6 +4,7 @@ import { createDefaultMyRoom, createMyRoomItemFromCatalog, defaultMyRoomItems, f
 import { getProfileId } from '../api/profileId';
 import { RoomCanvas } from './RoomCanvas';
 import './MyRoomSettingsPanel.css';
+import './MyRoomFurnitureThumbs.css';
 
 type MyRoomEditorMenu = 'furniture' | 'selected' | 'wallpaper' | 'floor' | 'manage';
 
@@ -14,6 +15,26 @@ const editorMenus: { id: MyRoomEditorMenu; label: string }[] = [
   { id: 'floor', label: '바닥' },
   { id: 'manage', label: '관리' },
 ];
+
+const catalogThumbnailPaths: Record<string, string> = {
+  bed01: '/assets/room/furniture/bed01.png',
+  desk01: '/assets/room/furniture/desk01.png',
+  sidedesk01: '/assets/room/furniture/sidedesk01.png',
+};
+
+const catalogThumbnailIcons: Record<string, string> = {
+  bed: '🛏️',
+  desk: '🪵',
+  'side-desk': '🪵',
+  table: '🫖',
+  plant: '🪴',
+  window: '🪟',
+  rug: '☁️',
+  frame: '🖼️',
+  sofa: '🛋️',
+  shelf: '📚',
+  lamp: '💡',
+};
 
 function clampPercent(value: number) {
   return Math.min(Math.max(value, 0), 100);
@@ -35,6 +56,21 @@ function duplicateItem(item: MyRoomItem, index: number): MyRoomItem {
     y: clampPercent(item.y + 4),
     z_index: clampZIndex(item.z_index + 1),
   };
+}
+
+function CatalogThumbnail({ assetId, itemType, label }: { assetId: string; itemType: string; label: string }) {
+  const thumbnailPath = catalogThumbnailPaths[assetId];
+
+  return (
+    <span className={`my-room-catalog-thumb ${thumbnailPath ? 'has-image' : ''}`}>
+      {thumbnailPath ? (
+        <img alt="" aria-hidden="true" draggable={false} src={thumbnailPath} />
+      ) : (
+        <span aria-hidden="true">{catalogThumbnailIcons[itemType] ?? '✨'}</span>
+      )}
+      <span className="sr-only">{label}</span>
+    </span>
+  );
 }
 
 export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
@@ -166,8 +202,11 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
           <div className="my-room-catalog-grid">
             {roomItemCatalog.map((item) => (
               <button key={item.catalog_id} type="button" onClick={() => addCatalogItem(item.catalog_id)}>
-                <strong>{item.label}</strong>
-                <small>{item.description}</small>
+                <CatalogThumbnail assetId={item.asset_id} itemType={item.item_type} label={item.label} />
+                <span className="my-room-catalog-copy">
+                  <strong>{item.label}</strong>
+                  <small>{item.description}</small>
+                </span>
               </button>
             ))}
           </div>
