@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import type { MyRoom, MyRoomItem } from '../api/myRoom';
 import './RoomCanvas.css';
 
@@ -54,7 +54,7 @@ function itemIcon(item: MyRoomItem) {
 }
 
 export function RoomCanvas({ room, characters = [], footer, isCompact = false, onStageClick }: RoomCanvasProps) {
-  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleClick = (event: MouseEvent<HTMLDivElement>) => {
     if (!onStageClick) return;
 
     const target = event.target as HTMLElement;
