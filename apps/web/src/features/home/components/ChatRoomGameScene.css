@@ -1,0 +1,49 @@
+.chat-room-game-scene {
+  display: grid;
+  gap: 10px;
+  padding: 2px 2px 8px;
+}
+
+.game-scene-title-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px;
+}
+
+.game-scene-title-row strong {
+  display: block;
+  color: #27272a;
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.game-scene-title-row p {
+  margin-top: 4px;
+  color: #71717a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.game-scene-title-row > span {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 107, 157, 0.12);
+  color: #ff4f8b;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.game-scene-hint {
+  display: block;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 107, 157, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.84);
+  color: #71717a;
+  font-size: 11px;
+  font-weight: 850;
+  text-align: center;
+}
