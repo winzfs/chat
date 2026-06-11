@@ -1,4 +1,4 @@
-import type { CSSProperties, MouseEvent, ReactNode } from 'react';
+import type { CSSProperties, MouseEvent, PointerEvent, ReactNode } from 'react';
 import type { MyRoom, MyRoomItem } from '../api/myRoom';
 import './RoomCanvas.css';
 
@@ -16,6 +16,10 @@ type RoomCanvasProps = {
   characters?: RoomCharacter[];
   footer?: ReactNode;
   isCompact?: boolean;
+  isEditing?: boolean;
+  selectedItemId?: string;
+  onItemMove?: (itemId: string, position: { x: number; y: number }) => void;
+  onItemSelect?: (itemId: string) => void;
   onStageClick?: (position: { x: number; y: number }) => void;
 };
 
@@ -53,7 +57,28 @@ function itemIcon(item: MyRoomItem) {
   return itemIcons[item.item_type] ?? '✨';
 }
 
-export function RoomCanvas({ room, characters = [], footer, isCompact = false, onStageClick }: RoomCanvasProps) {
+function positionFromStagePointer(event: PointerEvent<HTMLElement>) {
+  const stage = event.currentTarget.closest('.room-stage') as HTMLElement | null;
+  if (!stage) return null;
+
+  const rect = stage.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width) * 100;
+  const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+  return { x: clampPercent(x), y: clampPercent(y) };
+}
+
+export function RoomCanvas({
+  room,
+  characters = [],
+  footer,
+  isCompact = false,
+  isEditing = false,
+  selectedItemId,
+  onItemMove,
+  onItemSelect,
+  onStageClick,
+}: RoomCanvasProps) {
   const handleClick = (event: MouseEvent<HTMLDivElement>) => {
     if (!onStageClick) return;
 
@@ -66,8 +91,32 @@ export function RoomCanvas({ room, characters = [], footer, isCompact = false, o
     onStageClick({ x: clampPercent(x), y: clampPercent(y) });
   };
 
+  const moveItem = (event: PointerEvent<HTMLElement>, itemId: string) => {
+    const position = positionFromStagePointer(event);
+    if (!position) return;
+    onItemMove?.(itemId, position);
+  };
+
+  const handleItemPointerDown = (event: PointerEvent<HTMLDivElement>, item: MyRoomItem) => {
+    if (!isEditing) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    onItemSelect?.(item.id);
+    moveItem(event, item.id);
+  };
+
+  const handleItemPointerMove = (event: PointerEvent<HTMLDivElement>, item: MyRoomItem) => {
+    if (!isEditing || event.buttons !== 1) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    moveItem(event, item.id);
+  };
+
   return (
-    <div className={`room-canvas ${isCompact ? 'is-compact' : ''} wallpaper-${room.wallpaper} floor-${room.floor}`}>
+    <div className={`room-canvas ${isCompact ? 'is-compact' : ''} ${isEditing ? 'is-editing' : ''} wallpaper-${room.wallpaper} floor-${room.floor}`}>
       <div className="room-wall">
         <span className="room-wall-shine" />
       </div>
@@ -75,8 +124,10 @@ export function RoomCanvas({ room, characters = [], footer, isCompact = false, o
         <div className="room-floor" />
         {room.items.map((item) => (
           <div
-            className={`room-item room-item-${item.item_type} asset-${item.asset_id}`}
+            className={`room-item room-item-${item.item_type} asset-${item.asset_id} ${selectedItemId === item.id ? 'is-selected' : ''}`}
             key={item.id}
+            onPointerDown={(event) => handleItemPointerDown(event, item)}
+            onPointerMove={(event) => handleItemPointerMove(event, item)}
             style={getItemStyle(item)}
             title={item.label}
           >
