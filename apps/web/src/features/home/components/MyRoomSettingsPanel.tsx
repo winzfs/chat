@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
-import { createDefaultMyRoom, defaultMyRoomItems, floorOptions, loadMyRoom, saveMyRoom, wallpaperOptions, type MyRoom, type MyRoomItem } from '../api/myRoom';
+import { createDefaultMyRoom, createMyRoomItemFromCatalog, defaultMyRoomItems, floorOptions, loadMyRoom, roomItemCatalog, saveMyRoom, wallpaperOptions, type MyRoom, type MyRoomItem } from '../api/myRoom';
 import { getProfileId } from '../api/profileId';
 import { RoomCanvas } from './RoomCanvas';
 import './MyRoomSettingsPanel.css';
@@ -16,6 +16,16 @@ function clampRotation(value: number) {
 
 function clampZIndex(value: number) {
   return Math.min(Math.max(value, 0), 99);
+}
+
+function duplicateItem(item: MyRoomItem, index: number): MyRoomItem {
+  return {
+    ...item,
+    id: `${item.asset_id}-${Date.now()}-${index}`,
+    x: clampPercent(item.x + 4),
+    y: clampPercent(item.y + 4),
+    z_index: clampZIndex(item.z_index + 1),
+  };
 }
 
 export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
@@ -66,6 +76,40 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
   const changeSelectedItemDepth = (amount: number) => {
     if (!selectedItem) return;
     updateItem(selectedItem.id, (item) => ({ ...item, z_index: clampZIndex(item.z_index + amount) }));
+  };
+
+  const addCatalogItem = (catalogId: string) => {
+    const catalogItem = roomItemCatalog.find((item) => item.catalog_id === catalogId);
+    if (!catalogItem) return;
+
+    setRoom((current) => {
+      const nextItem = createMyRoomItemFromCatalog(catalogItem, current.items.length);
+      setSelectedItemId(nextItem.id);
+      return { ...current, items: [...current.items, nextItem] };
+    });
+    setNotice(`${catalogItem.label}을(를) 방에 추가했어요. 원하는 위치로 끌어보세요.`);
+  };
+
+  const removeSelectedItem = () => {
+    if (!selectedItem) return;
+
+    setRoom((current) => {
+      const nextItems = current.items.filter((item) => item.id !== selectedItem.id);
+      setSelectedItemId(nextItems[0]?.id ?? '');
+      return { ...current, items: nextItems };
+    });
+    setNotice(`${selectedItem.label}을(를) 방에서 치웠어요. 저장을 눌러 반영해주세요.`);
+  };
+
+  const duplicateSelectedItem = () => {
+    if (!selectedItem) return;
+
+    setRoom((current) => {
+      const nextItem = duplicateItem(selectedItem, current.items.length);
+      setSelectedItemId(nextItem.id);
+      return { ...current, items: [...current.items, nextItem] };
+    });
+    setNotice(`${selectedItem.label}을(를) 하나 더 추가했어요.`);
   };
 
   const save = async () => {
@@ -136,9 +180,24 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
             <button type="button" onClick={() => changeSelectedItemDepth(-1)}>뒤로</button>
             <button type="button" onClick={() => rotateSelectedItem(-5)}>왼쪽 회전</button>
             <button type="button" onClick={() => rotateSelectedItem(5)}>오른쪽 회전</button>
+            <button type="button" onClick={duplicateSelectedItem}>복제</button>
+            <button className="danger-button" type="button" onClick={removeSelectedItem}>삭제</button>
           </div>
         </Card>
       )}
+
+      <Card className="person-card my-room-option-card">
+        <strong>가구 추가</strong>
+        <p>보유 가구에서 원하는 소품을 눌러 방에 추가하세요. 같은 가구도 여러 개 배치할 수 있어요.</p>
+        <div className="my-room-catalog-grid">
+          {roomItemCatalog.map((item) => (
+            <button key={item.catalog_id} type="button" onClick={() => addCatalogItem(item.catalog_id)}>
+              <strong>{item.label}</strong>
+              <small>{item.description}</small>
+            </button>
+          ))}
+        </div>
+      </Card>
 
       <Card className="person-card my-room-option-card">
         <strong>벽지</strong>
@@ -177,7 +236,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
       </Card>
 
       <Card className="person-card my-room-option-card">
-        <strong>가구/소품 슬롯</strong>
+        <strong>배치된 가구</strong>
         <p>가구 버튼을 누르면 해당 가구가 선택돼요. 선택한 가구는 위 미리보기에서 바로 끌어 배치할 수 있어요.</p>
         <div className="my-room-item-list">
           {room.items.length === 0 && <span>배치된 가구가 없어요.</span>}
@@ -189,13 +248,13 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
         </div>
         <div className="chat-room-card-actions">
           <button type="button" onClick={resetItems}>기본 배치</button>
-          <button type="button" onClick={clearItems}>가구 비우기</button>
+          <button type="button" onClick={clearItems}>가구 모두 비우기</button>
         </div>
       </Card>
 
       <Card className="person-card my-room-future-card">
         <strong>다음 확장 설계</strong>
-        <p>지금 배치 데이터는 그대로 저장돼요. 다음에는 실제 PNG/WebP 가구 에셋과 상점 아이템을 `asset_id`에 연결하면 됩니다.</p>
+        <p>지금은 임시 가구 카탈로그지만, 다음에는 실제 PNG/WebP 가구 에셋과 포인트 상점 아이템을 `asset_id`에 연결하면 됩니다.</p>
       </Card>
 
       <div className="my-room-save-bar">
