@@ -36,223 +36,330 @@ const catalogThumbnailIcons: Record<string, string> = {
   frame: '🖼️',
   sofa: '🛋️',
   shelf: '📚',
+  lamp: '💡',
 };
 
-function normalizeRotation(rotation: number) {
-  return ((Math.round(rotation / 45) * 45) % 360 + 360) % 360;
+function clampPercent(value: number) {
+  return Math.min(Math.max(value, 0), 100);
 }
 
-function CatalogThumbnail({ item }: { item: MyRoomItem }) {
-  const imagePath = catalogThumbnailPaths[item.asset_id];
+function normalizeRotation(value: number) {
+  return ((Math.round(value / 45) * 45) % 360 + 360) % 360;
+}
 
-  if (imagePath) {
-    return (
-      <span className="my-room-catalog-thumb has-image" aria-hidden="true">
-        <img alt="" src={imagePath} />
-      </span>
-    );
-  }
+function clampZIndex(value: number) {
+  return Math.min(Math.max(value, 0), 99);
+}
 
-  return <span className="my-room-catalog-thumb" aria-hidden="true">{catalogThumbnailIcons[item.item_type] ?? '✨'}</span>;
+function duplicateItem(item: MyRoomItem, index: number): MyRoomItem {
+  return {
+    ...item,
+    id: `${item.asset_id}-${Date.now()}-${index}`,
+    x: clampPercent(item.x + 4),
+    y: clampPercent(item.y + 4),
+    z_index: clampZIndex(item.z_index + 1),
+  };
+}
+
+function CatalogThumbnail({ assetId, itemType, label }: { assetId: string; itemType: string; label: string }) {
+  const thumbnailPath = catalogThumbnailPaths[assetId];
+
+  return (
+    <span className={`my-room-catalog-thumb ${thumbnailPath ? 'has-image' : ''}`}>
+      {thumbnailPath ? (
+        <img alt="" aria-hidden="true" draggable={false} src={thumbnailPath} />
+      ) : (
+        <span aria-hidden="true">{catalogThumbnailIcons[itemType] ?? '✨'}</span>
+      )}
+      <span className="sr-only">{label}</span>
+    </span>
+  );
 }
 
 export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
-  const myProfileId = useMemo(() => getProfileId(), []);
-  const [room, setRoom] = useState<MyRoom>(() => createDefaultMyRoom(myProfileId));
-  const [selectedId, setSelectedId] = useState('');
+  const [room, setRoom] = useState<MyRoom>(() => createDefaultMyRoom());
   const [activeMenu, setActiveMenu] = useState<MyRoomEditorMenu>('furniture');
-  const [isSaving, setIsSaving] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState(defaultMyRoomItems[0]?.id ?? '');
   const [notice, setNotice] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
-    loadMyRoom(myProfileId).then((nextRoom) => {
+    loadMyRoom(getProfileId()).then((nextRoom) => {
       if (!isMounted) return;
       setRoom(nextRoom);
-      setSelectedId(nextRoom.items[0]?.id ?? '');
+      setSelectedItemId(nextRoom.items[0]?.id ?? '');
+      setIsLoading(false);
+    }).catch(() => {
+      if (!isMounted) return;
+      const fallbackRoom = createDefaultMyRoom();
+      setRoom(fallbackRoom);
+      setSelectedItemId(fallbackRoom.items[0]?.id ?? '');
+      setIsLoading(false);
     });
 
     return () => {
       isMounted = false;
     };
-  }, [myProfileId]);
+  }, []);
 
-  const selectedItem = useMemo(() => room.items.find((item) => item.id === selectedId), [room.items, selectedId]);
+  const selectedItem = useMemo(() => room.items.find((item) => item.id === selectedItemId) ?? null, [room.items, selectedItemId]);
 
-  const updateItem = (id: string, patch: Partial<MyRoomItem>) => {
+  const selectItem = (itemId: string) => {
+    setSelectedItemId(itemId);
+    setActiveMenu('selected');
+  };
+
+  const updateItem = (itemId: string, patcher: (item: MyRoomItem) => MyRoomItem) => {
     setRoom((current) => ({
       ...current,
-      items: current.items.map((item) => (item.id === id ? { ...item, ...patch } : item)),
-      updated_at: new Date().toISOString(),
+      items: current.items.map((item) => item.id === itemId ? patcher(item) : item),
     }));
   };
 
-  const addItem = (catalogItem: MyRoomItem) => {
-    const nextItem = createMyRoomItemFromCatalog(catalogItem, room.items.length);
-    setRoom((current) => ({
-      ...current,
-      items: [...current.items, nextItem],
-      updated_at: new Date().toISOString(),
-    }));
-    setSelectedId(nextItem.id);
-    setActiveMenu('selected');
-    setNotice(`${catalogItem.label}을 방에 추가했어요.`);
+  const moveItem = (itemId: string, position: { x: number; y: number }) => {
+    updateItem(itemId, (item) => ({ ...item, x: clampPercent(position.x), y: clampPercent(position.y) }));
+  };
+
+  const rotateSelectedItem = (amount: number) => {
+    if (!selectedItem) return;
+    updateItem(selectedItem.id, (item) => ({ ...item, rotation: normalizeRotation((item.rotation ?? 0) + amount) }));
+  };
+
+  const changeSelectedItemDepth = (amount: number) => {
+    if (!selectedItem) return;
+    updateItem(selectedItem.id, (item) => ({ ...item, z_index: clampZIndex(item.z_index + amount) }));
+  };
+
+  const addCatalogItem = (catalogId: string) => {
+    const catalogItem = roomItemCatalog.find((item) => item.catalog_id === catalogId);
+    if (!catalogItem) return;
+
+    setRoom((current) => {
+      const nextItem = createMyRoomItemFromCatalog(catalogItem, current.items.length);
+      setSelectedItemId(nextItem.id);
+      setActiveMenu('selected');
+      return { ...current, items: [...current.items, nextItem] };
+    });
+    setNotice(`${catalogItem.label}을(를) 방에 추가했어요. 바로 끌어서 위치를 잡아보세요.`);
   };
 
   const removeSelectedItem = () => {
     if (!selectedItem) return;
-    setRoom((current) => ({
-      ...current,
-      items: current.items.filter((item) => item.id !== selectedItem.id),
-      updated_at: new Date().toISOString(),
-    }));
-    setNotice(`${selectedItem.label}을 제거했어요.`);
-    setSelectedId('');
+
+    setRoom((current) => {
+      const nextItems = current.items.filter((item) => item.id !== selectedItem.id);
+      setSelectedItemId(nextItems[0]?.id ?? '');
+      return { ...current, items: nextItems };
+    });
+    setNotice(`${selectedItem.label}을(를) 방에서 치웠어요. 저장을 눌러 반영해주세요.`);
   };
 
-  const handleSave = async () => {
+  const duplicateSelectedItem = () => {
+    if (!selectedItem) return;
+
+    setRoom((current) => {
+      const nextItem = duplicateItem(selectedItem, current.items.length);
+      setSelectedItemId(nextItem.id);
+      return { ...current, items: [...current.items, nextItem] };
+    });
+    setNotice(`${selectedItem.label}을(를) 하나 더 추가했어요.`);
+  };
+
+  const save = async () => {
     setIsSaving(true);
     const saved = await saveMyRoom(room);
     setIsSaving(false);
-    if (saved) {
-      setRoom(saved);
-      setNotice('마이룸을 저장했어요.');
+
+    if (!saved) {
+      setNotice('마이룸을 저장하지 못했어요. 잠시 후 다시 시도해주세요.');
       return;
     }
 
-    setNotice('저장에 실패했어요. 잠시 후 다시 시도해주세요.');
+    setRoom(saved);
+    setSelectedItemId(saved.items.find((item) => item.id === selectedItemId)?.id ?? saved.items[0]?.id ?? '');
+    setNotice('마이룸이 저장됐어요. 새 채팅방에도 이 방이 보여요.');
+  };
+
+  const resetItems = () => {
+    setRoom((current) => ({ ...current, items: defaultMyRoomItems }));
+    setSelectedItemId(defaultMyRoomItems[0]?.id ?? '');
+    setNotice('기본 가구 배치로 되돌렸어요. 저장을 눌러 반영해주세요.');
+  };
+
+  const clearItems = () => {
+    setRoom((current) => ({ ...current, items: [] }));
+    setSelectedItemId('');
+    setNotice('가구를 비웠어요. 저장을 눌러 반영해주세요.');
+  };
+
+  const renderEditorPanel = () => {
+    if (activeMenu === 'furniture') {
+      return (
+        <div className="my-room-panel-section">
+          <div className="my-room-panel-title">
+            <strong>가구 추가</strong>
+            <p>원하는 가구를 누르면 방에 바로 추가돼요.</p>
+          </div>
+          <div className="my-room-catalog-grid">
+            {roomItemCatalog.map((item) => (
+              <button key={item.catalog_id} type="button" onClick={() => addCatalogItem(item.catalog_id)}>
+                <CatalogThumbnail assetId={item.asset_id} itemType={item.item_type} label={item.label} />
+                <span className="my-room-catalog-copy">
+                  <strong>{item.label}</strong>
+                  <small>{item.description}</small>
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (activeMenu === 'selected') {
+      return (
+        <div className="my-room-panel-section">
+          <div className="my-room-panel-title">
+            <strong>선택한 가구</strong>
+            <p>{selectedItem ? `${selectedItem.label} · X ${Math.round(selectedItem.x)} / Y ${Math.round(selectedItem.y)} / 깊이 ${selectedItem.z_index} / 회전 ${normalizeRotation(selectedItem.rotation ?? 0)}°` : '방 안의 가구를 누르거나 아래 목록에서 선택하세요.'}</p>
+          </div>
+          {selectedItem ? (
+            <div className="my-room-control-grid">
+              <button type="button" onClick={() => changeSelectedItemDepth(1)}>앞으로</button>
+              <button type="button" onClick={() => changeSelectedItemDepth(-1)}>뒤로</button>
+              <button type="button" onClick={() => rotateSelectedItem(-45)}>왼쪽 45°</button>
+              <button type="button" onClick={() => rotateSelectedItem(45)}>오른쪽 45°</button>
+              <button type="button" onClick={duplicateSelectedItem}>복제</button>
+              <button className="danger-button" type="button" onClick={removeSelectedItem}>삭제</button>
+            </div>
+          ) : null}
+          <div className="my-room-item-list is-compact-list">
+            {room.items.length === 0 && <span>배치된 가구가 없어요.</span>}
+            {room.items.map((item) => (
+              <button className={selectedItemId === item.id ? 'is-selected' : ''} key={item.id} type="button" onClick={() => setSelectedItemId(item.id)}>
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (activeMenu === 'wallpaper') {
+      return (
+        <div className="my-room-panel-section">
+          <div className="my-room-panel-title">
+            <strong>벽지</strong>
+            <p>누르면 바로 미리보기에 반영돼요.</p>
+          </div>
+          <div className="my-room-option-grid is-menu-grid">
+            {wallpaperOptions.map((option) => (
+              <button
+                className={room.wallpaper === option.id ? 'my-room-option is-selected' : 'my-room-option'}
+                key={option.id}
+                type="button"
+                onClick={() => setRoom((current) => ({ ...current, wallpaper: option.id }))}
+              >
+                <span className={`my-room-swatch wallpaper-${option.id}`} />
+                <strong>{option.label}</strong>
+                <small>{option.description}</small>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (activeMenu === 'floor') {
+      return (
+        <div className="my-room-panel-section">
+          <div className="my-room-panel-title">
+            <strong>바닥</strong>
+            <p>방 분위기에 맞는 바닥을 골라보세요.</p>
+          </div>
+          <div className="my-room-option-grid is-menu-grid">
+            {floorOptions.map((option) => (
+              <button
+                className={room.floor === option.id ? 'my-room-option is-selected' : 'my-room-option'}
+                key={option.id}
+                type="button"
+                onClick={() => setRoom((current) => ({ ...current, floor: option.id }))}
+              >
+                <span className={`my-room-swatch floor-${option.id}`} />
+                <strong>{option.label}</strong>
+                <small>{option.description}</small>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="my-room-panel-section">
+        <div className="my-room-panel-title">
+          <strong>방 관리</strong>
+          <p>배치를 초기화하거나 가구를 모두 비울 수 있어요.</p>
+        </div>
+        <div className="my-room-manage-grid">
+          <button type="button" onClick={resetItems}>기본 배치로</button>
+          <button className="danger-button" type="button" onClick={clearItems}>가구 모두 비우기</button>
+        </div>
+        <p className="my-room-small-hint">지금은 임시 가구 카탈로그지만, 다음에는 실제 PNG/WebP 에셋과 포인트 상점 아이템을 `asset_id`에 연결하면 됩니다.</p>
+      </div>
+    );
   };
 
   return (
-    <section className="my-room-editor-screen">
+    <section className="talk-list my-room-editor-screen" aria-label="마이룸 꾸미기">
       <Card className="settings-summary my-room-settings-header">
         <button className="chat-back-button" type="button" onClick={onClose}>←</button>
         <div className="my-room-header-copy">
           <strong>마이룸 꾸미기</strong>
           <p>방을 보면서 바로 가구와 분위기를 바꿔보세요.</p>
         </div>
-        <button className="my-room-save-chip" disabled={isSaving} type="button" onClick={handleSave}>{isSaving ? '저장중' : '저장'}</button>
+        <button className="my-room-save-chip" disabled={isSaving} onClick={save} type="button">{isSaving ? '저장중' : '저장'}</button>
       </Card>
 
-      <Card className="my-room-preview-card is-sticky-preview">
+      <Card className="person-card my-room-preview-card is-sticky-preview">
         <div className="my-room-card-title-row">
           <div>
             <strong>배치 편집</strong>
-            <p>가구를 터치하고 위치, 크기, 방향을 조절하세요.</p>
+            <p>가구를 끌어서 옮기고, 아래 메뉴에서 꾸미기 도구를 바꿔요.</p>
           </div>
-          <span>{selectedItem?.label ?? '전체'}</span>
+          <span>{selectedItem ? selectedItem.label : '선택 없음'}</span>
         </div>
-        <RoomCanvas editingItemId={selectedId} isEditing onItemSelect={setSelectedId} onItemUpdate={updateItem} room={room} />
+        {isLoading ? (
+          <p>마이룸을 불러오는 중...</p>
+        ) : (
+          <RoomCanvas
+            isEditing
+            onItemMove={moveItem}
+            onItemSelect={selectItem}
+            selectedItemId={selectedItemId}
+            room={room}
+          />
+        )}
+        {notice && <p className="my-room-notice">{notice}</p>}
       </Card>
 
-      <Card className="my-room-editor-dock">
-        <div className="my-room-menu-tabs">
+      <Card className="person-card my-room-editor-dock">
+        <div className="my-room-menu-tabs" role="tablist" aria-label="마이룸 편집 메뉴">
           {editorMenus.map((menu) => (
-            <button className={menu.id === activeMenu ? 'is-active' : ''} key={menu.id} type="button" onClick={() => setActiveMenu(menu.id)}>{menu.label}</button>
+            <button
+              aria-selected={activeMenu === menu.id}
+              className={activeMenu === menu.id ? 'is-active' : ''}
+              key={menu.id}
+              role="tab"
+              type="button"
+              onClick={() => setActiveMenu(menu.id)}
+            >
+              {menu.label}
+            </button>
           ))}
         </div>
-
-        {activeMenu === 'furniture' && (
-          <div className="my-room-panel-section">
-            <div className="my-room-panel-title">
-              <strong>가구 추가</strong>
-              <p>원하는 가구를 누르면 방에 바로 추가돼요.</p>
-            </div>
-            <div className="my-room-catalog-grid">
-              {roomItemCatalog.map((item) => (
-                <button key={item.id} type="button" onClick={() => addItem(item)}>
-                  <CatalogThumbnail item={item} />
-                  <span className="my-room-catalog-copy">
-                    <strong>{item.label}</strong>
-                    <small>{item.description}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeMenu === 'selected' && (
-          <div className="my-room-panel-section">
-            {selectedItem ? (
-              <>
-                <div className="my-room-panel-title">
-                  <strong>{selectedItem.label}</strong>
-                  <p>작게 움직여서 원하는 위치로 맞춰보세요.</p>
-                </div>
-                <div className="my-room-control-grid">
-                  <button type="button" onClick={() => updateItem(selectedItem.id, { x: Math.max(4, selectedItem.x - 4) })}>왼쪽</button>
-                  <button type="button" onClick={() => updateItem(selectedItem.id, { x: Math.min(96, selectedItem.x + 4) })}>오른쪽</button>
-                  <button type="button" onClick={() => updateItem(selectedItem.id, { y: Math.max(20, selectedItem.y - 4) })}>위</button>
-                  <button type="button" onClick={() => updateItem(selectedItem.id, { y: Math.min(96, selectedItem.y + 4) })}>아래</button>
-                  <button type="button" onClick={() => updateItem(selectedItem.id, { scale: Math.max(0.6, Number((selectedItem.scale - 0.1).toFixed(1))) })}>작게</button>
-                  <button type="button" onClick={() => updateItem(selectedItem.id, { scale: Math.min(1.8, Number((selectedItem.scale + 0.1).toFixed(1))) })}>크게</button>
-                  <button type="button" onClick={() => updateItem(selectedItem.id, { rotation: normalizeRotation((selectedItem.rotation ?? 0) - 45) })}>왼쪽 45°</button>
-                  <button type="button" onClick={() => updateItem(selectedItem.id, { rotation: normalizeRotation((selectedItem.rotation ?? 0) + 45) })}>오른쪽 45°</button>
-                  <button className="danger-button" type="button" onClick={removeSelectedItem}>삭제</button>
-                </div>
-              </>
-            ) : (
-              <p className="my-room-small-hint">선택된 가구가 없어요. 방 위 가구나 아래 목록을 눌러 선택해주세요.</p>
-            )}
-          </div>
-        )}
-
-        {activeMenu === 'wallpaper' && (
-          <div className="my-room-panel-section">
-            <div className="my-room-panel-title">
-              <strong>벽지</strong>
-              <p>방의 분위기를 바꾸는 배경 컬러예요.</p>
-            </div>
-            <div className="my-room-option-grid is-menu-grid">
-              {wallpaperOptions.map((option) => (
-                <button className={`my-room-option ${room.wallpaper === option.id ? 'is-selected' : ''}`} key={option.id} type="button" onClick={() => setRoom((current) => ({ ...current, wallpaper: option.id, updated_at: new Date().toISOString() }))}>
-                  <span className={`my-room-swatch wallpaper-${option.id}`} />
-                  <strong>{option.label}</strong>
-                  <small>{option.description}</small>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeMenu === 'floor' && (
-          <div className="my-room-panel-section">
-            <div className="my-room-panel-title">
-              <strong>바닥</strong>
-              <p>가구와 잘 어울리는 바닥을 골라보세요.</p>
-            </div>
-            <div className="my-room-option-grid is-menu-grid">
-              {floorOptions.map((option) => (
-                <button className={`my-room-option ${room.floor === option.id ? 'is-selected' : ''}`} key={option.id} type="button" onClick={() => setRoom((current) => ({ ...current, floor: option.id, updated_at: new Date().toISOString() }))}>
-                  <span className={`my-room-swatch floor-${option.id}`} />
-                  <strong>{option.label}</strong>
-                  <small>{option.description}</small>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeMenu === 'manage' && (
-          <div className="my-room-panel-section">
-            <div className="my-room-panel-title">
-              <strong>관리</strong>
-              <p>기본 배치로 돌리거나 저장할 수 있어요.</p>
-            </div>
-            <div className="my-room-manage-grid">
-              <button type="button" onClick={() => setRoom(createDefaultMyRoom(myProfileId))}>초기화</button>
-              <button type="button" onClick={() => setRoom((current) => ({ ...current, items: defaultMyRoomItems, updated_at: new Date().toISOString() }))}>기본 가구</button>
-              <button type="button" onClick={handleSave}>저장</button>
-            </div>
-            {notice && <p className="my-room-notice">{notice}</p>}
-            <div className="my-room-item-list is-compact-list">
-              {room.items.map((item) => (
-                <button className={item.id === selectedId ? 'is-selected' : ''} key={item.id} type="button" onClick={() => { setSelectedId(item.id); setActiveMenu('selected'); }}>{item.label}</button>
-              ))}
-            </div>
-          </div>
-        )}
+        {renderEditorPanel()}
       </Card>
     </section>
   );
