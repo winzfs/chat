@@ -82,7 +82,7 @@ function RoomItemContent({ item }: { item: MyRoomItem }) {
   const assetPath = itemAssetPath(item);
 
   if (assetPath && !imageFailed) {
-    return <img alt="" className="room-item-image" draggable={false} onError={() => setImageFailed(true)} src={assetPath} />;
+    return <img alt={item.label} className="room-item-image" draggable={false} onError={() => setImageFailed(true)} src={assetPath} />;
   }
 
   return <span className="room-item-emoji">{itemIcon(item)}</span>;
@@ -214,21 +214,25 @@ function RoomCanvasComponent({
       </div>
       <div className="room-stage" onClick={handleClick} role={onStageClick ? 'button' : undefined} tabIndex={onStageClick ? 0 : undefined}>
         <div className="room-floor" />
-        {room.items.map((item) => (
-          <div
-            className={`room-item room-item-${item.item_type} asset-${item.asset_id} ${selectedItemId === item.id ? 'is-selected' : ''}`}
-            key={item.id}
-            onPointerCancel={handleItemPointerCancel}
-            onPointerDown={(event) => handleItemPointerDown(event, item)}
-            onPointerMove={handleItemPointerMove}
-            onPointerUp={finishDrag}
-            style={getItemStyle(item)}
-            title={item.label}
-          >
-            <span className="room-item-shadow" />
-            <span className="room-item-icon"><RoomItemContent item={item} /></span>
-          </div>
-        ))}
+        {room.items.map((item) => {
+          const hasImage = Boolean(itemAssetPath(item));
+
+          return (
+            <div
+              className={`room-item room-item-${item.item_type} asset-${item.asset_id} ${selectedItemId === item.id ? 'is-selected' : ''}`}
+              key={item.id}
+              onPointerCancel={handleItemPointerCancel}
+              onPointerDown={(event) => handleItemPointerDown(event, item)}
+              onPointerMove={handleItemPointerMove}
+              onPointerUp={finishDrag}
+              style={getItemStyle(item)}
+              title={item.label}
+            >
+              <span className="room-item-shadow" />
+              <span className={`room-item-icon ${hasImage ? 'has-image' : ''}`}><RoomItemContent item={item} /></span>
+            </div>
+          );
+        })}
         {characters.map((character) => (
           <div className={`room-character is-${character.variant}`} key={character.id} style={getCharacterStyle(character)}>
             {character.bubble && <div className="room-speech-bubble">{character.bubble}</div>}
