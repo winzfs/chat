@@ -63,8 +63,7 @@
   opacity: 0.7;
 }
 
-.my-room-preview-card,
-.my-room-editor-dock {
+.my-room-preview-card {
   min-height: 0;
 }
 
@@ -95,80 +94,92 @@
   transform: translateY(-12px);
 }
 
-.my-room-editor-dock.is-floating-editor {
+.my-room-floating-editor {
   position: absolute;
-  right: 10px;
-  bottom: 10px;
-  left: 10px;
-  z-index: 12;
+  right: 12px;
+  bottom: 12px;
+  z-index: 14;
   display: grid;
-  max-height: min(158px, 23dvh);
-  overflow: visible;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  backdrop-filter: none;
-  gap: 6px;
+  justify-items: end;
+  gap: 8px;
+  pointer-events: none;
 }
 
-.my-room-editor-dock.is-floating-editor .my-room-menu-tabs {
-  gap: 4px;
-  padding: 4px;
+.my-room-floating-editor > * {
+  pointer-events: auto;
+}
+
+.my-room-floating-editor-toggle {
+  min-width: 74px !important;
+  min-height: 42px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border: 1px solid rgba(255, 107, 157, 0.22) !important;
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, rgba(255, 91, 143, 0.96), rgba(255, 135, 84, 0.96)) !important;
+  box-shadow: 0 12px 26px rgba(255, 91, 143, 0.24) !important;
+  color: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+}
+
+.my-room-floating-editor-panel {
+  display: grid;
+  width: min(342px, calc(100vw - 58px));
+  max-height: min(360px, 48dvh);
+  overflow: hidden;
+  padding: 8px;
   border: 1px solid rgba(255, 107, 157, 0.16);
-  border-radius: 20px;
-  background: rgba(255, 244, 248, 0.94);
-  box-shadow: 0 10px 22px rgba(255, 107, 157, 0.14);
-  backdrop-filter: blur(14px);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 34px rgba(255, 107, 157, 0.18);
+  backdrop-filter: blur(16px);
+  gap: 8px;
 }
 
-.my-room-editor-dock.is-floating-editor .my-room-menu-tabs button {
-  min-height: 30px !important;
+.my-room-floating-editor-panel .my-room-menu-tabs {
+  gap: 4px;
+  padding: 3px;
+  border-radius: 18px;
+}
+
+.my-room-floating-editor-panel .my-room-menu-tabs button {
+  min-height: 31px !important;
   padding: 0 4px !important;
   border-radius: 14px !important;
   font-size: 11px !important;
 }
 
-.my-room-editor-dock.is-floating-editor .my-room-panel-section {
-  max-height: min(88px, 13dvh);
+.my-room-floating-editor-panel .my-room-panel-section {
+  max-height: min(272px, 36dvh);
   overflow: auto;
-  gap: 5px;
-  padding: 6px;
-  border: 1px solid rgba(255, 107, 157, 0.12);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 10px 22px rgba(255, 107, 157, 0.1);
-  backdrop-filter: blur(12px);
+  gap: 7px;
+  padding: 2px;
 }
 
-.my-room-editor-dock.is-floating-editor .my-room-panel-title {
-  gap: 1px;
-}
-
-.my-room-editor-dock.is-floating-editor .my-room-panel-title p {
+.my-room-floating-editor-panel .my-room-panel-title p {
   display: none;
 }
 
-.my-room-editor-dock.is-floating-editor .my-room-catalog-grid,
-.my-room-editor-dock.is-floating-editor .my-room-option-grid,
-.my-room-editor-dock.is-floating-editor .my-room-control-grid,
-.my-room-editor-dock.is-floating-editor .my-room-manage-grid {
+.my-room-floating-editor-panel .my-room-catalog-grid,
+.my-room-floating-editor-panel .my-room-option-grid,
+.my-room-floating-editor-panel .my-room-control-grid,
+.my-room-floating-editor-panel .my-room-manage-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 5px;
+  gap: 6px;
 }
 
-.my-room-editor-dock.is-floating-editor .my-room-catalog-grid button,
-.my-room-editor-dock.is-floating-editor .my-room-option,
-.my-room-editor-dock.is-floating-editor .my-room-control-grid button,
-.my-room-editor-dock.is-floating-editor .my-room-manage-grid button {
-  min-height: 42px !important;
-  padding: 5px 6px !important;
-  border-radius: 14px !important;
+.my-room-floating-editor-panel .my-room-catalog-grid button,
+.my-room-floating-editor-panel .my-room-option,
+.my-room-floating-editor-panel .my-room-control-grid button,
+.my-room-floating-editor-panel .my-room-manage-grid button {
+  min-height: 48px !important;
+  padding: 6px !important;
+  border-radius: 15px !important;
 }
 
-.my-room-editor-dock.is-floating-editor .my-room-catalog-grid small,
-.my-room-editor-dock.is-floating-editor .my-room-option small {
+.my-room-floating-editor-panel .my-room-catalog-grid small,
+.my-room-floating-editor-panel .my-room-option small {
   display: none;
 }
 
@@ -192,24 +203,34 @@
     transform: translateY(-14px);
   }
 
-  .my-room-editor-dock.is-floating-editor {
-    right: 8px;
-    bottom: 8px;
-    left: 8px;
-    max-height: min(146px, 24dvh);
-    padding: 0 !important;
+  .my-room-floating-editor {
+    right: 10px;
+    bottom: 10px;
   }
 
-  .my-room-editor-dock.is-floating-editor .my-room-panel-section {
-    max-height: min(78px, 14dvh);
-    padding: 5px;
+  .my-room-floating-editor-toggle {
+    min-width: 68px !important;
+    min-height: 39px !important;
+    padding: 0 12px !important;
+    font-size: 12px !important;
   }
 
-  .my-room-editor-dock.is-floating-editor .my-room-catalog-grid button,
-  .my-room-editor-dock.is-floating-editor .my-room-option,
-  .my-room-editor-dock.is-floating-editor .my-room-control-grid button,
-  .my-room-editor-dock.is-floating-editor .my-room-manage-grid button {
-    min-height: 38px !important;
+  .my-room-floating-editor-panel {
+    width: min(326px, calc(100vw - 48px));
+    max-height: min(330px, 46dvh);
+    padding: 7px;
+    border-radius: 22px;
+  }
+
+  .my-room-floating-editor-panel .my-room-panel-section {
+    max-height: min(246px, 34dvh);
+  }
+
+  .my-room-floating-editor-panel .my-room-catalog-grid button,
+  .my-room-floating-editor-panel .my-room-option,
+  .my-room-floating-editor-panel .my-room-control-grid button,
+  .my-room-floating-editor-panel .my-room-manage-grid button {
+    min-height: 44px !important;
     padding: 5px !important;
   }
 }
