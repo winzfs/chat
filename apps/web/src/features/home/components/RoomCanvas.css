@@ -23,7 +23,7 @@
 
 .room-wall {
   position: absolute;
-  inset: 0 0 38%;
+  inset: 0 0 48%;
   overflow: hidden;
 }
 
@@ -76,10 +76,10 @@
   position: absolute;
   left: -8%;
   right: -8%;
-  bottom: -18%;
-  height: 57%;
-  border-top: 2px solid rgba(255, 255, 255, 0.72);
-  border-radius: 50% 50% 0 0 / 18% 18% 0 0;
+  bottom: -16%;
+  height: 68%;
+  border-top: 2px solid rgba(255, 255, 255, 0.76);
+  border-radius: 50% 50% 0 0 / 14% 14% 0 0;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0));
 }
 
