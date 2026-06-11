@@ -33,8 +33,6 @@
 
 .my-room-preview-card,
 .my-room-editor-dock {
-  display: grid;
-  gap: 8px;
   min-height: 0;
 }
 
@@ -42,21 +40,28 @@
   position: relative;
   top: auto;
   z-index: 1;
+  display: flex !important;
+  min-height: 0;
   overflow: hidden;
   padding: 10px !important;
   border-radius: 24px !important;
   background: rgba(255, 255, 255, 0.96) !important;
   box-shadow: 0 8px 18px rgba(255, 107, 157, 0.09);
   backdrop-filter: none;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .my-room-preview-card .room-canvas {
-  min-height: 0;
-  height: 100%;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: clamp(340px, 45dvh, 520px) !important;
+  height: auto !important;
 }
 
 .my-room-card-title-row {
   display: flex;
+  flex: 0 0 auto;
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
@@ -90,6 +95,7 @@
 }
 
 .my-room-notice {
+  flex: 0 0 auto;
   padding: 7px 9px;
   border-radius: 14px;
   background: rgba(255, 107, 157, 0.1);
@@ -99,11 +105,13 @@
 }
 
 .my-room-editor-dock {
+  display: grid;
   overflow: hidden;
   padding: 9px !important;
   border-radius: 24px !important;
   background: rgba(255, 255, 255, 0.96) !important;
   box-shadow: 0 8px 18px rgba(39, 39, 42, 0.06);
+  gap: 8px;
 }
 
 .my-room-menu-tabs {
@@ -140,7 +148,7 @@
   display: grid;
   gap: 8px;
   min-height: 0;
-  max-height: 184px;
+  max-height: 168px;
   overflow: auto;
   padding: 2px;
   overscroll-behavior: contain;
@@ -370,6 +378,7 @@
 
 @media (max-width: 420px) {
   .my-room-editor-screen {
+    grid-template-rows: auto minmax(360px, 1fr) auto auto;
     height: calc(100dvh - 106px);
     gap: 7px;
   }
@@ -380,6 +389,10 @@
 
   .my-room-preview-card.is-sticky-preview {
     padding: 9px !important;
+  }
+
+  .my-room-preview-card .room-canvas {
+    min-height: clamp(330px, 48dvh, 460px) !important;
   }
 
   .my-room-card-title-row p {
@@ -398,7 +411,7 @@
   }
 
   .my-room-panel-section {
-    max-height: 166px;
+    max-height: 142px;
   }
 
   .my-room-catalog-grid {
