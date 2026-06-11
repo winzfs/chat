@@ -1,0 +1,2 @@
+deploy-trigger: 2026-06-12T04:54:00Z
+reason: force Cloudflare Pages to detect a new main commit after my-room restore
