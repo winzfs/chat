@@ -19,8 +19,8 @@ function clampPercent(value: number) {
   return Math.min(Math.max(value, 0), 100);
 }
 
-function clampRotation(value: number) {
-  return Math.min(Math.max(value, -45), 45);
+function normalizeRotation(value: number) {
+  return ((Math.round(value / 45) * 45) % 360 + 360) % 360;
 }
 
 function clampZIndex(value: number) {
@@ -85,7 +85,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
 
   const rotateSelectedItem = (amount: number) => {
     if (!selectedItem) return;
-    updateItem(selectedItem.id, (item) => ({ ...item, rotation: clampRotation((item.rotation ?? 0) + amount) }));
+    updateItem(selectedItem.id, (item) => ({ ...item, rotation: normalizeRotation((item.rotation ?? 0) + amount) }));
   };
 
   const changeSelectedItemDepth = (amount: number) => {
@@ -180,14 +180,14 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
         <div className="my-room-panel-section">
           <div className="my-room-panel-title">
             <strong>선택한 가구</strong>
-            <p>{selectedItem ? `${selectedItem.label} · X ${Math.round(selectedItem.x)} / Y ${Math.round(selectedItem.y)} / 깊이 ${selectedItem.z_index} / 회전 ${selectedItem.rotation ?? 0}°` : '방 안의 가구를 누르거나 아래 목록에서 선택하세요.'}</p>
+            <p>{selectedItem ? `${selectedItem.label} · X ${Math.round(selectedItem.x)} / Y ${Math.round(selectedItem.y)} / 깊이 ${selectedItem.z_index} / 회전 ${normalizeRotation(selectedItem.rotation ?? 0)}°` : '방 안의 가구를 누르거나 아래 목록에서 선택하세요.'}</p>
           </div>
           {selectedItem ? (
             <div className="my-room-control-grid">
               <button type="button" onClick={() => changeSelectedItemDepth(1)}>앞으로</button>
               <button type="button" onClick={() => changeSelectedItemDepth(-1)}>뒤로</button>
-              <button type="button" onClick={() => rotateSelectedItem(-5)}>왼쪽 회전</button>
-              <button type="button" onClick={() => rotateSelectedItem(5)}>오른쪽 회전</button>
+              <button type="button" onClick={() => rotateSelectedItem(-45)}>왼쪽 45°</button>
+              <button type="button" onClick={() => rotateSelectedItem(45)}>오른쪽 45°</button>
               <button type="button" onClick={duplicateSelectedItem}>복제</button>
               <button className="danger-button" type="button" onClick={removeSelectedItem}>삭제</button>
             </div>
