@@ -60,7 +60,7 @@ function normalizeRoom(room?: Partial<MyRoom> | null, profileId = getProfileId()
     ...createDefaultMyRoom(profileId),
     ...room,
     profile_id: room?.profile_id || profileId,
-    items: Array.isArray(room?.items) && room.items.length > 0 ? room.items : defaultMyRoomItems,
+    items: Array.isArray(room?.items) ? room.items : defaultMyRoomItems,
   };
 }
 
