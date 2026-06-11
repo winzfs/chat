@@ -12,7 +12,7 @@ const allowedFloors = new Set(['cream', 'wood', 'checker', 'carpet']);
 
 const defaultItems = [
   { id: 'window-main', item_type: 'window', asset_id: 'basic-window', label: '창문', x: 68, y: 18, z_index: 2, rotation: 0 },
-  { id: 'bed-soft', item_type: 'bed', asset_id: 'soft-bed', label: '침대', x: 12, y: 48, z_index: 3, rotation: 0 },
+  { id: 'star-bed', item_type: 'bed', asset_id: 'bed01', label: '별침대', x: 12, y: 48, z_index: 3, rotation: 0 },
   { id: 'rug-round', item_type: 'rug', asset_id: 'round-rug', label: '러그', x: 44, y: 66, z_index: 1, rotation: 0 },
   { id: 'table-tea', item_type: 'table', asset_id: 'tea-table', label: '테이블', x: 58, y: 58, z_index: 4, rotation: 0 },
   { id: 'plant-small', item_type: 'plant', asset_id: 'small-plant', label: '화분', x: 82, y: 52, z_index: 4, rotation: 0 },
@@ -55,8 +55,10 @@ function normalizeItems(value: unknown) {
     const record = item && typeof item === 'object' ? item as Record<string, unknown> : {};
     const id = typeof record.id === 'string' && record.id.trim() ? record.id.trim().slice(0, 40) : `item-${index}`;
     const itemType = typeof record.item_type === 'string' && record.item_type.trim() ? record.item_type.trim().slice(0, 30) : 'decor';
-    const assetId = typeof record.asset_id === 'string' && record.asset_id.trim() ? record.asset_id.trim().slice(0, 40) : itemType;
-    const label = typeof record.label === 'string' && record.label.trim() ? record.label.trim().slice(0, 20) : '소품';
+    const rawAssetId = typeof record.asset_id === 'string' && record.asset_id.trim() ? record.asset_id.trim().slice(0, 40) : itemType;
+    const assetId = itemType === 'bed' && (rawAssetId === 'soft-bed' || rawAssetId === 'bed01') ? 'bed01' : rawAssetId;
+    const rawLabel = typeof record.label === 'string' && record.label.trim() ? record.label.trim().slice(0, 20) : '소품';
+    const label = itemType === 'bed' && assetId === 'bed01' ? '별침대' : rawLabel;
     const x = Math.min(Math.max(Number(record.x ?? 50), 0), 100);
     const y = Math.min(Math.max(Number(record.y ?? 50), 0), 100);
     const zIndex = Math.min(Math.max(Number(record.z_index ?? index + 1), 0), 99);
