@@ -1,13 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
-import { createDefaultMyRoom, defaultMyRoomItems, floorOptions, loadMyRoom, saveMyRoom, wallpaperOptions, type MyRoom } from '../api/myRoom';
+import { createDefaultMyRoom, defaultMyRoomItems, floorOptions, loadMyRoom, saveMyRoom, wallpaperOptions, type MyRoom, type MyRoomItem } from '../api/myRoom';
 import { getProfileId } from '../api/profileId';
 import { RoomCanvas } from './RoomCanvas';
 import './MyRoomSettingsPanel.css';
 
+function clampPercent(value: number) {
+  return Math.min(Math.max(value, 0), 100);
+}
+
+function clampRotation(value: number) {
+  return Math.min(Math.max(value, -45), 45);
+}
+
+function clampZIndex(value: number) {
+  return Math.min(Math.max(value, 0), 99);
+}
+
 export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
   const [room, setRoom] = useState<MyRoom>(() => createDefaultMyRoom());
+  const [selectedItemId, setSelectedItemId] = useState(defaultMyRoomItems[0]?.id ?? '');
   const [notice, setNotice] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -17,10 +30,13 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
     loadMyRoom(getProfileId()).then((nextRoom) => {
       if (!isMounted) return;
       setRoom(nextRoom);
+      setSelectedItemId(nextRoom.items[0]?.id ?? '');
       setIsLoading(false);
     }).catch(() => {
       if (!isMounted) return;
-      setRoom(createDefaultMyRoom());
+      const fallbackRoom = createDefaultMyRoom();
+      setRoom(fallbackRoom);
+      setSelectedItemId(fallbackRoom.items[0]?.id ?? '');
       setIsLoading(false);
     });
 
@@ -28,6 +44,29 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
       isMounted = false;
     };
   }, []);
+
+  const selectedItem = useMemo(() => room.items.find((item) => item.id === selectedItemId) ?? null, [room.items, selectedItemId]);
+
+  const updateItem = (itemId: string, patcher: (item: MyRoomItem) => MyRoomItem) => {
+    setRoom((current) => ({
+      ...current,
+      items: current.items.map((item) => item.id === itemId ? patcher(item) : item),
+    }));
+  };
+
+  const moveItem = (itemId: string, position: { x: number; y: number }) => {
+    updateItem(itemId, (item) => ({ ...item, x: clampPercent(position.x), y: clampPercent(position.y) }));
+  };
+
+  const rotateSelectedItem = (amount: number) => {
+    if (!selectedItem) return;
+    updateItem(selectedItem.id, (item) => ({ ...item, rotation: clampRotation((item.rotation ?? 0) + amount) }));
+  };
+
+  const changeSelectedItemDepth = (amount: number) => {
+    if (!selectedItem) return;
+    updateItem(selectedItem.id, (item) => ({ ...item, z_index: clampZIndex(item.z_index + amount) }));
+  };
 
   const save = async () => {
     setIsSaving(true);
@@ -40,16 +79,19 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
     }
 
     setRoom(saved);
+    setSelectedItemId(saved.items.find((item) => item.id === selectedItemId)?.id ?? saved.items[0]?.id ?? '');
     setNotice('마이룸이 저장됐어요. 새 채팅방에도 이 방이 보여요.');
   };
 
   const resetItems = () => {
     setRoom((current) => ({ ...current, items: defaultMyRoomItems }));
+    setSelectedItemId(defaultMyRoomItems[0]?.id ?? '');
     setNotice('기본 가구 배치로 되돌렸어요. 저장을 눌러 반영해주세요.');
   };
 
   const clearItems = () => {
     setRoom((current) => ({ ...current, items: [] }));
+    setSelectedItemId('');
     setNotice('가구를 비웠어요. 저장을 눌러 반영해주세요.');
   };
 
@@ -64,10 +106,39 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
       </Card>
 
       <Card className="person-card my-room-preview-card">
-        <strong>미리보기</strong>
-        {isLoading ? <p>마이룸을 불러오는 중...</p> : <RoomCanvas isCompact room={room} />}
+        <div className="my-room-card-title-row">
+          <div>
+            <strong>배치 편집</strong>
+            <p>가구를 손가락으로 끌어서 원하는 위치에 놓아보세요.</p>
+          </div>
+          <span>{selectedItem ? selectedItem.label : '선택 없음'}</span>
+        </div>
+        {isLoading ? (
+          <p>마이룸을 불러오는 중...</p>
+        ) : (
+          <RoomCanvas
+            isEditing
+            onItemMove={moveItem}
+            onItemSelect={setSelectedItemId}
+            selectedItemId={selectedItemId}
+            room={room}
+          />
+        )}
         {notice && <p className="my-room-notice">{notice}</p>}
       </Card>
+
+      {selectedItem && (
+        <Card className="person-card my-room-option-card">
+          <strong>선택한 가구 조절</strong>
+          <p>{selectedItem.label} · X {Math.round(selectedItem.x)} / Y {Math.round(selectedItem.y)} / 깊이 {selectedItem.z_index} / 회전 {selectedItem.rotation ?? 0}°</p>
+          <div className="my-room-control-grid">
+            <button type="button" onClick={() => changeSelectedItemDepth(1)}>앞으로</button>
+            <button type="button" onClick={() => changeSelectedItemDepth(-1)}>뒤로</button>
+            <button type="button" onClick={() => rotateSelectedItem(-5)}>왼쪽 회전</button>
+            <button type="button" onClick={() => rotateSelectedItem(5)}>오른쪽 회전</button>
+          </div>
+        </Card>
+      )}
 
       <Card className="person-card my-room-option-card">
         <strong>벽지</strong>
@@ -107,10 +178,14 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
 
       <Card className="person-card my-room-option-card">
         <strong>가구/소품 슬롯</strong>
-        <p>지금은 기본 가구 배치를 저장하고, 이후 에셋 이미지·벽지·액자·가구 아이템을 이 구조에 붙일 수 있게 설계했어요.</p>
+        <p>가구 버튼을 누르면 해당 가구가 선택돼요. 선택한 가구는 위 미리보기에서 바로 끌어 배치할 수 있어요.</p>
         <div className="my-room-item-list">
           {room.items.length === 0 && <span>배치된 가구가 없어요.</span>}
-          {room.items.map((item) => <span key={item.id}>{item.label}</span>)}
+          {room.items.map((item) => (
+            <button className={selectedItemId === item.id ? 'is-selected' : ''} key={item.id} type="button" onClick={() => setSelectedItemId(item.id)}>
+              {item.label}
+            </button>
+          ))}
         </div>
         <div className="chat-room-card-actions">
           <button type="button" onClick={resetItems}>기본 배치</button>
@@ -120,7 +195,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
 
       <Card className="person-card my-room-future-card">
         <strong>다음 확장 설계</strong>
-        <p>아이템은 `asset_id`, 위치 `x/y`, 깊이 `z_index`, 회전값을 가지고 있어요. 나중에 실제 가구 PNG나 도트 에셋을 넣으면 이 데이터 그대로 배치 편집기로 확장할 수 있어요.</p>
+        <p>지금 배치 데이터는 그대로 저장돼요. 다음에는 실제 PNG/WebP 가구 에셋과 상점 아이템을 `asset_id`에 연결하면 됩니다.</p>
       </Card>
 
       <div className="my-room-save-bar">
