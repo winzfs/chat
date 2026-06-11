@@ -26,11 +26,40 @@
   gap: 12px;
 }
 
-.my-room-preview-card > strong,
+.my-room-preview-card .room-canvas {
+  min-height: 380px;
+}
+
+.my-room-card-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.my-room-card-title-row strong,
 .my-room-option-card > strong,
 .my-room-future-card > strong {
+  display: block;
   color: #27272a;
   font-size: 15px;
+  font-weight: 950;
+}
+
+.my-room-card-title-row p {
+  margin-top: 4px;
+  color: #71717a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.my-room-card-title-row span {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 107, 157, 0.1);
+  color: #ff4f8b;
+  font-size: 11px;
   font-weight: 950;
 }
 
@@ -40,6 +69,19 @@
   background: rgba(255, 107, 157, 0.1);
   color: #ff4f8b !important;
   font-weight: 900 !important;
+}
+
+.my-room-control-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.my-room-control-grid button {
+  min-height: 40px !important;
+  margin: 0 !important;
+  border-radius: 16px !important;
+  font-size: 12px !important;
 }
 
 .my-room-option-grid {
@@ -130,13 +172,22 @@
   gap: 7px;
 }
 
-.my-room-item-list span {
-  padding: 7px 10px;
-  border-radius: 999px;
-  background: rgba(255, 107, 157, 0.1);
-  color: #ff4f8b;
-  font-size: 12px;
-  font-weight: 900;
+.my-room-item-list span,
+.my-room-item-list button {
+  min-height: 34px !important;
+  margin: 0 !important;
+  padding: 7px 10px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 107, 157, 0.1) !important;
+  color: #ff4f8b !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+.my-room-item-list button.is-selected {
+  background: #ff5b8f !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 22px rgba(255, 91, 143, 0.22) !important;
 }
 
 .my-room-save-bar {
@@ -154,5 +205,9 @@
 @media (max-width: 420px) {
   .my-room-option-grid {
     grid-template-columns: 1fr;
+  }
+
+  .my-room-preview-card .room-canvas {
+    min-height: 340px;
   }
 }
