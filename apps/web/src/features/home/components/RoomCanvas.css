@@ -13,6 +13,12 @@
   border-radius: 24px;
 }
 
+.room-canvas.is-editing {
+  border-color: rgba(255, 107, 157, 0.32);
+  background-image: linear-gradient(rgba(255, 107, 157, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 107, 157, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
 .room-wall {
   position: absolute;
   inset: 0 0 38%;
@@ -122,6 +128,16 @@
   height: 48px;
   place-items: center;
   pointer-events: none;
+  touch-action: none;
+}
+
+.room-canvas.is-editing .room-item {
+  cursor: grab;
+  pointer-events: auto;
+}
+
+.room-canvas.is-editing .room-item:active {
+  cursor: grabbing;
 }
 
 .room-canvas.is-compact .room-item {
@@ -151,6 +167,17 @@
   background: rgba(255, 255, 255, 0.82);
   box-shadow: 0 10px 20px rgba(39, 39, 42, 0.08);
   font-size: 25px;
+}
+
+.room-canvas.is-editing .room-item-icon {
+  border-color: rgba(255, 107, 157, 0.26);
+  box-shadow: 0 12px 28px rgba(255, 107, 157, 0.16);
+}
+
+.room-item.is-selected .room-item-icon {
+  border-color: rgba(255, 79, 139, 0.78);
+  background: rgba(255, 244, 248, 0.94);
+  box-shadow: 0 0 0 6px rgba(255, 107, 157, 0.13), 0 18px 34px rgba(255, 107, 157, 0.18);
 }
 
 .room-item-rug .room-item-icon {
