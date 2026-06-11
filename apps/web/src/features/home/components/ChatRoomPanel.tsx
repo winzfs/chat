@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
 import { compressImageToWebp } from '../../../shared/lib/compressImage';
@@ -10,6 +10,22 @@ import { ChatMessageItem } from './ChatMessageItem';
 import { ChatRoomGameScene } from './ChatRoomGameScene';
 import './ChatRoomPanel.css';
 
+function previewMessageText(message: D1ChatMessage) {
+  if (message.message_type === 'image') return '사진을 보냈어요 📷';
+  return message.body?.trim() || '내용 없는 메시지';
+}
+
+function formatPreviewTime(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return '';
+
+  return date.toLocaleTimeString('ko-KR', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: () => void }) {
   const [messages, setMessages] = useState<D1ChatMessage[]>([]);
   const [text, setText] = useState('');
@@ -18,6 +34,7 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
   const [errorText, setErrorText] = useState('');
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const peer = getPeerFromRoom(room);
+  const previewMessages = useMemo(() => messages.slice(-3), [messages]);
 
   useEffect(() => {
     loadD1ChatMessages(room.id).then(setMessages);
@@ -119,6 +136,17 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
       </Card>
 
       <ChatRoomGameScene messages={messages} room={room} />
+
+      <div className="chat-room-preview-box" aria-label="최근 채팅 미리보기">
+        {previewMessages.length === 0 ? (
+          <div className="chat-room-preview-row"><span className="chat-room-preview-body">아직 메시지가 없어요.</span></div>
+        ) : previewMessages.map((message) => (
+          <div className="chat-room-preview-row" key={message.id}>
+            <span className="chat-room-preview-body"><b>{message.sender_nickname}:</b> {previewMessageText(message)}</span>
+            <span className="chat-room-preview-time">{formatPreviewTime(message.created_at)}</span>
+          </div>
+        ))}
+      </div>
 
       {isHistoryOpen && (
         <div className="chat-history-overlay" role="dialog" aria-modal="true" aria-labelledby="chat-history-title">
