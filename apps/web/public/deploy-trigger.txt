@@ -1,2 +1,3 @@
-deploy-trigger: 2026-06-12T04:54:00Z
-reason: force Cloudflare Pages to detect a new main commit after my-room restore
+deploy-trigger: 2026-06-12T05:20:00+09:00
+reason: force Cloudflare Pages to detect latest floating editor menu changes
+latest-target: 98f1745b5443884c0e647befeec0056667969fc3
