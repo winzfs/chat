@@ -7,6 +7,7 @@ import { loadMyProfile } from '../api/profileStorage';
 import { getPeerFromRoom } from '../api/userSafety';
 import { RoomCanvas, type RoomCharacter, type RoomChatHistoryLine } from './RoomCanvas';
 import './ChatRoomGameScene.css';
+import './RoomChatHistoryOverlay.css';
 
 function messageText(message?: D1ChatMessage) {
   if (!message) return '';
