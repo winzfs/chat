@@ -1,4 +1,4 @@
-import { memo, useRef, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
+import { memo, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import type { MyRoom, MyRoomItem } from '../api/myRoom';
 import './RoomCanvas.css';
 
@@ -43,6 +43,11 @@ const itemIcons: Record<string, string> = {
   lamp: '💡',
 };
 
+const furnitureAssetPaths: Record<string, string> = {
+  bed01: '/assets/room/furniture/bed01.png',
+  'soft-bed': '/assets/room/furniture/bed01.png',
+};
+
 function clampPercent(value: number) {
   return Math.min(Math.max(value, 0), 100);
 }
@@ -66,6 +71,21 @@ function getCharacterStyle(character: RoomCharacter): CSSProperties {
 
 function itemIcon(item: MyRoomItem) {
   return itemIcons[item.item_type] ?? '✨';
+}
+
+function itemAssetPath(item: MyRoomItem) {
+  return furnitureAssetPaths[item.asset_id] ?? '';
+}
+
+function RoomItemContent({ item }: { item: MyRoomItem }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const assetPath = itemAssetPath(item);
+
+  if (assetPath && !imageFailed) {
+    return <img alt="" className="room-item-image" draggable={false} onError={() => setImageFailed(true)} src={assetPath} />;
+  }
+
+  return <span className="room-item-emoji">{itemIcon(item)}</span>;
 }
 
 function positionFromStagePointer(event: PointerEvent<HTMLElement>) {
@@ -206,7 +226,7 @@ function RoomCanvasComponent({
             title={item.label}
           >
             <span className="room-item-shadow" />
-            <span className="room-item-icon">{itemIcon(item)}</span>
+            <span className="room-item-icon"><RoomItemContent item={item} /></span>
           </div>
         ))}
         {characters.map((character) => (
