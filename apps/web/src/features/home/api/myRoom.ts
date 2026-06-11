@@ -51,6 +51,7 @@ export const floorOptions: { id: MyRoomFloor; label: string; description: string
 export const roomItemCatalog: MyRoomCatalogItem[] = [
   { catalog_id: 'basic-window', item_type: 'window', asset_id: 'basic-window', label: '창문', description: '방 분위기를 밝게 만드는 기본 창문', default_x: 68, default_y: 18, default_z_index: 2 },
   { catalog_id: 'star-bed', item_type: 'bed', asset_id: 'bed01', label: '별침대', description: '별빛 느낌의 포근한 침대', default_x: 14, default_y: 52, default_z_index: 3 },
+  { catalog_id: 'wooden-desk', item_type: 'desk', asset_id: 'desk01', label: '나무책상', description: '따뜻한 분위기의 나무 책상', default_x: 54, default_y: 58, default_z_index: 4 },
   { catalog_id: 'round-rug', item_type: 'rug', asset_id: 'round-rug', label: '러그', description: '방 중앙에 까는 둥근 러그', default_x: 46, default_y: 68, default_z_index: 1 },
   { catalog_id: 'tea-table', item_type: 'table', asset_id: 'tea-table', label: '테이블', description: '대화하기 좋은 작은 테이블', default_x: 58, default_y: 58, default_z_index: 4 },
   { catalog_id: 'small-plant', item_type: 'plant', asset_id: 'small-plant', label: '화분', description: '싱그러운 작은 화분', default_x: 82, default_y: 52, default_z_index: 4 },
