@@ -111,7 +111,7 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
           </div>
         </div>
         <div className="talk-actions chat-room-safety-actions">
-          <button type="button" onClick={() => setIsHistoryOpen((value) => !value)}>{isHistoryOpen ? '기록 닫기' : '기록'}</button>
+          <button type="button" onClick={() => setIsHistoryOpen(true)}>기록</button>
           <button type="button" onClick={handleReport}>신고</button>
           <button type="button" onClick={handleBlock}>차단</button>
         </div>
@@ -121,13 +121,22 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
       <ChatRoomGameScene messages={messages} room={room} />
 
       {isHistoryOpen && (
-        <Card className="person-card chat-history-card">
-          <strong>대화 기록</strong>
-          <div className="talk-list chat-message-list">
-            {messages.length === 0 && <Card className="person-card"><strong>아직 메시지가 없어요</strong><p>첫 메시지를 보내서 대화를 시작해보세요.</p></Card>}
-            {messages.map((message) => <ChatMessageItem key={message.id} message={message} />)}
-          </div>
-        </Card>
+        <div className="chat-history-overlay" role="dialog" aria-modal="true" aria-labelledby="chat-history-title">
+          <div className="chat-history-backdrop" onClick={() => setIsHistoryOpen(false)} />
+          <Card className="person-card chat-history-sheet">
+            <div className="chat-history-sheet-header">
+              <div>
+                <strong id="chat-history-title">대화 기록</strong>
+                <p>{messages.length}개 메시지</p>
+              </div>
+              <button type="button" onClick={() => setIsHistoryOpen(false)}>닫기</button>
+            </div>
+            <div className="talk-list chat-message-list chat-history-scroll">
+              {messages.length === 0 && <Card className="person-card"><strong>아직 메시지가 없어요</strong><p>첫 메시지를 보내서 대화를 시작해보세요.</p></Card>}
+              {messages.map((message) => <ChatMessageItem key={message.id} message={message} />)}
+            </div>
+          </Card>
+        </div>
       )}
 
       <form className="quick-compose chat-compose-bar" onSubmit={handleSubmit}>
