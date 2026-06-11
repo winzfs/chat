@@ -79,6 +79,7 @@ function CatalogThumbnail({ assetId, itemType, label }: { assetId: string; itemT
 export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
   const [room, setRoom] = useState<MyRoom>(() => createDefaultMyRoom());
   const [activeMenu, setActiveMenu] = useState<MyRoomEditorMenu>('furniture');
+  const [isEditorMenuOpen, setIsEditorMenuOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState(defaultMyRoomItems[0]?.id ?? '');
   const [notice, setNotice] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -140,6 +141,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
       const nextItem = createMyRoomItemFromCatalog(catalogItem, current.items.length);
       setSelectedItemId(nextItem.id);
       setActiveMenu('selected');
+      setIsEditorMenuOpen(true);
       return { ...current, items: [...current.items, nextItem] };
     });
     setNotice(`${catalogItem.label}을(를) 방에 추가했어요. 바로 끌어서 위치를 잡아보세요.`);
@@ -326,7 +328,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
         <div className="my-room-card-title-row">
           <div>
             <strong>배치 편집</strong>
-            <p>가구를 끌어서 옮기고, 아래 메뉴에서 꾸미기 도구를 바꿔요.</p>
+            <p>가구를 끌어서 옮기고, 아래 버튼으로 꾸미기 메뉴를 열어요.</p>
           </div>
           <span>{selectedItem ? selectedItem.label : '선택 없음'}</span>
         </div>
@@ -343,23 +345,36 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
         )}
         {notice && <p className="my-room-notice">{notice}</p>}
 
-        <Card className="person-card my-room-editor-dock is-floating-editor">
-          <div className="my-room-menu-tabs" role="tablist" aria-label="마이룸 편집 메뉴">
-            {editorMenus.map((menu) => (
-              <button
-                aria-selected={activeMenu === menu.id}
-                className={activeMenu === menu.id ? 'is-active' : ''}
-                key={menu.id}
-                role="tab"
-                type="button"
-                onClick={() => setActiveMenu(menu.id)}
-              >
-                {menu.label}
-              </button>
-            ))}
-          </div>
-          {renderEditorPanel()}
-        </Card>
+        <div className={isEditorMenuOpen ? 'my-room-floating-editor is-open' : 'my-room-floating-editor'}>
+          <button
+            className="my-room-floating-editor-toggle"
+            type="button"
+            aria-expanded={isEditorMenuOpen}
+            onClick={() => setIsEditorMenuOpen((current) => !current)}
+          >
+            {isEditorMenuOpen ? '접기' : '꾸미기'}
+          </button>
+
+          {isEditorMenuOpen && (
+            <div className="my-room-floating-editor-panel">
+              <div className="my-room-menu-tabs" role="tablist" aria-label="마이룸 편집 메뉴">
+                {editorMenus.map((menu) => (
+                  <button
+                    aria-selected={activeMenu === menu.id}
+                    className={activeMenu === menu.id ? 'is-active' : ''}
+                    key={menu.id}
+                    role="tab"
+                    type="button"
+                    onClick={() => setActiveMenu(menu.id)}
+                  >
+                    {menu.label}
+                  </button>
+                ))}
+              </div>
+              {renderEditorPanel()}
+            </div>
+          )}
+        </div>
       </Card>
     </section>
   );
