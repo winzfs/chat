@@ -1,3 +1,5 @@
+@import './components/ChatRoomBottomFill.css';
+
 .app-shell:has(.my-room-editor-screen),
 .app-shell:has(.chat-room-view) {
   padding-top: 0;
