@@ -1,12 +1,21 @@
 .chat-room-view {
+  position: relative;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 8px;
-  height: calc(100dvh - 14px);
-  min-height: 0;
+  height: 100svh;
+  min-height: 100svh;
+  max-height: 100dvh;
   overflow: hidden;
   padding-top: 8px;
-  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+}
+
+@supports (height: 100dvh) {
+  .chat-room-view {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
 }
 
 .chat-room-header-card {
@@ -226,12 +235,14 @@
 }
 
 .chat-compose-bar {
-  position: relative !important;
+  position: fixed !important;
+  left: max(16px, calc((100vw - 520px) / 2 + 16px)) !important;
+  right: max(16px, calc((100vw - 520px) / 2 + 16px)) !important;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
   z-index: 30 !important;
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) 54px 64px !important;
   gap: 8px !important;
-  width: 100% !important;
   margin: 0 !important;
   padding: 9px !important;
   border: 1px solid rgba(255, 107, 157, 0.16);
@@ -259,10 +270,19 @@
 
 @media (max-width: 420px) {
   .chat-room-view {
-    height: calc(100dvh - 12px);
+    height: 100svh;
+    min-height: 100svh;
+    max-height: 100dvh;
     gap: 7px;
     padding-top: 7px;
-    padding-bottom: calc(7px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+
+  @supports (height: 100dvh) {
+    .chat-room-view {
+      height: 100dvh;
+      min-height: 100dvh;
+    }
   }
 
   .chat-room-header-card {
@@ -292,6 +312,9 @@
   }
 
   .chat-compose-bar {
+    left: 16px !important;
+    right: 16px !important;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
     grid-template-columns: minmax(0, 1fr) 50px 58px !important;
     padding: 8px !important;
   }
