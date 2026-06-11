@@ -1,7 +1,37 @@
 .chat-room-game-scene {
   display: grid;
   gap: 10px;
-  padding: 2px 2px 8px;
+  min-height: calc(100dvh - 245px);
+  padding: 0 0 8px;
+}
+
+.chat-room-game-scene .room-canvas {
+  min-height: clamp(500px, calc(100dvh - 290px), 740px);
+  border-radius: 32px;
+}
+
+.chat-room-game-scene .room-character-body {
+  width: 60px;
+  height: 68px;
+  border-radius: 28px 28px 22px 22px;
+}
+
+.chat-room-game-scene .room-character-face {
+  font-size: 15px;
+}
+
+.chat-room-game-scene .room-character-name {
+  max-width: 92px;
+  padding: 4px 9px;
+  font-size: 11px;
+}
+
+.chat-room-game-scene .room-speech-bubble {
+  min-width: 92px;
+  max-width: 190px;
+  padding: 10px 12px;
+  border-radius: 20px 20px 20px 7px;
+  font-size: 13px;
 }
 
 .game-scene-title-row {
@@ -46,4 +76,25 @@
   font-size: 11px;
   font-weight: 850;
   text-align: center;
+}
+
+@media (max-width: 420px) {
+  .chat-room-game-scene {
+    min-height: calc(100dvh - 222px);
+  }
+
+  .chat-room-game-scene .room-canvas {
+    min-height: clamp(470px, calc(100dvh - 260px), 680px);
+    border-radius: 28px;
+  }
+
+  .chat-room-game-scene .room-character-body {
+    width: 54px;
+    height: 62px;
+  }
+
+  .chat-room-game-scene .room-speech-bubble {
+    max-width: 160px;
+    font-size: 12px;
+  }
 }
