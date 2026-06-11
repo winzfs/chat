@@ -175,6 +175,8 @@ docs/05-android-capacitor.md
 docs/06-mobile-only-android-build.md
 docs/07-play-store-release-checklist.md
 docs/08-play-store-listing-draft.md
+docs/09-release-aab-and-keystore.md
+docs/10-safety-and-operation-policy.md
 docs/current-implementation-status.md
 ```
 
@@ -182,7 +184,10 @@ docs/current-implementation-status.md
 실제 인증/권한 전환 계획은 `docs/04-auth-and-permissions-plan.md`를 기준으로 확인합니다.
 Android 패키징 절차는 `docs/05-android-capacitor.md`를 기준으로 확인합니다.
 모바일만으로 APK를 만드는 방법은 `docs/06-mobile-only-android-build.md`를 기준으로 확인합니다.
+Google Play 정식 출시 전 차단 조건은 `docs/07-play-store-release-checklist.md`를 기준으로 확인합니다.
 Play Store 등록 문구 초안은 `docs/08-play-store-listing-draft.md`를 기준으로 확인합니다.
+release AAB 서명 키 준비와 GitHub Secrets 등록 절차는 `docs/09-release-aab-and-keystore.md`를 기준으로 확인합니다.
+안전/운영 정책과 금지 콘텐츠, 신고/차단 처리 기준은 `docs/10-safety-and-operation-policy.md`를 기준으로 확인합니다.
 
 ## 로컬 실행
 
