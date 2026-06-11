@@ -1,8 +1,8 @@
 import { apiUrl } from './apiBase';
 import { getProfileId } from './profileId';
 
-export type MyRoomWallpaper = 'peach' | 'mint' | 'lavender' | 'sky';
-export type MyRoomFloor = 'cream' | 'wood' | 'checker' | 'carpet';
+export type MyRoomWallpaper = 'peach' | 'mint' | 'lavender' | 'sky' | 'terracotta' | 'olive' | 'butter' | 'ocean' | 'berry' | 'cobalt' | 'noir';
+export type MyRoomFloor = 'cream' | 'wood' | 'checker' | 'carpet' | 'walnut' | 'herringbone' | 'terrazzo' | 'mono-checker' | 'clay-tile' | 'ocean-tile' | 'moss-carpet' | 'night-wood' | 'black-marble';
 
 export type MyRoomItem = {
   id: string;
@@ -39,13 +39,29 @@ export const wallpaperOptions: { id: MyRoomWallpaper; label: string; description
   { id: 'mint', label: '민트 방', description: '산뜻하고 편안한 방' },
   { id: 'lavender', label: '라벤더 방', description: '몽글몽글한 보라빛 방' },
   { id: 'sky', label: '하늘 방', description: '맑고 청량한 파란 방' },
+  { id: 'terracotta', label: '테라코타 방', description: '햇빛에 구운 흙색의 따뜻한 공간' },
+  { id: 'olive', label: '올리브 방', description: '식물과 원목이 잘 어울리는 차분한 초록 방' },
+  { id: 'butter', label: '버터옐로우 방', description: '밝고 부드러운 노란빛 포근함' },
+  { id: 'ocean', label: '오션틸 방', description: '깊은 바다빛이 도는 청록색 무드' },
+  { id: 'berry', label: '베리퍼플 방', description: '진한 베리색 포인트의 개성 있는 방' },
+  { id: 'cobalt', label: '코발트 방', description: '선명한 블루가 주는 시원한 팝 무드' },
+  { id: 'noir', label: '느와르블랙 방', description: '검은 라운지처럼 고급스럽고 묵직한 방' },
 ];
 
 export const floorOptions: { id: MyRoomFloor; label: string; description: string }[] = [
   { id: 'cream', label: '크림 바닥', description: '깔끔한 기본 바닥' },
   { id: 'wood', label: '우드 바닥', description: '따뜻한 나무 바닥' },
-  { id: 'checker', label: '체커 바닥', description: '귀여운 체크 패턴' },
+  { id: 'checker', label: '핑크 체커 바닥', description: '귀여운 체크 패턴' },
   { id: 'carpet', label: '러그 바닥', description: '포근한 카펫 느낌' },
+  { id: 'walnut', label: '월넛우드 바닥', description: '진한 원목 느낌의 고급 바닥' },
+  { id: 'herringbone', label: '헤링본 바닥', description: '사선 목재 패턴의 클래식한 바닥' },
+  { id: 'terrazzo', label: '테라조 바닥', description: '알록달록한 조각감이 있는 트렌디한 바닥' },
+  { id: 'mono-checker', label: '흑백체커 바닥', description: '레트로 카페 같은 강한 대비감' },
+  { id: 'clay-tile', label: '클레이타일 바닥', description: '따뜻한 점토 타일 느낌' },
+  { id: 'ocean-tile', label: '오션타일 바닥', description: '푸른 타일이 주는 시원한 분위기' },
+  { id: 'moss-carpet', label: '모스카펫 바닥', description: '이끼색 카펫처럼 차분한 자연 무드' },
+  { id: 'night-wood', label: '나이트우드 바닥', description: '어두운 원목의 차분한 밤 분위기' },
+  { id: 'black-marble', label: '블랙마블 바닥', description: '블랙 컨셉에 어울리는 고급 대리석 바닥' },
 ];
 
 export const roomItemCatalog: MyRoomCatalogItem[] = [
