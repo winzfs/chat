@@ -191,6 +191,7 @@ docs/07-play-store-release-checklist.md
 docs/08-play-store-listing-draft.md
 docs/09-release-aab-and-keystore.md
 docs/10-safety-and-operation-policy.md
+docs/11-my-room-game-chat-plan.md
 docs/current-implementation-status.md
 ```
 
@@ -202,6 +203,7 @@ Google Play 정식 출시 전 차단 조건은 `docs/07-play-store-release-check
 Play Store 등록 문구 초안은 `docs/08-play-store-listing-draft.md`를 기준으로 확인합니다.
 release AAB 서명 키 준비와 GitHub Secrets 등록 절차는 `docs/09-release-aab-and-keystore.md`를 기준으로 확인합니다.
 안전/운영 정책과 금지 콘텐츠, 신고/차단 처리 기준은 `docs/10-safety-and-operation-policy.md`를 기준으로 확인합니다.
+마이룸 게임형 채팅 구조와 확장 계획은 `docs/11-my-room-game-chat-plan.md`를 기준으로 확인합니다.
 
 ## 로컬 실행
 
