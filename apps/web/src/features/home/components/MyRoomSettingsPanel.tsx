@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
 import { createDefaultMyRoom, createMyRoomItemFromCatalog, defaultMyRoomItems, floorOptions, loadMyRoom, roomItemCatalog, saveMyRoom, wallpaperOptions, type MyRoom, type MyRoomItem } from '../api/myRoom';
 import { getProfileId } from '../api/profileId';
@@ -274,10 +273,11 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
     <section className="talk-list my-room-editor-screen" aria-label="마이룸 꾸미기">
       <Card className="settings-summary my-room-settings-header">
         <button className="chat-back-button" type="button" onClick={onClose}>←</button>
-        <div>
+        <div className="my-room-header-copy">
           <strong>마이룸 꾸미기</strong>
           <p>방을 보면서 바로 가구와 분위기를 바꿔보세요.</p>
         </div>
+        <button className="my-room-save-chip" disabled={isSaving} onClick={save} type="button">{isSaving ? '저장중' : '저장'}</button>
       </Card>
 
       <Card className="person-card my-room-preview-card is-sticky-preview">
@@ -319,10 +319,6 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
         </div>
         {renderEditorPanel()}
       </Card>
-
-      <div className="my-room-save-bar">
-        <Button disabled={isSaving} onClick={save} type="button">{isSaving ? '저장 중' : '마이룸 저장'}</Button>
-      </div>
     </section>
   );
 }
