@@ -5,7 +5,7 @@
   height: calc(100dvh - 18px);
   min-height: 0;
   overflow: hidden;
-  padding-bottom: 0;
+  padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));
 }
 
 .chat-room-header-card {
@@ -77,8 +77,8 @@
   inset: 0;
   z-index: 80;
   display: grid;
-  align-items: end;
-  padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  place-items: center;
+  padding: 18px;
 }
 
 .chat-history-backdrop {
@@ -92,13 +92,13 @@
   position: relative;
   z-index: 1;
   display: grid;
-  width: min(520px, 100%);
-  max-height: min(72dvh, 620px);
-  margin: 0 auto;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(480px, calc(100vw - 36px));
+  max-height: min(70dvh, 620px);
   overflow: hidden;
   border: 1px solid rgba(255, 107, 157, 0.16) !important;
   border-radius: 28px !important;
-  background: rgba(255, 255, 255, 0.88) !important;
+  background: rgba(255, 255, 255, 0.94) !important;
   box-shadow: 0 24px 60px rgba(39, 39, 42, 0.22);
   backdrop-filter: blur(18px);
   gap: 10px;
@@ -136,7 +136,7 @@
 
 .chat-history-scroll {
   min-height: 0;
-  max-height: calc(min(72dvh, 620px) - 82px);
+  max-height: calc(min(70dvh, 620px) - 82px);
   overflow: auto;
   padding: 2px 2px 8px;
   overscroll-behavior: contain;
@@ -217,6 +217,7 @@
 @media (max-width: 420px) {
   .chat-room-view {
     height: calc(100dvh - 14px);
+    padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
   }
 
   .chat-room-header-card {
@@ -225,6 +226,15 @@
 
   .chat-room-view .chat-message {
     max-width: 82% !important;
+  }
+
+  .chat-history-sheet {
+    width: calc(100vw - 28px);
+    max-height: 72dvh;
+  }
+
+  .chat-history-scroll {
+    max-height: calc(72dvh - 82px);
   }
 
   .chat-compose-bar {
