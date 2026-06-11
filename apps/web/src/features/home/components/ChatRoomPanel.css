@@ -1,14 +1,14 @@
 .chat-room-view {
   position: relative;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 8px;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: 7px;
   height: 100svh;
   min-height: 100svh;
   max-height: 100dvh;
   overflow: hidden;
   padding-top: 8px;
-  padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
 }
 
 @supports (height: 100dvh) {
@@ -68,10 +68,18 @@
   font-weight: 800;
 }
 
-.chat-room-preview-list {
+.chat-room-preview-box {
+  z-index: 22;
   display: grid;
-  gap: 6px;
-  margin-top: 1px;
+  gap: 0;
+  overflow: hidden;
+  margin: 0 4px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 107, 157, 0.1);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 20px rgba(255, 107, 157, 0.08);
+  backdrop-filter: blur(8px);
 }
 
 .chat-room-preview-row {
@@ -79,34 +87,34 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
-  min-height: 30px;
-  padding: 7px 10px;
-  border: 1px solid rgba(255, 107, 157, 0.11);
-  border-radius: 999px;
-  background: rgba(255, 244, 248, 0.46);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(8px);
+  min-height: 25px;
+  padding: 3px 2px;
+  border-bottom: 1px solid rgba(255, 107, 157, 0.07);
+}
+
+.chat-room-preview-row:last-child {
+  border-bottom: 0;
 }
 
 .chat-room-preview-body {
   overflow: hidden;
-  color: rgba(82, 82, 91, 0.76);
+  color: rgba(82, 82, 91, 0.78);
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 800;
   line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .chat-room-preview-body b {
-  color: rgba(39, 39, 42, 0.72);
+  color: rgba(39, 39, 42, 0.78);
   font-weight: 950;
 }
 
 .chat-room-preview-time {
-  color: rgba(255, 107, 157, 0.62);
+  color: rgba(255, 107, 157, 0.68);
   font-size: 10px;
-  font-weight: 850;
+  font-weight: 900;
   white-space: nowrap;
 }
 
@@ -235,36 +243,33 @@
 }
 
 .chat-compose-bar {
-  position: fixed !important;
-  left: max(16px, calc((100vw - 520px) / 2 + 16px)) !important;
-  right: max(16px, calc((100vw - 520px) / 2 + 16px)) !important;
-  bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+  position: relative !important;
   z-index: 30 !important;
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) 54px 64px !important;
   gap: 8px !important;
   margin: 0 !important;
-  padding: 9px !important;
+  padding: 8px !important;
   border: 1px solid rgba(255, 107, 157, 0.16);
-  border-radius: 24px !important;
+  border-radius: 23px !important;
   background: rgba(255, 244, 248, 0.96) !important;
-  box-shadow: 0 12px 28px rgba(255, 107, 157, 0.13);
+  box-shadow: 0 10px 24px rgba(255, 107, 157, 0.12);
   backdrop-filter: blur(16px);
 }
 
 .chat-compose-bar input {
-  min-height: 44px !important;
-  border-radius: 18px !important;
+  min-height: 42px !important;
+  border-radius: 17px !important;
   background: #ffffff !important;
   font-size: 14px !important;
 }
 
 .chat-compose-bar .secondary-button,
 .chat-compose-bar button {
-  height: 44px !important;
+  height: 42px !important;
   min-width: 0 !important;
   padding: 0 10px !important;
-  border-radius: 18px !important;
+  border-radius: 17px !important;
   font-size: 12px !important;
 }
 
@@ -273,9 +278,9 @@
     height: 100svh;
     min-height: 100svh;
     max-height: 100dvh;
-    gap: 7px;
+    gap: 6px;
     padding-top: 7px;
-    padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
   }
 
   @supports (height: 100dvh) {
@@ -289,9 +294,15 @@
     padding: 11px 10px 13px !important;
   }
 
+  .chat-room-preview-box {
+    margin: 0 3px;
+    padding: 5px 9px;
+    border-radius: 18px;
+  }
+
   .chat-room-preview-row {
-    min-height: 28px;
-    padding: 6px 9px;
+    min-height: 23px;
+    padding: 2px 1px;
   }
 
   .chat-room-preview-body {
@@ -312,10 +323,7 @@
   }
 
   .chat-compose-bar {
-    left: 16px !important;
-    right: 16px !important;
-    bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
     grid-template-columns: minmax(0, 1fr) 50px 58px !important;
-    padding: 8px !important;
+    padding: 7px !important;
   }
 }
