@@ -28,6 +28,14 @@ function defaultRoom(profileId: string) {
   };
 }
 
+function normalizeWallpaper(value?: string) {
+  return allowedWallpapers.has(value ?? '') ? value as string : 'peach';
+}
+
+function normalizeFloor(value?: string) {
+  return allowedFloors.has(value ?? '') ? value as string : 'cream';
+}
+
 async function ensureMyRoomTable(env: Env) {
   await env.DB.prepare(
     `create table if not exists my_rooms (
@@ -88,8 +96,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   return Response.json({
     room: {
       profile_id: row.profile_id,
-      wallpaper: allowedWallpapers.has(row.wallpaper) ? row.wallpaper : 'peach',
-      floor: allowedFloors.has(row.floor) ? row.floor : 'cream',
+      wallpaper: normalizeWallpaper(row.wallpaper),
+      floor: normalizeFloor(row.floor),
       items: parseItems(row.items),
       updated_at: row.updated_at,
     },
@@ -106,8 +114,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     return Response.json({ error: 'profile_id가 필요해요.' }, { status: 400 });
   }
 
-  const wallpaper = allowedWallpapers.has(body.wallpaper ?? '') ? body.wallpaper : 'peach';
-  const floor = allowedFloors.has(body.floor ?? '') ? body.floor : 'cream';
+  const wallpaper = normalizeWallpaper(body.wallpaper);
+  const floor = normalizeFloor(body.floor);
   const items = normalizeItems(body.items);
 
   await env.DB.prepare(
@@ -126,7 +134,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
   return Response.json({
     room: row
-      ? { ...row, items: parseItems(row.items) }
+      ? { ...row, wallpaper: normalizeWallpaper(row.wallpaper), floor: normalizeFloor(row.floor), items: parseItems(row.items) }
       : { ...defaultRoom(profileId), wallpaper, floor, items },
   });
 };
