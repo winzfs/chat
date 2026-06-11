@@ -99,6 +99,45 @@
   background: linear-gradient(145deg, #dff2ff, #f8fbff 72%);
 }
 
+.wallpaper-terracotta .room-wall {
+  background-color: #c86546;
+  background-image: radial-gradient(circle at 24% 28%, rgba(255, 223, 184, 0.34), transparent 24%), linear-gradient(145deg, #b95039, #f0a46e 78%);
+}
+
+.wallpaper-olive .room-wall {
+  background-color: #6e7d45;
+  background-image: linear-gradient(135deg, rgba(255, 252, 218, 0.18) 0 18%, transparent 18% 100%), linear-gradient(145deg, #7d8b4c, #e3d39a 82%);
+}
+
+.wallpaper-butter .room-wall {
+  background-color: #ffe88a;
+  background-image: radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.52), transparent 22%), linear-gradient(145deg, #ffe36e, #fff7c9 78%);
+}
+
+.wallpaper-ocean .room-wall {
+  background-color: #087f8f;
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0 12%, transparent 12% 100%), linear-gradient(145deg, #075e73, #7fd6c6 80%);
+}
+
+.wallpaper-berry .room-wall {
+  background-color: #75305f;
+  background-image: radial-gradient(circle at 72% 30%, rgba(255, 162, 214, 0.28), transparent 24%), linear-gradient(145deg, #58284f, #d5759f 78%);
+}
+
+.wallpaper-cobalt .room-wall {
+  background-color: #1f5fff;
+  background-image: linear-gradient(120deg, rgba(255, 255, 255, 0.18) 0 16%, transparent 16% 100%), linear-gradient(145deg, #123dbe, #7db9ff 82%);
+}
+
+.wallpaper-noir .room-wall {
+  background-color: #11131d;
+  background-image: radial-gradient(circle at 74% 22%, rgba(255, 221, 160, 0.18), transparent 22%), linear-gradient(145deg, #0f111a, #35303e 82%);
+}
+
+.wallpaper-noir .room-wall-shine {
+  background: rgba(255, 225, 170, 0.16);
+}
+
 .floor-cream .room-floor {
   background-color: #fff2d9;
   background-image: linear-gradient(90deg, rgba(255, 197, 131, 0.1) 1px, transparent 1px);
@@ -120,6 +159,61 @@
   background-color: #ffe7f1;
   background-image: radial-gradient(rgba(255, 107, 157, 0.14) 1px, transparent 1px);
   background-size: 16px 16px;
+}
+
+.floor-walnut .room-floor {
+  background-color: #7b4b2a;
+  background-image: repeating-linear-gradient(90deg, rgba(55, 28, 13, 0.2) 0 3px, transparent 3px 44px), linear-gradient(180deg, rgba(255, 233, 184, 0.22), rgba(91, 46, 22, 0.08));
+}
+
+.floor-herringbone .room-floor {
+  background-color: #e9c99f;
+  background-image: linear-gradient(45deg, rgba(123, 76, 36, 0.18) 25%, transparent 25% 75%, rgba(123, 76, 36, 0.18) 75%), linear-gradient(-45deg, rgba(123, 76, 36, 0.12) 25%, transparent 25% 75%, rgba(123, 76, 36, 0.12) 75%);
+  background-size: 34px 34px;
+}
+
+.floor-terrazzo .room-floor {
+  background-color: #f6eadf;
+  background-image: radial-gradient(#e96b7f 1.5px, transparent 2px), radial-gradient(#3e9c9f 1.5px, transparent 2px), radial-gradient(#f0bd3d 2px, transparent 2.5px), radial-gradient(#7d6fb3 1px, transparent 2px);
+  background-position: 0 0, 12px 15px, 22px 5px, 30px 28px;
+  background-size: 38px 38px;
+}
+
+.floor-mono-checker .room-floor {
+  background-color: #f8f8f8;
+  background-image: linear-gradient(45deg, #2b2b31 25%, transparent 25%), linear-gradient(-45deg, #2b2b31 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #2b2b31 75%), linear-gradient(-45deg, transparent 75%, #2b2b31 75%);
+  background-position: 0 0, 0 16px, 16px -16px, -16px 0;
+  background-size: 32px 32px;
+}
+
+.floor-clay-tile .room-floor {
+  background-color: #d8794b;
+  background-image: linear-gradient(90deg, rgba(122, 58, 35, 0.22) 1px, transparent 1px), linear-gradient(0deg, rgba(122, 58, 35, 0.22) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+.floor-ocean-tile .room-floor {
+  background-color: #4aa6b7;
+  background-image: linear-gradient(90deg, rgba(255, 255, 255, 0.36) 1px, transparent 1px), linear-gradient(0deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px), radial-gradient(rgba(255, 255, 255, 0.22) 1px, transparent 1px);
+  background-size: 30px 30px, 30px 30px, 12px 12px;
+}
+
+.floor-moss-carpet .room-floor {
+  background-color: #7c8d54;
+  background-image: radial-gradient(rgba(35, 62, 34, 0.18) 1px, transparent 1.5px), radial-gradient(rgba(255, 255, 210, 0.16) 1px, transparent 1.5px);
+  background-position: 0 0, 7px 9px;
+  background-size: 14px 14px;
+}
+
+.floor-night-wood .room-floor {
+  background-color: #2b2430;
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0 2px, transparent 2px 46px), linear-gradient(180deg, rgba(178, 140, 90, 0.16), rgba(0, 0, 0, 0.08));
+}
+
+.floor-black-marble .room-floor {
+  background-color: #15161d;
+  background-image: linear-gradient(120deg, transparent 0 28%, rgba(255, 255, 255, 0.16) 29%, transparent 31% 100%), linear-gradient(58deg, transparent 0 62%, rgba(218, 184, 115, 0.16) 63%, transparent 66% 100%), radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 0.1), transparent 18%);
+  background-size: 120px 90px, 150px 110px, 100% 100%;
 }
 
 .room-item {
