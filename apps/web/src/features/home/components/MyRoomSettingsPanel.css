@@ -1,3 +1,7 @@
+@import './MyRoomSettingsRestoreControls.css';
+@import './MyRoomSettingsRestoreOptions.css';
+@import './MyRoomSettingsRestoreSwatches.css';
+
 .my-room-editor-screen {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
