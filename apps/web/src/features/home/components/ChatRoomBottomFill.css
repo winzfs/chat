@@ -1,0 +1,49 @@
+.chat-room-view {
+  gap: 2px !important;
+  padding-top: 4px !important;
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+}
+
+.chat-room-game-scene .room-canvas {
+  height: calc(100% + 54px) !important;
+  transform: translateY(-12px) !important;
+}
+
+.chat-room-preview-box {
+  padding: 3px 10px !important;
+}
+
+.chat-room-preview-row {
+  min-height: 20px !important;
+  padding: 1px 2px !important;
+}
+
+.chat-compose-bar {
+  padding: 5px !important;
+}
+
+@media (max-width: 420px) {
+  .chat-room-view {
+    gap: 1px !important;
+    padding-top: 3px !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+
+  .chat-room-game-scene .room-canvas {
+    height: calc(100% + 64px) !important;
+    transform: translateY(-14px) !important;
+  }
+
+  .chat-room-preview-box {
+    padding: 2px 9px !important;
+  }
+
+  .chat-room-preview-row {
+    min-height: 19px !important;
+    padding: 1px 1px !important;
+  }
+
+  .chat-compose-bar {
+    padding: 4px !important;
+  }
+}
