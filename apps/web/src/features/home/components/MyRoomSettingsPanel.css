@@ -1,6 +1,6 @@
 .my-room-editor-screen {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 8px;
   height: calc(100dvh - 112px);
   min-height: 0;
@@ -10,25 +10,53 @@
 
 .my-room-settings-header {
   display: grid !important;
-  grid-template-columns: 42px 1fr;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   padding: 10px 12px !important;
   border-radius: 22px !important;
 }
 
+.my-room-header-copy {
+  min-width: 0;
+}
+
 .my-room-settings-header strong {
   display: block;
+  overflow: hidden;
   color: #27272a;
   font-size: 17px;
   font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .my-room-settings-header p {
+  overflow: hidden;
   margin-top: 3px;
   color: #71717a;
   font-size: 11px;
   font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.my-room-save-chip {
+  min-width: 64px !important;
+  min-height: 38px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, #ff4f8b, #ff8754) !important;
+  box-shadow: 0 8px 18px rgba(255, 91, 143, 0.2) !important;
+  color: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+}
+
+.my-room-save-chip:disabled {
+  opacity: 0.7;
 }
 
 .my-room-preview-card,
@@ -148,7 +176,7 @@
   display: grid;
   gap: 8px;
   min-height: 0;
-  max-height: 168px;
+  max-height: 214px;
   overflow: auto;
   padding: 2px;
   overscroll-behavior: contain;
@@ -360,31 +388,23 @@
   line-height: 1.4 !important;
 }
 
-.my-room-save-bar {
-  position: relative;
-  left: auto;
-  right: auto;
-  bottom: auto;
-  z-index: 1;
-  display: grid;
-  padding: 0;
-}
-
-.my-room-save-bar button {
-  width: 100%;
-  min-height: 48px !important;
-  box-shadow: 0 10px 20px rgba(255, 91, 143, 0.16) !important;
-}
-
 @media (max-width: 420px) {
   .my-room-editor-screen {
-    grid-template-rows: auto minmax(360px, 1fr) auto auto;
+    grid-template-rows: auto minmax(360px, 1fr) auto;
     height: calc(100dvh - 106px);
     gap: 7px;
   }
 
   .my-room-settings-header {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
     padding: 9px 11px !important;
+  }
+
+  .my-room-save-chip {
+    min-width: 56px !important;
+    min-height: 34px !important;
+    padding: 0 11px !important;
+    font-size: 12px !important;
   }
 
   .my-room-preview-card.is-sticky-preview {
@@ -411,7 +431,7 @@
   }
 
   .my-room-panel-section {
-    max-height: 142px;
+    max-height: 190px;
   }
 
   .my-room-catalog-grid {
@@ -420,9 +440,5 @@
 
   .my-room-option-grid.is-menu-grid {
     grid-template-columns: repeat(4, minmax(98px, 1fr));
-  }
-
-  .my-room-save-bar button {
-    min-height: 46px !important;
   }
 }
