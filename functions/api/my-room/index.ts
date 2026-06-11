@@ -7,8 +7,35 @@ type MyRoomBody = {
   items?: unknown;
 };
 
-const allowedWallpapers = new Set(['peach', 'mint', 'lavender', 'sky']);
-const allowedFloors = new Set(['cream', 'wood', 'checker', 'carpet']);
+const allowedWallpapers = new Set([
+  'peach',
+  'mint',
+  'lavender',
+  'sky',
+  'terracotta',
+  'olive',
+  'butter',
+  'ocean',
+  'berry',
+  'cobalt',
+  'noir',
+]);
+
+const allowedFloors = new Set([
+  'cream',
+  'wood',
+  'checker',
+  'carpet',
+  'walnut',
+  'herringbone',
+  'terrazzo',
+  'mono-checker',
+  'clay-tile',
+  'ocean-tile',
+  'moss-carpet',
+  'night-wood',
+  'black-marble',
+]);
 
 const defaultItems = [
   { id: 'window-main', item_type: 'window', asset_id: 'basic-window', label: '창문', x: 68, y: 18, z_index: 2, rotation: 0 },
