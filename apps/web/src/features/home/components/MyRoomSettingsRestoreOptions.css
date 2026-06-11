@@ -1,0 +1,74 @@
+.my-room-catalog-grid button {
+  display: grid !important;
+  min-height: 66px !important;
+  margin: 0 !important;
+  padding: 8px !important;
+  border: 1px solid rgba(255, 107, 157, 0.12) !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+  box-shadow: 0 5px 10px rgba(39, 39, 42, 0.035) !important;
+  color: #27272a !important;
+  gap: 4px;
+  text-align: left !important;
+}
+
+.my-room-catalog-grid button::before {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 11px;
+  background: rgba(255, 107, 157, 0.1);
+  color: #ff4f8b;
+  content: '+';
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.my-room-catalog-grid strong {
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.my-room-catalog-grid small {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #71717a;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.my-room-option {
+  display: grid !important;
+  min-height: 88px !important;
+  margin: 0 !important;
+  padding: 8px !important;
+  border: 1px solid rgba(255, 107, 157, 0.12) !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+  box-shadow: 0 5px 10px rgba(39, 39, 42, 0.035) !important;
+  color: #27272a !important;
+  gap: 5px;
+  text-align: left !important;
+}
+
+.my-room-option.is-selected {
+  border-color: rgba(255, 107, 157, 0.5) !important;
+  background: #fff4f8 !important;
+  box-shadow: 0 6px 12px rgba(255, 107, 157, 0.1) !important;
+}
+
+.my-room-option strong {
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.my-room-option small {
+  color: #71717a;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.25;
+}
