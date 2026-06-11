@@ -41,7 +41,6 @@ export function ChatRoomGameScene({ messages, room }: { messages: D1ChatMessage[
   const myProfile = useMemo(() => loadMyProfile(), []);
   const peer = useMemo(() => getPeerFromRoom(room), [room]);
   const roomOwnerId = room.room_owner_profile_id || room.participant_a_id || myId;
-  const roomOwnerName = room.room_owner_nickname || room.participant_a_nickname || myProfile.nickname;
   const isMyRoom = roomOwnerId === myId;
   const [myRoom, setMyRoom] = useState<MyRoom>(() => createDefaultMyRoom(roomOwnerId));
   const [myPosition, setMyPosition] = useState({ x: isMyRoom ? 34 : 70, y: 74 });
@@ -93,24 +92,10 @@ export function ChatRoomGameScene({ messages, room }: { messages: D1ChatMessage[
     return baseCharacters;
   }, [isMyRoom, messages, myId, myPosition.x, myPosition.y, myProfile.nickname, peer]);
 
-  const footer = useMemo(
-    () => <span className="game-scene-hint">가구·벽지·액자는 설정 탭의 마이룸 꾸미기에서 바꿀 수 있어요.</span>,
-    [],
-  );
-
   return (
     <section className="chat-room-game-scene" aria-label="마이룸 채팅 화면">
-      <div className="game-scene-title-row">
-        <div>
-          <strong>{roomOwnerName}님의 마이룸</strong>
-          <p>{isMyRoom ? '내 방에서 대화 중이에요.' : '대화를 신청한 사람의 방에서 대화 중이에요.'}</p>
-        </div>
-        <span>터치해서 이동</span>
-      </div>
-
       <RoomCanvas
         characters={characters}
-        footer={footer}
         onStageClick={moveMyCharacter}
         room={myRoom}
       />
