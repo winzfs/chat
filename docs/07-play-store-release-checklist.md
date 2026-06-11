@@ -17,6 +17,7 @@
 - release AAB 워크플로우 추가
 - Play Store 등록 문구 초안 추가: `docs/08-play-store-listing-draft.md`
 - release AAB/keystore 준비 문서 추가: `docs/09-release-aab-and-keystore.md`
+- 안전/운영 정책 문서 추가: `docs/10-safety-and-operation-policy.md`
 
 ## 1. 앱 품질 점검
 
@@ -100,7 +101,30 @@ ANDROID_KEY_PASSWORD
 5. `flirting-release-aab` artifact 다운로드
 6. Play Console에 업로드
 
-## 5. 아직 위험한 부분
+## 5. 정식 출시 전 차단 조건
+
+아래 항목이 해결되지 않으면 정식 출시를 보류합니다.
+
+- [ ] 실제 로그인/인증 구조 도입
+- [ ] localStorage `profile_id`만으로 포인트/신고/채팅 권한을 처리하지 않도록 변경
+- [ ] 개인정보처리방침의 운영자명, 문의 이메일, 개인정보 보호책임자 정보 반영
+- [ ] 이용약관의 운영자 정보와 유료 기능/환불 조항 반영
+- [ ] 신고/차단 운영 정책 정리
+- [ ] 금지 콘텐츠와 제재 기준 정리
+- [ ] Google Play 데이터 보안 섹션 답변 작성
+- [ ] 20세 이상 제한 기준과 스토어 설명/약관/앱 화면 문구 일치 확인
+- [ ] release AAB 서명 키 생성 및 GitHub Secrets 등록
+- [ ] Play Store 등록용 스크린샷, 512×512 아이콘, 1024×500 피처 그래픽 준비
+
+관련 문서:
+
+```txt
+docs/04-auth-and-permissions-plan.md
+docs/09-release-aab-and-keystore.md
+docs/10-safety-and-operation-policy.md
+```
+
+## 6. 아직 위험한 부분
 
 ### localStorage 기반 가입
 
@@ -134,7 +158,7 @@ ANDROID_KEY_PASSWORD
 - [ ] 금지 콘텐츠 정책 명확화
 - [ ] 반복 신고/악성 이용자 제한 로직 강화
 
-## 6. 다음 작업 순서 추천
+## 7. 다음 작업 순서 추천
 
 1. Android Debug APK 재빌드 후 앱 이름/아이콘/스플래시 확인
 2. 실기기에서 토크/채팅/이미지 업로드/뒤로가기 테스트
