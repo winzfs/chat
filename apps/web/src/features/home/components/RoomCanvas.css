@@ -244,6 +244,16 @@
   width: 104px;
 }
 
+.room-item-desk .room-item-icon.has-image {
+  min-width: 86px;
+  min-height: 74px;
+  border-radius: 0;
+}
+
+.room-item-desk .room-item-image {
+  width: 92px;
+}
+
 .room-item-window .room-item-icon,
 .room-item-frame .room-item-icon {
   min-width: 50px;
@@ -348,6 +358,10 @@
 
   .room-item-bed .room-item-image {
     width: 94px;
+  }
+
+  .room-item-desk .room-item-image {
+    width: 84px;
   }
 
   .room-character-body {
