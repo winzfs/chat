@@ -11,9 +11,18 @@ export type RoomCharacter = {
   bubble?: string;
 };
 
+export type RoomChatHistoryLine = {
+  id: string;
+  sender: string;
+  body: string;
+  time?: string;
+  isMine?: boolean;
+};
+
 type RoomCanvasProps = {
   room: MyRoom;
   characters?: RoomCharacter[];
+  chatHistoryLines?: RoomChatHistoryLine[];
   footer?: ReactNode;
   isCompact?: boolean;
   isEditing?: boolean;
@@ -111,6 +120,7 @@ function applyItemDomPosition(element: HTMLElement, position: { x: number; y: nu
 function RoomCanvasComponent({
   room,
   characters = [],
+  chatHistoryLines = [],
   footer,
   isCompact = false,
   isEditing = false,
@@ -125,7 +135,7 @@ function RoomCanvasComponent({
     if (!onStageClick) return;
 
     const target = event.target as HTMLElement;
-    if (target.closest('button') || target.closest('.room-character') || target.closest('.room-item')) return;
+    if (target.closest('button') || target.closest('.room-chat-history') || target.closest('.room-character') || target.closest('.room-item')) return;
 
     const rect = event.currentTarget.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
@@ -218,6 +228,16 @@ function RoomCanvasComponent({
       </div>
       <div className="room-stage" onClick={handleClick} role={onStageClick ? 'button' : undefined} tabIndex={onStageClick ? 0 : undefined}>
         <div className="room-floor" />
+        {chatHistoryLines.length > 0 && (
+          <div className="room-chat-history" aria-label="최근 채팅 기록">
+            {chatHistoryLines.map((line) => (
+              <div className={line.isMine ? 'room-chat-history-line is-me' : 'room-chat-history-line'} key={line.id}>
+                <span className="room-chat-history-copy"><b>{line.sender}:</b> {line.body}</span>
+                {line.time && <time className="room-chat-history-time">{line.time}</time>}
+              </div>
+            ))}
+          </div>
+        )}
         {room.items.map((item) => {
           const hasImage = Boolean(itemAssetPath(item));
 
