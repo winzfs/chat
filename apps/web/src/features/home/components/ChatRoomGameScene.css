@@ -8,10 +8,10 @@
 
 .chat-room-game-scene .room-canvas {
   width: 100%;
-  height: calc(100% + 12px);
+  height: calc(100% + 34px);
   min-height: 0;
   border-radius: 32px;
-  transform: translateY(-10px);
+  transform: translateY(-12px);
 }
 
 .chat-room-game-scene .room-character-body {
@@ -40,9 +40,9 @@
 
 @media (max-width: 420px) {
   .chat-room-game-scene .room-canvas {
-    height: calc(100% + 14px);
+    height: calc(100% + 42px);
     border-radius: 28px;
-    transform: translateY(-12px);
+    transform: translateY(-14px);
   }
 
   .chat-room-game-scene .room-character-body {
