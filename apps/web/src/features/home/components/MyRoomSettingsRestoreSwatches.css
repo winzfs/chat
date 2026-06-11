@@ -1,0 +1,158 @@
+.my-room-swatch {
+  display: block;
+  width: 100%;
+  height: 28px;
+  border: 1px solid rgba(39, 39, 42, 0.08);
+  border-radius: 12px;
+}
+
+.my-room-swatch.wallpaper-peach { background: linear-gradient(145deg, #ffe5ef, #fff6e7); }
+.my-room-swatch.wallpaper-mint { background: linear-gradient(145deg, #dcfff5, #f4fff8); }
+.my-room-swatch.wallpaper-lavender { background: linear-gradient(145deg, #efe4ff, #fff3fb); }
+.my-room-swatch.wallpaper-sky { background: linear-gradient(145deg, #dff2ff, #f8fbff); }
+.my-room-swatch.wallpaper-terracotta { background: linear-gradient(145deg, #b95039, #f0a46e); }
+.my-room-swatch.wallpaper-olive { background: linear-gradient(145deg, #6e7d45, #e3d39a); }
+.my-room-swatch.wallpaper-butter { background: linear-gradient(145deg, #ffe36e, #fff7c9); }
+.my-room-swatch.wallpaper-ocean { background: linear-gradient(145deg, #075e73, #7fd6c6); }
+.my-room-swatch.wallpaper-berry { background: linear-gradient(145deg, #58284f, #d5759f); }
+.my-room-swatch.wallpaper-cobalt { background: linear-gradient(145deg, #123dbe, #7db9ff); }
+.my-room-swatch.wallpaper-noir { background: linear-gradient(145deg, #0f111a, #35303e 74%, #d5a95b); }
+.my-room-swatch.floor-cream { background: #fff2d9; }
+.my-room-swatch.floor-wood { background: repeating-linear-gradient(90deg, #ffe2bd 0 22px, #f6d0a0 22px 24px); }
+.my-room-swatch.floor-checker {
+  background-color: #fff5f8;
+  background-image: linear-gradient(45deg, rgba(255, 107, 157, 0.18) 25%, transparent 25%), linear-gradient(-45deg, rgba(255, 107, 157, 0.18) 25%, transparent 25%);
+  background-size: 18px 18px;
+}
+.my-room-swatch.floor-carpet {
+  background-color: #ffe7f1;
+  background-image: radial-gradient(rgba(255, 107, 157, 0.2) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+.my-room-swatch.floor-walnut { background: repeating-linear-gradient(90deg, #7b4b2a 0 20px, #5f341a 20px 22px); }
+.my-room-swatch.floor-herringbone {
+  background-color: #e9c99f;
+  background-image: linear-gradient(45deg, rgba(123, 76, 36, 0.22) 25%, transparent 25% 75%, rgba(123, 76, 36, 0.22) 75%), linear-gradient(-45deg, rgba(123, 76, 36, 0.14) 25%, transparent 25% 75%, rgba(123, 76, 36, 0.14) 75%);
+  background-size: 18px 18px;
+}
+.my-room-swatch.floor-terrazzo {
+  background-color: #f6eadf;
+  background-image: radial-gradient(#e96b7f 1.5px, transparent 2px), radial-gradient(#3e9c9f 1.5px, transparent 2px), radial-gradient(#f0bd3d 2px, transparent 2.5px), radial-gradient(#7d6fb3 1px, transparent 2px);
+  background-position: 0 0, 8px 10px, 15px 4px, 22px 18px;
+  background-size: 26px 26px;
+}
+.my-room-swatch.floor-mono-checker {
+  background-color: #f8f8f8;
+  background-image: linear-gradient(45deg, #2b2b31 25%, transparent 25%), linear-gradient(-45deg, #2b2b31 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #2b2b31 75%), linear-gradient(-45deg, transparent 75%, #2b2b31 75%);
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+  background-size: 20px 20px;
+}
+.my-room-swatch.floor-clay-tile {
+  background-color: #d8794b;
+  background-image: linear-gradient(90deg, rgba(122, 58, 35, 0.28) 1px, transparent 1px), linear-gradient(0deg, rgba(122, 58, 35, 0.28) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+.my-room-swatch.floor-ocean-tile {
+  background-color: #4aa6b7;
+  background-image: linear-gradient(90deg, rgba(255, 255, 255, 0.38) 1px, transparent 1px), linear-gradient(0deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
+  background-size: 15px 15px;
+}
+.my-room-swatch.floor-moss-carpet {
+  background-color: #7c8d54;
+  background-image: radial-gradient(rgba(35, 62, 34, 0.24) 1px, transparent 1.5px), radial-gradient(rgba(255, 255, 210, 0.18) 1px, transparent 1.5px);
+  background-position: 0 0, 5px 6px;
+  background-size: 10px 10px;
+}
+.my-room-swatch.floor-night-wood { background: repeating-linear-gradient(90deg, #2b2430 0 20px, #3b3140 20px 22px); }
+.my-room-swatch.floor-black-marble {
+  background-color: #15161d;
+  background-image: linear-gradient(120deg, transparent 0 32%, rgba(255, 255, 255, 0.18) 33%, transparent 35% 100%), linear-gradient(58deg, transparent 0 62%, rgba(218, 184, 115, 0.2) 63%, transparent 66% 100%);
+  background-size: 54px 38px, 68px 44px;
+}
+
+.my-room-item-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.my-room-item-list.is-compact-list {
+  max-height: 70px;
+  overflow: auto;
+}
+
+.my-room-item-list span,
+.my-room-item-list button {
+  min-height: 30px !important;
+  margin: 0 !important;
+  padding: 5px 9px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 107, 157, 0.1) !important;
+  color: #ff4f8b !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+}
+
+.my-room-item-list button.is-selected {
+  background: #ff5b8f !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 12px rgba(255, 91, 143, 0.16) !important;
+}
+
+.my-room-small-hint {
+  margin: 0 !important;
+  padding: 8px 9px;
+  border-radius: 14px;
+  background: rgba(39, 39, 42, 0.04);
+  color: #71717a !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  line-height: 1.4 !important;
+}
+
+@media (max-width: 420px) {
+  .my-room-editor-screen {
+    grid-template-rows: auto minmax(360px, 1fr) auto;
+    height: calc(100dvh - 106px);
+    gap: 7px;
+  }
+
+  .my-room-settings-header {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    padding: 9px 11px !important;
+  }
+
+  .my-room-save-chip {
+    min-width: 56px !important;
+    min-height: 34px !important;
+    padding: 0 11px !important;
+    font-size: 12px !important;
+  }
+
+  .my-room-preview-card.is-sticky-preview {
+    padding: 9px !important;
+  }
+
+  .my-room-preview-card .room-canvas {
+    min-height: clamp(390px, 54dvh, 520px) !important;
+  }
+
+  .my-room-card-title-row p {
+    display: none;
+  }
+
+  .my-room-menu-tabs {
+    grid-template-columns: repeat(5, minmax(48px, 1fr));
+    gap: 4px;
+  }
+
+  .my-room-menu-tabs button {
+    min-height: 34px !important;
+    padding: 0 4px !important;
+    font-size: 11px !important;
+  }
+
+  .my-room-panel-section { max-height: 190px; }
+  .my-room-catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .my-room-option-grid.is-menu-grid { grid-template-columns: repeat(4, minmax(98px, 1fr)); }
+}
