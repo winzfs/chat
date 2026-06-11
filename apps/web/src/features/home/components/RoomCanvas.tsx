@@ -33,6 +33,7 @@ type DragState = {
 
 const itemIcons: Record<string, string> = {
   bed: '🛏️',
+  desk: '🪵',
   table: '🫖',
   plant: '🪴',
   window: '🪟',
@@ -45,6 +46,7 @@ const itemIcons: Record<string, string> = {
 
 const furnitureAssetPaths: Record<string, string> = {
   bed01: '/assets/room/furniture/bed01.png',
+  desk01: '/assets/room/furniture/desk01.png',
   'soft-bed': '/assets/room/furniture/bed01.png',
 };
 
