@@ -90,8 +90,9 @@
   flex: 1 1 auto;
   width: 100%;
   min-height: 0 !important;
-  height: 100% !important;
-  transform: none;
+  height: calc(100% + 34px) !important;
+  border-radius: 32px;
+  transform: translateY(-12px);
 }
 
 .my-room-editor-dock.is-floating-editor {
@@ -176,8 +177,9 @@
 
   .my-room-preview-card .room-canvas {
     min-height: 0 !important;
-    height: 100% !important;
-    transform: none;
+    height: calc(100% + 42px) !important;
+    border-radius: 28px;
+    transform: translateY(-14px);
   }
 
   .my-room-editor-dock.is-floating-editor {
