@@ -36,6 +36,12 @@ function normalizeFloor(value?: string) {
   return allowedFloors.has(value ?? '') ? value as string : 'cream';
 }
 
+function normalizeRotation(value: unknown) {
+  const rotation = Number(value ?? 0);
+  if (!Number.isFinite(rotation)) return 0;
+  return ((Math.round(rotation / 45) * 45) % 360 + 360) % 360;
+}
+
 async function ensureMyRoomTable(env: Env) {
   await env.DB.prepare(
     `create table if not exists my_rooms (
@@ -62,7 +68,7 @@ function normalizeItems(value: unknown) {
     const x = Math.min(Math.max(Number(record.x ?? 50), 0), 100);
     const y = Math.min(Math.max(Number(record.y ?? 50), 0), 100);
     const zIndex = Math.min(Math.max(Number(record.z_index ?? index + 1), 0), 99);
-    const rotation = Math.min(Math.max(Number(record.rotation ?? 0), -45), 45);
+    const rotation = normalizeRotation(record.rotation);
 
     return { id, item_type: itemType, asset_id: assetId, label, x, y, z_index: zIndex, rotation };
   });
