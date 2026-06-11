@@ -1,0 +1,158 @@
+.my-room-settings-header {
+  display: grid !important;
+  grid-template-columns: 42px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.my-room-settings-header strong {
+  display: block;
+  color: #27272a;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.my-room-settings-header p {
+  margin-top: 4px;
+  color: #71717a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.my-room-preview-card,
+.my-room-option-card,
+.my-room-future-card {
+  display: grid;
+  gap: 12px;
+}
+
+.my-room-preview-card > strong,
+.my-room-option-card > strong,
+.my-room-future-card > strong {
+  color: #27272a;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.my-room-notice {
+  padding: 9px 10px;
+  border-radius: 16px;
+  background: rgba(255, 107, 157, 0.1);
+  color: #ff4f8b !important;
+  font-weight: 900 !important;
+}
+
+.my-room-option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.my-room-option {
+  display: grid !important;
+  min-height: 112px !important;
+  margin: 0 !important;
+  padding: 10px !important;
+  border: 1px solid rgba(255, 107, 157, 0.12) !important;
+  border-radius: 20px !important;
+  background: #ffffff !important;
+  box-shadow: 0 10px 22px rgba(39, 39, 42, 0.06) !important;
+  color: #27272a !important;
+  gap: 7px;
+  text-align: left !important;
+}
+
+.my-room-option.is-selected {
+  border-color: rgba(255, 107, 157, 0.5) !important;
+  background: #fff4f8 !important;
+  box-shadow: 0 14px 28px rgba(255, 107, 157, 0.14) !important;
+}
+
+.my-room-option strong {
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.my-room-option small {
+  color: #71717a;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.my-room-swatch {
+  display: block;
+  width: 100%;
+  height: 34px;
+  border: 1px solid rgba(39, 39, 42, 0.08);
+  border-radius: 14px;
+}
+
+.my-room-swatch.wallpaper-peach {
+  background: linear-gradient(145deg, #ffe5ef, #fff6e7);
+}
+
+.my-room-swatch.wallpaper-mint {
+  background: linear-gradient(145deg, #dcfff5, #f4fff8);
+}
+
+.my-room-swatch.wallpaper-lavender {
+  background: linear-gradient(145deg, #efe4ff, #fff3fb);
+}
+
+.my-room-swatch.wallpaper-sky {
+  background: linear-gradient(145deg, #dff2ff, #f8fbff);
+}
+
+.my-room-swatch.floor-cream {
+  background: #fff2d9;
+}
+
+.my-room-swatch.floor-wood {
+  background: repeating-linear-gradient(90deg, #ffe2bd 0 22px, #f6d0a0 22px 24px);
+}
+
+.my-room-swatch.floor-checker {
+  background-color: #fff5f8;
+  background-image: linear-gradient(45deg, rgba(255, 107, 157, 0.18) 25%, transparent 25%), linear-gradient(-45deg, rgba(255, 107, 157, 0.18) 25%, transparent 25%);
+  background-size: 18px 18px;
+}
+
+.my-room-swatch.floor-carpet {
+  background-color: #ffe7f1;
+  background-image: radial-gradient(rgba(255, 107, 157, 0.2) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+.my-room-item-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.my-room-item-list span {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(255, 107, 157, 0.1);
+  color: #ff4f8b;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.my-room-save-bar {
+  position: sticky;
+  bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+  z-index: 12;
+  display: grid;
+  padding: 10px 0;
+}
+
+.my-room-save-bar button {
+  width: 100%;
+}
+
+@media (max-width: 420px) {
+  .my-room-option-grid {
+    grid-template-columns: 1fr;
+  }
+}
