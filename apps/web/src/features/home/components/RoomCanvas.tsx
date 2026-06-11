@@ -1,4 +1,4 @@
-import type { CSSProperties, MouseEvent, PointerEvent, ReactNode } from 'react';
+import { memo, useRef, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import type { MyRoom, MyRoomItem } from '../api/myRoom';
 import './RoomCanvas.css';
 
@@ -21,6 +21,14 @@ type RoomCanvasProps = {
   onItemMove?: (itemId: string, position: { x: number; y: number }) => void;
   onItemSelect?: (itemId: string) => void;
   onStageClick?: (position: { x: number; y: number }) => void;
+};
+
+type DragState = {
+  itemId: string;
+  element: HTMLDivElement;
+  pointerId: number;
+  position: { x: number; y: number };
+  frameId: number | null;
 };
 
 const itemIcons: Record<string, string> = {
@@ -71,7 +79,12 @@ function positionFromStagePointer(event: PointerEvent<HTMLElement>) {
   return { x: clampPercent(x), y: clampPercent(y) };
 }
 
-export function RoomCanvas({
+function applyItemDomPosition(element: HTMLElement, position: { x: number; y: number }) {
+  element.style.left = `${position.x}%`;
+  element.style.top = `${position.y}%`;
+}
+
+function RoomCanvasComponent({
   room,
   characters = [],
   footer,
@@ -82,6 +95,8 @@ export function RoomCanvas({
   onItemSelect,
   onStageClick,
 }: RoomCanvasProps) {
+  const dragStateRef = useRef<DragState | null>(null);
+
   const handleClick = (event: MouseEvent<HTMLDivElement>) => {
     if (!onStageClick) return;
 
@@ -94,10 +109,44 @@ export function RoomCanvas({
     onStageClick({ x: clampPercent(x), y: clampPercent(y) });
   };
 
-  const moveItem = (event: PointerEvent<HTMLElement>, itemId: string) => {
-    const position = positionFromStagePointer(event);
-    if (!position) return;
-    onItemMove?.(itemId, position);
+  const scheduleDomMove = (element: HTMLDivElement, position: { x: number; y: number }) => {
+    const dragState = dragStateRef.current;
+    if (!dragState) return;
+
+    dragState.position = position;
+
+    if (dragState.frameId !== null) return;
+
+    dragState.frameId = requestAnimationFrame(() => {
+      const latestState = dragStateRef.current;
+      if (!latestState) return;
+
+      applyItemDomPosition(element, latestState.position);
+      latestState.frameId = null;
+    });
+  };
+
+  const finishDrag = (event: PointerEvent<HTMLDivElement>) => {
+    const dragState = dragStateRef.current;
+    if (!dragState) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (dragState.frameId !== null) {
+      cancelAnimationFrame(dragState.frameId);
+      applyItemDomPosition(dragState.element, dragState.position);
+    }
+
+    try {
+      dragState.element.releasePointerCapture(dragState.pointerId);
+    } catch {
+      // pointer capture may already be released
+    }
+
+    dragState.element.classList.remove('is-dragging');
+    dragStateRef.current = null;
+    onItemMove?.(dragState.itemId, dragState.position);
   };
 
   const handleItemPointerDown = (event: PointerEvent<HTMLDivElement>, item: MyRoomItem) => {
@@ -105,17 +154,37 @@ export function RoomCanvas({
 
     event.preventDefault();
     event.stopPropagation();
+
+    const position = positionFromStagePointer(event) ?? { x: item.x, y: item.y };
     event.currentTarget.setPointerCapture(event.pointerId);
+    event.currentTarget.classList.add('is-dragging');
     onItemSelect?.(item.id);
-    moveItem(event, item.id);
+
+    dragStateRef.current = {
+      itemId: item.id,
+      element: event.currentTarget,
+      pointerId: event.pointerId,
+      position,
+      frameId: null,
+    };
   };
 
-  const handleItemPointerMove = (event: PointerEvent<HTMLDivElement>, item: MyRoomItem) => {
-    if (!isEditing || event.buttons !== 1) return;
+  const handleItemPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const dragState = dragStateRef.current;
+    if (!isEditing || !dragState || event.pointerId !== dragState.pointerId) return;
+
+    const position = positionFromStagePointer(event);
+    if (!position) return;
 
     event.preventDefault();
     event.stopPropagation();
-    moveItem(event, item.id);
+    scheduleDomMove(event.currentTarget, position);
+  };
+
+  const handleItemPointerCancel = (event: PointerEvent<HTMLDivElement>) => {
+    const dragState = dragStateRef.current;
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+    finishDrag(event);
   };
 
   return (
@@ -129,8 +198,10 @@ export function RoomCanvas({
           <div
             className={`room-item room-item-${item.item_type} asset-${item.asset_id} ${selectedItemId === item.id ? 'is-selected' : ''}`}
             key={item.id}
+            onPointerCancel={handleItemPointerCancel}
             onPointerDown={(event) => handleItemPointerDown(event, item)}
-            onPointerMove={(event) => handleItemPointerMove(event, item)}
+            onPointerMove={handleItemPointerMove}
+            onPointerUp={finishDrag}
             style={getItemStyle(item)}
             title={item.label}
           >
@@ -152,3 +223,5 @@ export function RoomCanvas({
     </div>
   );
 }
+
+export const RoomCanvas = memo(RoomCanvasComponent);
