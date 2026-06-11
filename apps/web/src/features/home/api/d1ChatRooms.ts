@@ -15,6 +15,8 @@ export type D1ChatRoom = {
   participant_a_nickname?: string | null;
   participant_b_id?: string | null;
   participant_b_nickname?: string | null;
+  room_owner_profile_id?: string | null;
+  room_owner_nickname?: string | null;
   peer_avatar_url?: string | null;
 };
 
@@ -38,7 +40,12 @@ function resolveRoomTitle(room: D1ChatRoom): D1ChatRoom {
   const myNickname = profile.nickname;
   const isA = room.participant_a_id === myId || room.participant_a_nickname === myNickname;
   const isB = room.participant_b_id === myId || room.participant_b_nickname === myNickname;
-  const normalized = { ...room, unread_count: Number(room.unread_count ?? 0) };
+  const normalized = {
+    ...room,
+    unread_count: Number(room.unread_count ?? 0),
+    room_owner_profile_id: room.room_owner_profile_id || room.participant_a_id || myId,
+    room_owner_nickname: room.room_owner_nickname || room.participant_a_nickname || myNickname,
+  };
 
   if (isA && room.participant_b_nickname) {
     return { ...normalized, title: `${room.participant_b_nickname}님과의 대화` };
