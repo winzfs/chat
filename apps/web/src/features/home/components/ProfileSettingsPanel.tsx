@@ -9,6 +9,7 @@ import { getProfileId } from '../api/profileId';
 import type { MyProfile } from '../api/profileStorage';
 import { AvatarCropModal } from './AvatarCropModal';
 import { BlockedUsersPanel } from './BlockedUsersPanel';
+import { MyRoomSettingsPanel } from './MyRoomSettingsPanel';
 import { ReportsAdminPanel } from './ReportsAdminPanel';
 import './SettingsLegalLinks.css';
 
@@ -52,6 +53,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
   const [cropImageUrl, setCropImageUrl] = useState('');
   const [isReportAdminOpen, setIsReportAdminOpen] = useState(false);
   const [isBlockListOpen, setIsBlockListOpen] = useState(false);
+  const [isMyRoomOpen, setIsMyRoomOpen] = useState(false);
   const [isChargeOpen, setIsChargeOpen] = useState(false);
   const [isPointHistoryOpen, setIsPointHistoryOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -155,6 +157,10 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
     return <BlockedUsersPanel onClose={() => setIsBlockListOpen(false)} />;
   }
 
+  if (isMyRoomOpen) {
+    return <MyRoomSettingsPanel onClose={() => setIsMyRoomOpen(false)} />;
+  }
+
   return (
     <section className="talk-list" aria-label="프로필 설정">
       <Card className="settings-summary profile-summary-card">
@@ -230,6 +236,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
 
       {cropImageUrl && <AvatarCropModal imageUrl={cropImageUrl} onApply={uploadCroppedAvatar} onClose={() => setCropImageUrl('')} />}
 
+      <Card className="setting-item"><strong>마이룸 꾸미기</strong><button className="secondary-button" onClick={() => setIsMyRoomOpen(true)} type="button">열기</button></Card>
       <Card className="setting-item"><strong>알림 설정</strong><span>›</span></Card>
       <Card className="setting-item"><strong>차단 관리</strong><button className="secondary-button" onClick={() => setIsBlockListOpen(true)} type="button">열기</button></Card>
       <Card className="person-card"><strong>안전 기능</strong><p>불쾌한 상대는 채팅방에서 바로 신고하거나 차단할 수 있어요. 차단한 사용자는 사람 목록과 새 쪽지에서 제외돼요.</p></Card>
