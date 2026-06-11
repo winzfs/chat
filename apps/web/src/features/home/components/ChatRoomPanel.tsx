@@ -10,22 +10,6 @@ import { ChatMessageItem } from './ChatMessageItem';
 import { ChatRoomGameScene } from './ChatRoomGameScene';
 import './ChatRoomPanel.css';
 
-function previewMessageBody(message: D1ChatMessage) {
-  if (message.message_type === 'image') return '사진을 보냈어요 📷';
-  return message.body?.trim() || '내용 없는 메시지';
-}
-
-function formatPreviewTime(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) return '';
-
-  return date.toLocaleTimeString('ko-KR', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
-
 export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: () => void }) {
   const [messages, setMessages] = useState<D1ChatMessage[]>([]);
   const [text, setText] = useState('');
@@ -34,7 +18,6 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
   const [errorText, setErrorText] = useState('');
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const peer = getPeerFromRoom(room);
-  const previewMessages = messages.slice(-3);
 
   useEffect(() => {
     loadD1ChatMessages(room.id).then(setMessages);
@@ -127,20 +110,6 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
             <p>{uploadStatus || `${messages.length}개 메시지 · 마이룸 채팅 중`}</p>
           </div>
         </div>
-        {previewMessages.length > 0 && (
-          <div className="chat-room-preview-list" aria-label="최근 채팅 기록">
-            {previewMessages.map((message) => {
-              const previewTime = formatPreviewTime(message.created_at);
-
-              return (
-                <div className="chat-room-preview-row" key={message.id}>
-                  <span className="chat-room-preview-body"><b>{message.sender_nickname}:</b> {previewMessageBody(message)}</span>
-                  {previewTime && <time className="chat-room-preview-time" dateTime={message.created_at}>{previewTime}</time>}
-                </div>
-              );
-            })}
-          </div>
-        )}
         <div className="talk-actions chat-room-safety-actions">
           <button type="button" onClick={() => setIsHistoryOpen(true)}>기록</button>
           <button type="button" onClick={handleReport}>신고</button>
