@@ -30,6 +30,9 @@ const itemIcons: Record<string, string> = {
   window: '🪟',
   rug: '☁️',
   frame: '🖼️',
+  sofa: '🛋️',
+  shelf: '📚',
+  lamp: '💡',
 };
 
 function clampPercent(value: number) {
