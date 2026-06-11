@@ -4,12 +4,12 @@
 
 .my-room-editor-screen {
   display: grid;
-  grid-template-rows: auto minmax(660px, 72dvh) auto;
+  grid-template-rows: auto minmax(620px, 1fr);
   gap: 8px;
   min-height: calc(100dvh - 112px);
   height: auto;
   overflow: visible;
-  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
 }
 
 .my-room-settings-header {
@@ -73,8 +73,8 @@
   top: auto;
   z-index: 1;
   display: flex !important;
-  min-height: 660px;
-  height: 72dvh;
+  min-height: 620px;
+  height: calc(100dvh - 178px);
   overflow: hidden;
   padding: 10px !important;
   border-radius: 24px !important;
@@ -94,22 +94,57 @@
   transform: none;
 }
 
+.my-room-editor-dock.is-floating-editor {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  left: 10px;
+  z-index: 12;
+  display: grid;
+  max-height: min(255px, 36dvh);
+  overflow: hidden;
+  padding: 8px !important;
+  border: 1px solid rgba(255, 107, 157, 0.16) !important;
+  border-radius: 24px !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 14px 30px rgba(255, 107, 157, 0.16);
+  backdrop-filter: blur(16px);
+  gap: 8px;
+}
+
+.my-room-editor-dock.is-floating-editor .my-room-panel-section {
+  max-height: min(178px, 24dvh);
+}
+
 @media (max-width: 420px) {
   .my-room-editor-screen {
-    grid-template-rows: auto minmax(640px, 74dvh) auto;
+    grid-template-rows: auto minmax(600px, 1fr);
     min-height: calc(100dvh - 106px);
     overflow: visible;
-    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
   }
 
   .my-room-preview-card.is-sticky-preview {
-    min-height: 640px;
-    height: 74dvh;
+    min-height: 600px;
+    height: calc(100dvh - 166px);
   }
 
   .my-room-preview-card .room-canvas {
     min-height: 0 !important;
     height: 100% !important;
     transform: none;
+  }
+
+  .my-room-editor-dock.is-floating-editor {
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    max-height: min(246px, 38dvh);
+    padding: 7px !important;
+    border-radius: 22px !important;
+  }
+
+  .my-room-editor-dock.is-floating-editor .my-room-panel-section {
+    max-height: min(168px, 27dvh);
   }
 }
