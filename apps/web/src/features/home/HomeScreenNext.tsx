@@ -16,6 +16,7 @@ import './HomePage.css';
 import './HomeExtra.css';
 import './ProfileAvatar.css';
 import './components/HomeUiPolish.css';
+import './FullScreenRoutes.css';
 
 type HomeTab = 'talk' | 'people' | 'chats' | 'settings';
 const tabs: { id: HomeTab; label: string; icon: string }[] = [
