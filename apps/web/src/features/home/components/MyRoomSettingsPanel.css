@@ -4,7 +4,7 @@
 
 .my-room-editor-screen {
   display: grid;
-  grid-template-rows: auto minmax(620px, 1fr);
+  grid-template-rows: auto minmax(650px, 1fr);
   gap: 8px;
   min-height: calc(100dvh - 112px);
   height: auto;
@@ -73,8 +73,8 @@
   top: auto;
   z-index: 1;
   display: flex !important;
-  min-height: 620px;
-  height: calc(100dvh - 178px);
+  min-height: 650px;
+  height: calc(100dvh - 154px);
   overflow: hidden;
   padding: 10px !important;
   border-radius: 24px !important;
@@ -118,15 +118,15 @@
 
 @media (max-width: 420px) {
   .my-room-editor-screen {
-    grid-template-rows: auto minmax(600px, 1fr);
+    grid-template-rows: auto minmax(630px, 1fr);
     min-height: calc(100dvh - 106px);
     overflow: visible;
     padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
   }
 
   .my-room-preview-card.is-sticky-preview {
-    min-height: 600px;
-    height: calc(100dvh - 166px);
+    min-height: 630px;
+    height: calc(100dvh - 142px);
   }
 
   .my-room-preview-card .room-canvas {
