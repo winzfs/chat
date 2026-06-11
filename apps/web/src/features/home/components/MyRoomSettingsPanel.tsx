@@ -342,24 +342,24 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
           />
         )}
         {notice && <p className="my-room-notice">{notice}</p>}
-      </Card>
 
-      <Card className="person-card my-room-editor-dock">
-        <div className="my-room-menu-tabs" role="tablist" aria-label="마이룸 편집 메뉴">
-          {editorMenus.map((menu) => (
-            <button
-              aria-selected={activeMenu === menu.id}
-              className={activeMenu === menu.id ? 'is-active' : ''}
-              key={menu.id}
-              role="tab"
-              type="button"
-              onClick={() => setActiveMenu(menu.id)}
-            >
-              {menu.label}
-            </button>
-          ))}
-        </div>
-        {renderEditorPanel()}
+        <Card className="person-card my-room-editor-dock is-floating-editor">
+          <div className="my-room-menu-tabs" role="tablist" aria-label="마이룸 편집 메뉴">
+            {editorMenus.map((menu) => (
+              <button
+                aria-selected={activeMenu === menu.id}
+                className={activeMenu === menu.id ? 'is-active' : ''}
+                key={menu.id}
+                role="tab"
+                type="button"
+                onClick={() => setActiveMenu(menu.id)}
+              >
+                {menu.label}
+              </button>
+            ))}
+          </div>
+          {renderEditorPanel()}
+        </Card>
       </Card>
     </section>
   );
