@@ -4,6 +4,18 @@
   padding-bottom: calc(16px + env(safe-area-inset-bottom));
 }
 
+.app-shell:has(.chat-room-view) {
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.app-shell:has(.chat-room-view) .home-screen {
+  height: 100%;
+  overflow: hidden;
+}
+
 .app-shell:has(.my-room-editor-screen) .home-header,
 .app-shell:has(.chat-room-view) .home-header,
 .app-shell:has(.my-room-editor-screen) .bottom-nav,
