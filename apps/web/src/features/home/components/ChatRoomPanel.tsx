@@ -7,6 +7,7 @@ import type { D1ChatRoom } from '../api/d1ChatRooms';
 import { blockUser, getPeerFromRoom, reportUser } from '../api/userSafety';
 import { useMessagePolling } from '../api/useMessagePolling';
 import { ChatMessageItem } from './ChatMessageItem';
+import { ChatRoomGameScene } from './ChatRoomGameScene';
 import './ChatRoomPanel.css';
 
 export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: () => void }) {
@@ -15,6 +16,7 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
   const [isSending, setIsSending] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const [errorText, setErrorText] = useState('');
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const peer = getPeerFromRoom(room);
 
   useEffect(() => {
@@ -105,23 +107,31 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
           <button className="chat-back-button" type="button" onClick={onClose}>←</button>
           <div>
             <strong>{room.title ?? '새 채팅방'}</strong>
-            <p>{uploadStatus || `${messages.length}개 메시지 · 자동 갱신 중`}</p>
+            <p>{uploadStatus || `${messages.length}개 메시지 · 마이룸 채팅 중`}</p>
           </div>
         </div>
         <div className="talk-actions chat-room-safety-actions">
+          <button type="button" onClick={() => setIsHistoryOpen((value) => !value)}>{isHistoryOpen ? '기록 닫기' : '기록'}</button>
           <button type="button" onClick={handleReport}>신고</button>
           <button type="button" onClick={handleBlock}>차단</button>
         </div>
         {errorText && <p className="error-text">{errorText}</p>}
       </Card>
 
-      <div className="talk-list chat-message-list">
-        {messages.length === 0 && <Card className="person-card"><strong>아직 메시지가 없어요</strong><p>첫 메시지를 보내서 대화를 시작해보세요.</p></Card>}
-        {messages.map((message) => <ChatMessageItem key={message.id} message={message} />)}
-      </div>
+      <ChatRoomGameScene messages={messages} room={room} />
+
+      {isHistoryOpen && (
+        <Card className="person-card chat-history-card">
+          <strong>대화 기록</strong>
+          <div className="talk-list chat-message-list">
+            {messages.length === 0 && <Card className="person-card"><strong>아직 메시지가 없어요</strong><p>첫 메시지를 보내서 대화를 시작해보세요.</p></Card>}
+            {messages.map((message) => <ChatMessageItem key={message.id} message={message} />)}
+          </div>
+        </Card>
+      )}
 
       <form className="quick-compose chat-compose-bar" onSubmit={handleSubmit}>
-        <input aria-label="메시지 입력" maxLength={500} onChange={(event) => setText(event.target.value)} placeholder="메시지를 입력하세요" value={text} />
+        <input aria-label="메시지 입력" maxLength={500} onChange={(event) => setText(event.target.value)} placeholder="말풍선으로 띄울 메시지" value={text} />
         <label className="secondary-button">사진<input accept="image/*" hidden onChange={handleImageChange} type="file" /></label>
         <Button disabled={isSending || text.trim().length === 0} type="submit">보내기</Button>
       </form>
