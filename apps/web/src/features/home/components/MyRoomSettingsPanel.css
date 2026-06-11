@@ -84,6 +84,57 @@
   font-size: 12px !important;
 }
 
+.my-room-control-grid .danger-button {
+  border-color: rgba(239, 68, 68, 0.22) !important;
+  background: rgba(239, 68, 68, 0.09) !important;
+  color: #dc2626 !important;
+}
+
+.my-room-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.my-room-catalog-grid button {
+  display: grid !important;
+  min-height: 88px !important;
+  margin: 0 !important;
+  padding: 10px !important;
+  border: 1px solid rgba(255, 107, 157, 0.12) !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  box-shadow: 0 8px 18px rgba(39, 39, 42, 0.05) !important;
+  color: #27272a !important;
+  gap: 5px;
+  text-align: left !important;
+}
+
+.my-room-catalog-grid button::before {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 13px;
+  background: rgba(255, 107, 157, 0.1);
+  color: #ff4f8b;
+  content: '+';
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.my-room-catalog-grid strong {
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.my-room-catalog-grid small {
+  color: #71717a;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
 .my-room-option-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -203,7 +254,8 @@
 }
 
 @media (max-width: 420px) {
-  .my-room-option-grid {
+  .my-room-option-grid,
+  .my-room-catalog-grid {
     grid-template-columns: 1fr;
   }
 
