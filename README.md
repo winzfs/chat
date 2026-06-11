@@ -113,6 +113,20 @@ CI Build: GitHub Actions
 - 이미지 메시지 `profile_id` 검사 강화
 - 내 메시지/상대 메시지 말풍선 분리
 - 말풍선 안에는 프로필 아이콘을 표시하지 않음
+- 채팅방 화면은 마이룸 기반 게임형 화면으로 표시
+- 메시지는 캐릭터 위 말풍선으로 표시
+- 대화 기록은 채팅방에서 접어서 확인 가능
+
+### 마이룸
+
+- 설정 탭에서 마이룸 꾸미기 진입
+- 마이룸 벽지 선택
+- 마이룸 바닥 선택
+- 기본 가구/소품 배치 표시
+- 방 데이터는 `my_rooms` 테이블에 저장
+- 1:1 대화를 새로 신청한 사람이 해당 채팅방의 기본 마이룸 주인이 됨
+- 채팅방에서는 `room_owner_profile_id` 기준으로 마이룸을 불러옴
+- 가구/벽지/액자 에셋 확장을 위해 `asset_id`, `x`, `y`, `z_index`, `rotation` 구조 사용
 
 ### 채팅방 나가기
 
@@ -255,6 +269,7 @@ GET/POST/DELETE /api/chat-rooms
 GET/POST        /api/chat-messages
 GET/POST        /api/chat-images
 GET/POST        /api/points
+GET/POST        /api/my-room
 GET/POST/DELETE /api/profile-image
 POST            /api/profile-sync
 POST            /api/chat-room-leave
@@ -275,6 +290,7 @@ GET             /api/admin/user-review
 - 같은 기기 1계정 제한은 브라우저 데이터 삭제나 다른 브라우저 사용 시 우회될 수 있습니다.
 - 운영자 권한은 현재 `ADMIN_PROFILE_IDS` 기반이므로 실제 운영 전 로그인 기반 권한 검사가 필요합니다.
 - 실시간 기능은 WebSocket이 아니라 폴링 기반입니다.
+- 마이룸 캐릭터 이동은 현재 내 화면에서만 즉시 반영되며 상대방 실시간 위치 동기화는 아직 없습니다.
 - 포인트 충전 상품 UI는 있으나 실제 결제 PG는 아직 연결되지 않았습니다.
 - 광고보기 보상 API/UI는 있으나 실제 광고 SDK는 아직 연결되지 않았습니다.
 - 개발 중 만들어진 오래된 채팅방은 participant 정보가 없어 제목이 보정 표시될 수 있습니다.
@@ -286,6 +302,9 @@ GET             /api/admin/user-review
 - GitHub Actions에서 Cloudflare Pages 배포 빌드 로그 확인
 - GitHub Actions에서 Android Debug APK 워크플로우 실행 후 빌드 로그 확인
 - Android 실기기에서 키보드/입력창/이미지 업로드 테스트
+- 마이룸 가구 드래그 배치 편집기 추가
+- 실제 가구/벽지/액자 에셋 연결
+- 마이룸 캐릭터 위치 실시간 동기화 검토
 - 포인트 충전 PG 연동
 - 보상형 광고 SDK 연동
 - release AAB 서명 키 생성 및 GitHub Secrets 등록
