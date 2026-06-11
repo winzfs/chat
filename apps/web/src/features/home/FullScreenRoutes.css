@@ -1,0 +1,16 @@
+.app-shell:has(.my-room-editor-screen),
+.app-shell:has(.chat-room-view) {
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+}
+
+.app-shell:has(.my-room-editor-screen) .bottom-nav,
+.app-shell:has(.chat-room-view) .bottom-nav {
+  display: none;
+}
+
+@supports not selector(:has(*)) {
+  .my-room-editor-screen,
+  .chat-room-view {
+    margin-bottom: calc(-102px - env(safe-area-inset-bottom));
+  }
+}
