@@ -5,14 +5,23 @@
 }
 
 .app-shell:has(.chat-room-view) {
-  height: 100dvh;
-  min-height: 100dvh;
+  height: 100svh;
+  min-height: 100svh;
+  max-height: 100dvh;
   overflow: hidden;
   padding-bottom: 0;
 }
 
+@supports (height: 100dvh) {
+  .app-shell:has(.chat-room-view) {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+}
+
 .app-shell:has(.chat-room-view) .home-screen {
   height: 100%;
+  min-height: 0;
   overflow: hidden;
 }
 
