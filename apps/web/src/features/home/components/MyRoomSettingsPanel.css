@@ -88,6 +88,15 @@
 .my-room-preview-card .room-canvas {
   flex: 1 1 auto;
   width: 100%;
-  min-height: clamp(390px, 52dvh, 560px) !important;
-  height: 100% !important;
+  min-height: clamp(430px, 58dvh, 640px) !important;
+  height: calc(100% + 54px) !important;
+  transform: translateY(-12px);
+}
+
+@media (max-width: 420px) {
+  .my-room-preview-card .room-canvas {
+    min-height: clamp(460px, 62dvh, 680px) !important;
+    height: calc(100% + 64px) !important;
+    transform: translateY(-14px);
+  }
 }
