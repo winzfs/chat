@@ -67,6 +67,17 @@
   font-size: 12px !important;
 }
 
+.chat-history-card {
+  display: grid;
+  gap: 10px;
+}
+
+.chat-history-card > strong {
+  color: #27272a;
+  font-size: 15px;
+  font-weight: 950;
+}
+
 .chat-message-list {
   gap: 7px;
   padding: 2px 2px 8px;
