@@ -102,34 +102,44 @@
   left: 10px;
   z-index: 12;
   display: grid;
-  max-height: min(168px, 24dvh);
-  overflow: hidden;
-  padding: 7px !important;
-  border: 1px solid rgba(255, 107, 157, 0.16) !important;
-  border-radius: 22px !important;
-  background: rgba(255, 255, 255, 0.88) !important;
-  box-shadow: 0 12px 26px rgba(255, 107, 157, 0.14);
-  backdrop-filter: blur(16px);
+  max-height: min(158px, 23dvh);
+  overflow: visible;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
   gap: 6px;
 }
 
 .my-room-editor-dock.is-floating-editor .my-room-menu-tabs {
   gap: 4px;
-  padding: 3px;
-  border-radius: 17px;
+  padding: 4px;
+  border: 1px solid rgba(255, 107, 157, 0.16);
+  border-radius: 20px;
+  background: rgba(255, 244, 248, 0.94);
+  box-shadow: 0 10px 22px rgba(255, 107, 157, 0.14);
+  backdrop-filter: blur(14px);
 }
 
 .my-room-editor-dock.is-floating-editor .my-room-menu-tabs button {
   min-height: 30px !important;
   padding: 0 4px !important;
-  border-radius: 13px !important;
+  border-radius: 14px !important;
   font-size: 11px !important;
 }
 
 .my-room-editor-dock.is-floating-editor .my-room-panel-section {
-  max-height: min(98px, 14dvh);
-  gap: 5px;
+  max-height: min(88px, 13dvh);
   overflow: auto;
+  gap: 5px;
+  padding: 6px;
+  border: 1px solid rgba(255, 107, 157, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 10px 22px rgba(255, 107, 157, 0.1);
+  backdrop-filter: blur(12px);
 }
 
 .my-room-editor-dock.is-floating-editor .my-room-panel-title {
@@ -152,8 +162,8 @@
 .my-room-editor-dock.is-floating-editor .my-room-option,
 .my-room-editor-dock.is-floating-editor .my-room-control-grid button,
 .my-room-editor-dock.is-floating-editor .my-room-manage-grid button {
-  min-height: 44px !important;
-  padding: 6px !important;
+  min-height: 42px !important;
+  padding: 5px 6px !important;
   border-radius: 14px !important;
 }
 
@@ -186,20 +196,20 @@
     right: 8px;
     bottom: 8px;
     left: 8px;
-    max-height: min(156px, 25dvh);
-    padding: 6px !important;
-    border-radius: 21px !important;
+    max-height: min(146px, 24dvh);
+    padding: 0 !important;
   }
 
   .my-room-editor-dock.is-floating-editor .my-room-panel-section {
-    max-height: min(88px, 15dvh);
+    max-height: min(78px, 14dvh);
+    padding: 5px;
   }
 
   .my-room-editor-dock.is-floating-editor .my-room-catalog-grid button,
   .my-room-editor-dock.is-floating-editor .my-room-option,
   .my-room-editor-dock.is-floating-editor .my-room-control-grid button,
   .my-room-editor-dock.is-floating-editor .my-room-manage-grid button {
-    min-height: 40px !important;
+    min-height: 38px !important;
     padding: 5px !important;
   }
 }
