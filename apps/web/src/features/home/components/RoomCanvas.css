@@ -171,9 +171,35 @@
   font-size: 25px;
 }
 
+.room-item-icon.has-image {
+  min-width: 86px;
+  min-height: 64px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.room-item-image {
+  display: block;
+  width: 94px;
+  max-width: none;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+
+.room-item-emoji {
+  display: block;
+  line-height: 1;
+}
+
 .room-canvas.is-editing .room-item-icon {
   border-color: rgba(255, 107, 157, 0.24);
   box-shadow: 0 8px 14px rgba(255, 107, 157, 0.1);
+}
+
+.room-canvas.is-editing .room-item-icon.has-image {
+  box-shadow: none;
 }
 
 .room-item.is-selected .room-item-icon {
@@ -182,8 +208,17 @@
   box-shadow: 0 0 0 4px rgba(255, 107, 157, 0.12), 0 10px 18px rgba(255, 107, 157, 0.13);
 }
 
+.room-item.is-selected .room-item-icon.has-image {
+  background: transparent;
+  box-shadow: 0 0 0 5px rgba(255, 107, 157, 0.16);
+}
+
 .room-item.is-dragging .room-item-icon {
   box-shadow: 0 0 0 4px rgba(255, 107, 157, 0.16), 0 8px 14px rgba(255, 107, 157, 0.14);
+}
+
+.room-item.is-dragging .room-item-icon.has-image {
+  box-shadow: 0 0 0 5px rgba(255, 107, 157, 0.18);
 }
 
 .room-item-rug .room-item-icon {
@@ -197,6 +232,16 @@
   min-width: 74px;
   min-height: 50px;
   border-radius: 22px 22px 16px 16px;
+}
+
+.room-item-bed .room-item-icon.has-image {
+  min-width: 98px;
+  min-height: 72px;
+  border-radius: 0;
+}
+
+.room-item-bed .room-item-image {
+  width: 104px;
 }
 
 .room-item-window .room-item-icon,
@@ -299,6 +344,10 @@
 
   .room-canvas.is-compact {
     min-height: 220px;
+  }
+
+  .room-item-bed .room-item-image {
+    width: 94px;
   }
 
   .room-character-body {
