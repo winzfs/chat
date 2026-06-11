@@ -1,0 +1,68 @@
+.chat-room-game-scene .room-chat-history {
+  position: absolute;
+  z-index: 19;
+  top: 28%;
+  right: 14px;
+  left: 14px;
+  display: grid;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.chat-room-game-scene .room-chat-history-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 107, 157, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.46);
+  box-shadow: 0 8px 18px rgba(255, 107, 157, 0.06);
+  color: rgba(39, 39, 42, 0.76);
+  font-size: 12px;
+  font-weight: 850;
+  backdrop-filter: blur(6px);
+}
+
+.chat-room-game-scene .room-chat-history-line.is-me {
+  background: rgba(255, 244, 248, 0.58);
+}
+
+.chat-room-game-scene .room-chat-history-copy {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-room-game-scene .room-chat-history-copy b {
+  font-weight: 950;
+}
+
+.chat-room-game-scene .room-chat-history-time {
+  color: rgba(255, 79, 139, 0.74);
+  font-size: 11px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .chat-room-game-scene .room-chat-history {
+    top: 30%;
+    right: 12px;
+    left: 12px;
+    gap: 7px;
+  }
+
+  .chat-room-game-scene .room-chat-history-line {
+    min-height: 30px;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .chat-room-game-scene .room-chat-history-time {
+    font-size: 10px;
+  }
+}
