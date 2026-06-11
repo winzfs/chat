@@ -5,30 +5,13 @@ import type { D1ChatRoom } from '../api/d1ChatRooms';
 import { getProfileId } from '../api/profileId';
 import { loadMyProfile } from '../api/profileStorage';
 import { getPeerFromRoom } from '../api/userSafety';
-import { RoomCanvas, type RoomCharacter, type RoomChatHistoryLine } from './RoomCanvas';
+import { RoomCanvas, type RoomCharacter } from './RoomCanvas';
 import './ChatRoomGameScene.css';
-import './RoomChatHistoryOverlay.css';
 
 function messageText(message?: D1ChatMessage) {
   if (!message) return '';
   if (message.message_type === 'image') return '사진을 보냈어요 📷';
   return message.body?.slice(0, 44) ?? '';
-}
-
-function chatHistoryText(message: D1ChatMessage) {
-  if (message.message_type === 'image') return '사진을 보냈어요 📷';
-  return message.body?.trim() || '내용 없는 메시지';
-}
-
-function formatHistoryTime(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) return '';
-
-  return date.toLocaleTimeString('ko-KR', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
 }
 
 function isMyMessage(message: D1ChatMessage, myId: string, myNickname: string) {
@@ -113,21 +96,10 @@ export function ChatRoomGameScene({ messages, room }: { messages: D1ChatMessage[
     return baseCharacters;
   }, [isMyRoom, messages, myId, myPosition.x, myPosition.y, myProfile.nickname, peer]);
 
-  const chatHistoryLines = useMemo<RoomChatHistoryLine[]>(() => (
-    messages.slice(-3).map((message) => ({
-      id: message.id,
-      sender: message.sender_nickname,
-      body: chatHistoryText(message),
-      time: formatHistoryTime(message.created_at),
-      isMine: isMyMessage(message, myId, myProfile.nickname),
-    }))
-  ), [messages, myId, myProfile.nickname]);
-
   return (
     <section className="chat-room-game-scene" aria-label="마이룸 채팅 화면">
       <RoomCanvas
         characters={characters}
-        chatHistoryLines={chatHistoryLines}
         onStageClick={moveMyCharacter}
         room={myRoom}
       />
