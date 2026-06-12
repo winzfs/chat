@@ -52,7 +52,26 @@ export function isAdminRequest(env: EnvWithAdmin, request: Request) {
   return isAdminProfile(env, profileIdFromRequest(request, ['admin_profile_id', 'profile_id']));
 }
 
+export async function ensureChatRoomAuthColumns(env: EnvWithDb) {
+  const columns = [
+    'alter table chat_rooms add column direct_key text',
+    'alter table chat_rooms add column participant_a_id text',
+    'alter table chat_rooms add column participant_b_id text',
+    'alter table chat_rooms add column room_owner_profile_id text',
+  ];
+
+  for (const query of columns) {
+    try {
+      await env.DB.prepare(query).run();
+    } catch {
+      // column already exists
+    }
+  }
+}
+
 export async function chatRoomAuthRow(env: EnvWithDb, roomId: string) {
+  await ensureChatRoomAuthColumns(env);
+
   return env.DB.prepare(
     `select id, direct_key, participant_a_id, participant_b_id, room_owner_profile_id
      from chat_rooms
