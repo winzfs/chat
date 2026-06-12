@@ -124,16 +124,21 @@ CI Build: GitHub Actions
 - 마이룸 바닥 선택
 - 기본 가구/소품 배치 표시
 - 가구 카탈로그에서 가구 추가
+- 카페트 카테고리를 별도 탭으로 분리
+- 하트러그 `rug01` 에셋 등록
+- 하트러그 파일 경로: `apps/web/public/assets/room/furniture/rug01.png`
+- 하트러그는 카탈로그/카페트 탭에만 표시하고 기본 방에는 자동 포함하지 않음
 - 선택한 가구 삭제
 - 선택한 가구 복제
 - 같은 가구 여러 개 배치
 - 가구 드래그 위치 이동
 - 선택한 가구 앞/뒤 깊이 조절
 - 선택한 가구 회전 조절
+- 꾸미기 메뉴는 마이룸 화면 내부의 접을 수 있는 플로팅 버튼/패널로 표시
 - 방 데이터는 `my_rooms` 테이블에 저장
 - 1:1 대화를 새로 신청한 사람이 해당 채팅방의 기본 마이룸 주인이 됨
 - 채팅방에서는 `room_owner_profile_id` 기준으로 마이룸을 불러옴
-- 가구/벽지/액자 에셋 확장을 위해 `asset_id`, `x`, `y`, `z_index`, `rotation` 구조 사용
+- 가구/카페트/벽지/액자 에셋 확장을 위해 `asset_id`, `x`, `y`, `z_index`, `rotation` 구조 사용
 
 ### 채팅방 나가기
 
@@ -218,104 +223,3 @@ release AAB 서명 키 준비와 GitHub Secrets 등록 절차는 `docs/09-releas
 pnpm install
 pnpm dev
 ```
-
-## 빌드
-
-```bash
-pnpm build
-```
-
-빌드 결과물은 아래 경로에 생성됩니다.
-
-```txt
-apps/web/dist
-```
-
-## Android 패키징
-
-PC가 있다면 아래 명령을 사용합니다.
-
-```bash
-pnpm install
-pnpm build
-npx cap add android
-npx @capacitor/assets generate --android --iconBackgroundColor '#ff5b8f' --splashBackgroundColor '#ff5b8f'
-npx cap sync android
-npx cap open android
-```
-
-모바일만 있다면 GitHub Actions에서 `Android Debug APK` 워크플로우를 실행하고 `flirting-debug-apk` artifact를 다운로드합니다.
-
-## Cloudflare Pages 배포 설정
-
-```txt
-Root directory: /
-Build command: pnpm install --frozen-lockfile=false && pnpm build
-Build output directory: apps/web/dist
-Node.js version: 22
-```
-
-## Cloudflare 바인딩
-
-```txt
-D1 binding: DB
-R2 binding: IMAGES
-```
-
-## Cloudflare 환경변수
-
-```txt
-ADMIN_PROFILE_IDS=운영자_profile_id
-```
-
-## 주요 API
-
-```txt
-GET/POST/DELETE /api/talk-posts
-GET/POST        /api/recent-users
-GET             /api/profile-lookup
-GET/POST/DELETE /api/chat-rooms
-GET/POST        /api/chat-messages
-GET/POST        /api/chat-images
-GET/POST        /api/points
-GET/POST        /api/my-room
-GET/POST/DELETE /api/profile-image
-POST            /api/profile-sync
-POST            /api/chat-room-leave
-GET/POST/DELETE /api/user-blocks
-GET/POST/PATCH  /api/reports
-GET             /api/admin/me
-GET             /api/admin/user-review
-```
-
-## 현재 화면 구조
-
-- 현재 앱 화면은 `HomeScreenNext.tsx` 기준입니다.
-- 구버전 `HomeScreen.tsx`는 빌드 호환을 위해 `HomeScreenNext`를 위임합니다.
-
-## 현재 주의사항
-
-- 가입은 아직 실제 인증이 아니라 localStorage 기반입니다.
-- 같은 기기 1계정 제한은 브라우저 데이터 삭제나 다른 브라우저 사용 시 우회될 수 있습니다.
-- 운영자 권한은 현재 `ADMIN_PROFILE_IDS` 기반이므로 실제 운영 전 로그인 기반 권한 검사가 필요합니다.
-- 실시간 기능은 WebSocket이 아니라 폴링 기반입니다.
-- 마이룸 캐릭터 이동은 현재 내 화면에서만 즉시 반영되며 상대방 실시간 위치 동기화는 아직 없습니다.
-- 포인트 충전 상품 UI는 있으나 실제 결제 PG는 아직 연결되지 않았습니다.
-- 광고보기 보상 API/UI는 있으나 실제 광고 SDK는 아직 연결되지 않았습니다.
-- 개발 중 만들어진 오래된 채팅방은 participant 정보가 없어 제목이 보정 표시될 수 있습니다.
-- 오래된 메시지는 `sender_profile_id`가 비어 있을 수 있어 닉네임 기준으로 보정 표시됩니다.
-- Play Store 업로드 후 Android 패키지명은 변경하기 어렵습니다.
-
-## 다음 작업 후보
-
-- GitHub Actions에서 Cloudflare Pages 배포 빌드 로그 확인
-- GitHub Actions에서 Android Debug APK 워크플로우 실행 후 빌드 로그 확인
-- Android 실기기에서 키보드/입력창/이미지 업로드 테스트
-- 실제 가구/벽지/액자 에셋 연결
-- 마이룸 가구 보유/구매 상태 분리
-- 마이룸 캐릭터 위치 실시간 동기화 검토
-- 포인트 충전 PG 연동
-- 보상형 광고 SDK 연동
-- release AAB 서명 키 생성 및 GitHub Secrets 등록
-- Play Store 등록 정보 작성
-- 실제 인증 체계 도입
