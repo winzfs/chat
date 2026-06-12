@@ -58,6 +58,7 @@ const furnitureAssetPaths: Record<string, string> = {
   bed01: '/assets/room/furniture/bed01.png',
   desk01: '/assets/room/furniture/desk01.png',
   sidedesk01: '/assets/room/furniture/sidedesk01.png',
+  rug01: '/assets/room/furniture/rug01.png',
   'soft-bed': '/assets/room/furniture/bed01.png',
 };
 
