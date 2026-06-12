@@ -1,6 +1,6 @@
 # 현재 구현 상태
 
-마지막 갱신: 2026-06-10
+마지막 갱신: 2026-06-12
 
 ## 개요
 
@@ -203,6 +203,9 @@ apps/web/src/features/home/components/ProfileSettingsPanel.tsx
 - 방별 안 읽은 메시지 수 표시
 - 차단된 사용자와는 새 직접 채팅방 생성 차단
 - 포인트가 부족하면 새 쪽지/새 직접대화 시작 차단
+- 채팅방 화면은 마이룸 기반 게임형 화면으로 표시
+- 메시지는 캐릭터 위 말풍선으로 표시
+- 대화 기록은 채팅방에서 접어서 확인 가능
 
 ### 7. 채팅 메시지
 
@@ -217,7 +220,30 @@ apps/web/src/features/home/components/ProfileSettingsPanel.tsx
 - 닉네임과 프로필 아이콘은 말풍선에 직접 표시하지 않음
 - 채팅 입력창은 하단 네비게이션 위에 고정 표시
 
-### 8. 채팅방 나가기
+### 8. 마이룸
+
+- 설정 탭에서 마이룸 꾸미기 진입
+- 마이룸 벽지 선택
+- 마이룸 바닥 선택
+- 기본 가구/소품 배치 표시
+- 가구 카탈로그에서 가구 추가
+- 카페트 카테고리를 별도 탭으로 분리
+- `rug01` 하트러그 에셋 등록
+- 하트러그는 `apps/web/public/assets/room/furniture/rug01.png`를 사용
+- 기본 배치에는 하트러그를 자동 포함하지 않음
+- 선택한 가구 삭제
+- 선택한 가구 복제
+- 같은 가구 여러 개 배치
+- 가구 드래그 위치 이동
+- 선택한 가구 앞/뒤 깊이 조절
+- 선택한 가구 회전 조절
+- 꾸미기 메뉴는 마이룸 화면 내부의 접을 수 있는 플로팅 버튼/패널로 표시
+- 방 데이터는 `my_rooms` 테이블에 저장
+- 1:1 대화를 새로 신청한 사람이 해당 채팅방의 기본 마이룸 주인이 됨
+- 채팅방에서는 `room_owner_profile_id` 기준으로 마이룸을 불러옴
+- 가구/벽지/액자/카페트 에셋 확장을 위해 `asset_id`, `x`, `y`, `z_index`, `rotation` 구조 사용
+
+### 9. 채팅방 나가기
 
 현재 나가기 방식:
 
@@ -236,7 +262,7 @@ apps/web/src/features/home/components/ProfileSettingsPanel.tsx
 POST /api/chat-room-leave
 ```
 
-### 9. 차단/신고
+### 10. 차단/신고
 
 - 채팅방 안에서 상대방 신고 가능
 - 채팅방 안에서 상대방 차단 가능
@@ -248,7 +274,7 @@ POST /api/chat-room-leave
 - 신고 상태를 `open`, `reviewing`, `closed`로 변경 가능
 - 운영자는 신고 대상의 프로필, 소개글, 프로필 사진, 토크 글, 관련 채팅방과 메시지 검토 자료를 조회할 수 있음
 
-### 10. Android 뒤로가기
+### 11. Android 뒤로가기
 
 Android 네이티브 환경에서는 Capacitor App 플러그인으로 뒤로가기를 처리합니다.
 
@@ -271,6 +297,7 @@ GET             /api/profile-lookup
 GET/POST/DELETE /api/chat-rooms
 GET/POST        /api/chat-messages
 GET/POST        /api/chat-images
+GET/POST        /api/my-room
 GET/POST        /api/points
 GET/POST/DELETE /api/profile-image
 POST            /api/profile-sync
@@ -291,6 +318,7 @@ apps/web/src/features/home/HomeScreen.tsx
 apps/web/src/features/home/HomeScreenNext.tsx
 apps/web/src/features/home/api/apiBase.ts
 apps/web/src/features/home/api/points.ts
+apps/web/src/features/home/api/myRoom.ts
 apps/web/src/features/home/api/d1TalkPosts.ts
 apps/web/src/features/home/api/d1ChatRooms.ts
 apps/web/src/features/home/api/d1ChatMessages.ts
@@ -302,8 +330,16 @@ apps/web/src/features/home/components/TalkPanel2.tsx
 apps/web/src/features/home/components/RecentUsersPanel.tsx
 apps/web/src/features/home/components/ChatRoomsList.tsx
 apps/web/src/features/home/components/ChatRoomPanel.tsx
-apps/web/src/features/home/components/ChatMessageItem.tsx
+apps/web/src/features/home/components/ChatRoomGameScene.tsx
+apps/web/src/features/home/components/MyRoomSettingsPanel.tsx
+apps/web/src/features/home/components/RoomCanvas.tsx
+apps/web/src/features/home/components/RoomCanvas.css
+apps/web/src/features/home/components/RoomCanvasFurnitureAssets.css
 apps/web/src/features/home/components/ProfilePreviewModal.tsx
+apps/web/public/assets/room/furniture/bed01.png
+apps/web/public/assets/room/furniture/desk01.png
+apps/web/public/assets/room/furniture/sidedesk01.png
+apps/web/public/assets/room/furniture/rug01.png
 ```
 
 ## 서버 주요 파일
@@ -319,6 +355,7 @@ functions/api/chat-rooms/index.ts
 functions/api/chat-messages/index.ts
 functions/api/chat-images/index.ts
 functions/api/chat-room-leave/index.ts
+functions/api/my-room/index.ts
 functions/api/user-blocks/index.ts
 functions/api/reports/index.ts
 functions/api/admin/me.ts
@@ -346,6 +383,7 @@ functions/api/admin/user-review.ts
 - 출석체크/광고보기 하루 1회 제한 테스트
 - 포인트 충전 PG 연동
 - 보상형 광고 SDK 연동
+- 마이룸 에셋 카탈로그 확장
 - release AAB 서명 키 생성 및 GitHub Secrets 등록
 - Play Store 등록 정보 작성
 - 실제 인증 체계 도입
