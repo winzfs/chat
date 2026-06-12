@@ -79,7 +79,9 @@ export const roomItemCatalog: MyRoomCatalogItem[] = [
   { catalog_id: 'mood-lamp', item_type: 'lamp', asset_id: 'mood-lamp', label: '스탠드', description: '은은한 분위기의 조명', default_x: 78, default_y: 62, default_z_index: 5 },
 ];
 
-export const defaultMyRoomItems: MyRoomItem[] = roomItemCatalog.slice(0, 6).map((item) => ({
+const defaultCatalogIds = new Set(['basic-window', 'star-bed', 'wooden-desk', 'wooden-side-desk', 'round-rug', 'tea-table']);
+
+export const defaultMyRoomItems: MyRoomItem[] = roomItemCatalog.filter((item) => defaultCatalogIds.has(item.catalog_id)).map((item) => ({
   id: item.catalog_id === 'basic-window' ? 'window-main' : item.catalog_id,
   item_type: item.item_type,
   asset_id: item.asset_id,
