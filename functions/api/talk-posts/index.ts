@@ -1,3 +1,5 @@
+import { jsonError } from '../../_shared/auth';
+
 type Env = { DB: D1Database };
 
 type TalkPostBody = {
@@ -168,13 +170,30 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 };
 
 export const onRequestDelete: PagesFunction<Env> = async ({ env, request }) => {
+  await ensureTalkPostColumns(env);
+
   const url = new URL(request.url);
-  const id = url.searchParams.get('id')?.trim();
+  const id = url.searchParams.get('id')?.trim() ?? '';
+  const profileId = url.searchParams.get('profile_id')?.trim() ?? '';
 
   if (!id) {
-    return Response.json({ error: 'id가 필요해요.' }, { status: 400 });
+    return jsonError('id가 필요해요.', 400);
   }
 
-  await env.DB.prepare('delete from talk_posts where id = ?').bind(id).run();
+  if (!profileId) {
+    return jsonError('가입한 사용자만 토크를 삭제할 수 있어요.', 401);
+  }
+
+  const post = await env.DB.prepare('select profile_id from talk_posts where id = ? limit 1').bind(id).first<{ profile_id?: string | null }>();
+
+  if (!post) {
+    return jsonError('삭제할 토크를 찾지 못했어요.', 404);
+  }
+
+  if (post.profile_id !== profileId) {
+    return jsonError('내가 작성한 토크만 삭제할 수 있어요.', 403);
+  }
+
+  await env.DB.prepare('delete from talk_posts where id = ? and profile_id = ?').bind(id, profileId).run();
   return Response.json({ ok: true });
 };
