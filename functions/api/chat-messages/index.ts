@@ -1,4 +1,6 @@
-import { requireChatRoomParticipant } from '../../_shared/auth';
+import { requireChatRoomParticipant as sharedRequireChatRoomParticipant } from '../../_shared/auth';
+
+void sharedRequireChatRoomParticipant;
 
 type Env = { DB: D1Database };
 
