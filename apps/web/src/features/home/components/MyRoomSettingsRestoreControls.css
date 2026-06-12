@@ -55,7 +55,7 @@
 
 .my-room-menu-tabs {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(48px, 1fr));
   gap: 5px;
   padding: 4px;
   border: 1px solid rgba(255, 107, 157, 0.12);
