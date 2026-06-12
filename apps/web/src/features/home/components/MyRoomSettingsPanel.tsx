@@ -9,10 +9,11 @@ import './MyRoomSettingsRestoreOptions.css';
 import './MyRoomSettingsRestoreSwatches.css';
 import './MyRoomFurnitureThumbs.css';
 
-type MyRoomEditorMenu = 'furniture' | 'selected' | 'wallpaper' | 'floor' | 'manage';
+type MyRoomEditorMenu = 'furniture' | 'carpet' | 'selected' | 'wallpaper' | 'floor' | 'manage';
 
 const editorMenus: { id: MyRoomEditorMenu; label: string }[] = [
   { id: 'furniture', label: '가구' },
+  { id: 'carpet', label: '카페트' },
   { id: 'selected', label: '선택' },
   { id: 'wallpaper', label: '벽지' },
   { id: 'floor', label: '바닥' },
@@ -23,6 +24,7 @@ const catalogThumbnailPaths: Record<string, string> = {
   bed01: '/assets/room/furniture/bed01.png',
   desk01: '/assets/room/furniture/desk01.png',
   sidedesk01: '/assets/room/furniture/sidedesk01.png',
+  rug01: '/assets/room/furniture/rug01.png',
 };
 
 const catalogThumbnailIcons: Record<string, string> = {
@@ -38,6 +40,9 @@ const catalogThumbnailIcons: Record<string, string> = {
   shelf: '📚',
   lamp: '💡',
 };
+
+const furnitureCatalogItems = roomItemCatalog.filter((item) => item.item_type !== 'rug');
+const carpetCatalogItems = roomItemCatalog.filter((item) => item.item_type === 'rug');
 
 function clampPercent(value: number) {
   return Math.min(Math.max(value, 0), 100);
@@ -196,27 +201,33 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
     setNotice('가구를 비웠어요. 저장을 눌러 반영해주세요.');
   };
 
+  const renderCatalogPanel = (title: string, description: string, items: typeof roomItemCatalog) => (
+    <div className="my-room-panel-section">
+      <div className="my-room-panel-title">
+        <strong>{title}</strong>
+        <p>{description}</p>
+      </div>
+      <div className="my-room-catalog-grid">
+        {items.map((item) => (
+          <button key={item.catalog_id} type="button" onClick={() => addCatalogItem(item.catalog_id)}>
+            <CatalogThumbnail assetId={item.asset_id} itemType={item.item_type} label={item.label} />
+            <span className="my-room-catalog-copy">
+              <strong>{item.label}</strong>
+              <small>{item.description}</small>
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   const renderEditorPanel = () => {
     if (activeMenu === 'furniture') {
-      return (
-        <div className="my-room-panel-section">
-          <div className="my-room-panel-title">
-            <strong>가구 추가</strong>
-            <p>원하는 가구를 누르면 방에 바로 추가돼요.</p>
-          </div>
-          <div className="my-room-catalog-grid">
-            {roomItemCatalog.map((item) => (
-              <button key={item.catalog_id} type="button" onClick={() => addCatalogItem(item.catalog_id)}>
-                <CatalogThumbnail assetId={item.asset_id} itemType={item.item_type} label={item.label} />
-                <span className="my-room-catalog-copy">
-                  <strong>{item.label}</strong>
-                  <small>{item.description}</small>
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      );
+      return renderCatalogPanel('가구 추가', '원하는 가구를 누르면 방에 바로 추가돼요.', furnitureCatalogItems);
+    }
+
+    if (activeMenu === 'carpet') {
+      return renderCatalogPanel('카페트 추가', '러그와 카페트류만 모아뒀어요.', carpetCatalogItems);
     }
 
     if (activeMenu === 'selected') {
