@@ -1,3 +1,5 @@
+import { requireChatRoomParticipant } from '../../_shared/auth';
+
 type Env = { DB: D1Database };
 
 type LeaveBody = {
@@ -32,14 +34,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const roomId = body.room_id?.trim() ?? '';
   const profileId = body.profile_id?.trim() ?? '';
   const nickname = body.nickname?.trim().slice(0, 20) || '상대방';
+  const authError = await requireChatRoomParticipant(env, roomId, profileId);
 
-  if (!profileId) {
-    return Response.json({ error: '가입한 사용자만 채팅방을 나갈 수 있어요.' }, { status: 401 });
-  }
-
-  if (!roomId) {
-    return Response.json({ error: 'room_id가 필요해요.' }, { status: 400 });
-  }
+  if (authError) return authError;
 
   const message = `${nickname}님이 나갔습니다.`;
   const id = crypto.randomUUID();
