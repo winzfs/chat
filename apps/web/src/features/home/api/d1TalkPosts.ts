@@ -62,7 +62,8 @@ export async function createD1TalkPost(text: string, mood: string, profile?: MyP
 }
 
 export async function deleteD1TalkPost(id: string): Promise<boolean> {
-  const response = await fetch(apiUrl(`/api/talk-posts?id=${encodeURIComponent(id)}`), {
+  const params = new URLSearchParams({ id, profile_id: getProfileId() });
+  const response = await fetch(apiUrl(`/api/talk-posts?${params.toString()}`), {
     method: 'DELETE',
   });
 
