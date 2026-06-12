@@ -1,0 +1,27 @@
+.room-item-rug .room-item-icon.has-image {
+  min-width: 120px;
+  min-height: 74px;
+  border-radius: 0;
+}
+
+.room-item-rug .room-item-image {
+  width: 124px;
+}
+
+.room-item-rug.asset-rug01 .room-item-icon.has-image {
+  min-width: 132px;
+  min-height: 86px;
+}
+
+.room-item-rug.asset-rug01 .room-item-image {
+  width: 136px;
+}
+
+.room-canvas.is-compact .room-item-rug .room-item-icon.has-image {
+  min-width: 96px;
+  min-height: 60px;
+}
+
+.room-canvas.is-compact .room-item-rug .room-item-image {
+  width: 104px;
+}
