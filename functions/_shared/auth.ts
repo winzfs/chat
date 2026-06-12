@@ -64,6 +64,8 @@ export async function chatRoomAuthRow(env: EnvWithDb, roomId: string) {
 export function isProfileInChatRoom(room: ChatRoomAuthRow | null | undefined, profileId: string) {
   if (!room || !profileId) return false;
 
+  if (!room.direct_key) return true;
+
   return room.participant_a_id === profileId
     || room.participant_b_id === profileId
     || room.room_owner_profile_id === profileId;
