@@ -7,6 +7,52 @@ type MessageBody = {
   profile_id?: string;
 };
 
+type ChatRoomAccessRow = {
+  id: string;
+  participant_a_id?: string | null;
+  participant_b_id?: string | null;
+  room_owner_profile_id?: string | null;
+};
+
+function jsonError(error: string, status = 400) {
+  return Response.json({ error }, { status });
+}
+
+function isProfileInChatRoom(room: ChatRoomAccessRow | null | undefined, profileId: string) {
+  if (!room || !profileId) return false;
+
+  return room.participant_a_id === profileId
+    || room.participant_b_id === profileId
+    || room.room_owner_profile_id === profileId;
+}
+
+async function requireChatRoomParticipant(env: Env, roomId: string, profileId: string) {
+  if (!profileId) {
+    return jsonError('가입한 사용자만 접근할 수 있어요.', 401);
+  }
+
+  if (!roomId) {
+    return jsonError('room_id가 필요해요.', 400);
+  }
+
+  const room = await env.DB.prepare(
+    `select id, participant_a_id, participant_b_id, room_owner_profile_id
+     from chat_rooms
+     where id = ?
+     limit 1`,
+  ).bind(roomId).first<ChatRoomAccessRow>();
+
+  if (!room) {
+    return jsonError('채팅방을 찾을 수 없어요.', 404);
+  }
+
+  if (!isProfileInChatRoom(room, profileId)) {
+    return jsonError('이 채팅방에 접근할 수 없어요.', 403);
+  }
+
+  return null;
+}
+
 async function ensureChatMessageColumns(env: Env) {
   try {
     await env.DB.prepare('alter table chat_messages add column sender_profile_id text').run();
@@ -80,10 +126,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const url = new URL(request.url);
   const roomId = url.searchParams.get('room_id')?.trim() ?? '';
   const profileId = url.searchParams.get('profile_id')?.trim() ?? '';
+  const authError = await requireChatRoomParticipant(env, roomId, profileId);
 
-  if (!roomId) {
-    return Response.json({ error: 'room_id가 필요해요.' }, { status: 400 });
-  }
+  if (authError) return authError;
 
   const { results } = await env.DB.prepare(
     `select m.id, m.room_id, m.sender_nickname, m.sender_profile_id, m.message_type, m.body, m.image_key, m.image_url, m.created_at
@@ -108,14 +153,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const body = data.body?.trim() ?? '';
   const senderNickname = data.sender_nickname?.trim().slice(0, 20) || '익명';
   const profileId = data.profile_id?.trim() ?? '';
+  const authError = await requireChatRoomParticipant(env, roomId, profileId);
 
-  if (!profileId) {
-    return Response.json({ error: '가입한 사용자만 메시지를 보낼 수 있어요.' }, { status: 401 });
-  }
-
-  if (!roomId) {
-    return Response.json({ error: 'room_id가 필요해요.' }, { status: 400 });
-  }
+  if (authError) return authError;
 
   if (body.length < 1 || body.length > 500) {
     return Response.json({ error: '메시지는 1자 이상 500자 이하로 입력해야 해요.' }, { status: 400 });
