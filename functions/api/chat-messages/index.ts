@@ -1,3 +1,5 @@
+import { requireChatRoomParticipant } from '../../_shared/auth';
+
 type Env = { DB: D1Database };
 
 type MessageBody = {

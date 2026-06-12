@@ -163,6 +163,15 @@ async function ensureChatRoomColumns(env: Env) {
   await ensurePointTables(env);
   await env.DB.prepare('create index if not exists user_blocks_blocked_idx on user_blocks(blocked_id)').run();
   await env.DB.prepare('create index if not exists chat_room_exits_profile_idx on chat_room_exits(profile_id, is_hidden)').run();
+  await env.DB.prepare('create index if not exists chat_rooms_participant_a_idx on chat_rooms(participant_a_id)').run();
+  await env.DB.prepare('create index if not exists chat_rooms_participant_b_idx on chat_rooms(participant_b_id)').run();
+  await env.DB.prepare('create index if not exists chat_rooms_owner_idx on chat_rooms(room_owner_profile_id)').run();
+
+  try {
+    await env.DB.prepare('create unique index if not exists chat_rooms_direct_key_unique_idx on chat_rooms(direct_key) where direct_key is not null').run();
+  } catch {
+    // Duplicate legacy direct rooms must be cleaned before this can be enforced.
+  }
 }
 
 function directKey(a: string, b: string) {
@@ -276,18 +285,34 @@ async function listRooms(env: Env, viewerId: string) {
      left join recent_users bu on bu.id = r.participant_b_id
      where (? = ''
         or r.direct_key is null
-        or not exists (
-          select 1 from user_blocks b
-          where (b.blocker_id = ? and (b.blocked_id = r.participant_a_id or b.blocked_id = r.participant_b_id))
-             or (b.blocked_id = ? and (b.blocker_id = r.participant_a_id or b.blocker_id = r.participant_b_id))
-        ))
+        or r.participant_a_id = ?
+        or r.participant_b_id = ?
+        or r.room_owner_profile_id = ?)
+       and (? = '' or not exists (
+         select 1 from user_blocks b
+         where (b.blocker_id = ? and (b.blocked_id = r.participant_a_id or b.blocked_id = r.participant_b_id))
+            or (b.blocked_id = ? and (b.blocker_id = r.participant_a_id or b.blocker_id = r.participant_b_id))
+       ))
        and (? = '' or not exists (
          select 1 from chat_room_exits hidden
          where hidden.room_id = r.id and hidden.profile_id = ? and hidden.is_hidden = 1
        ))
      order by r.last_message_at desc
      limit 50`,
-  ).bind(viewerId, viewerId, viewerId, viewerId, viewerId, viewerId, viewerId, viewerId).all<ChatRoomRow>();
+  ).bind(
+    viewerId,
+    viewerId,
+    viewerId,
+    viewerId,
+    viewerId,
+    viewerId,
+    viewerId,
+    viewerId,
+    viewerId,
+    viewerId,
+    viewerId,
+    viewerId,
+  ).all<ChatRoomRow>();
 
   return (results ?? []).map((room) => displayRoomForViewer(room, viewerId));
 }
@@ -382,10 +407,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const existingRoom = await env.DB.prepare(
     `select ${roomSelectColumns}, 0 as unread_count
      from chat_rooms r
-     where r.title = ?
+     where r.title = ? and r.room_owner_profile_id = ?
      order by r.created_at desc
      limit 1`,
-  ).bind(title).first<ChatRoomRow>();
+  ).bind(title, viewerId).first<ChatRoomRow>();
 
   if (existingRoom) return Response.json(existingRoom);
 
@@ -401,18 +426,4 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   ).bind(id).first<ChatRoomRow>();
 
   return Response.json(room, { status: 201 });
-};
-
-export const onRequestDelete: PagesFunction<Env> = async ({ env, request }) => {
-  const url = new URL(request.url);
-  const id = url.searchParams.get('id')?.trim();
-
-  if (!id) {
-    return Response.json({ error: 'id가 필요해요.' }, { status: 400 });
-  }
-
-  await env.DB.prepare('delete from chat_messages where room_id = ?').bind(id).run();
-  await env.DB.prepare('delete from chat_rooms where id = ?').bind(id).run();
-
-  return Response.json({ ok: true });
 };
