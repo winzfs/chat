@@ -34,7 +34,7 @@ export function bodyProfileId(body: Record<string, unknown>, key = 'profile_id')
 
 export function declaredProfileMatchesRequest(request: Request, declaredProfileId: string, queryKeys = ['profile_id']) {
   const requesterId = profileIdFromRequest(request, queryKeys);
-  return !requesterId || requesterId === declaredProfileId;
+  return Boolean(requesterId && requesterId === declaredProfileId);
 }
 
 export function adminProfileIds(env: EnvWithAdmin) {
