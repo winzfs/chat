@@ -1,6 +1,7 @@
 import { memo, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import type { MyRoom, MyRoomItem } from '../api/myRoom';
 import './RoomCanvas.css';
+import './RoomCanvasFurnitureAssets.css';
 
 export type RoomCharacter = {
   id: string;
