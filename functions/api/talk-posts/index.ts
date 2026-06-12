@@ -190,10 +190,10 @@ export const onRequestDelete: PagesFunction<Env> = async ({ env, request }) => {
     return jsonError('삭제할 토크를 찾지 못했어요.', 404);
   }
 
-  if (post.profile_id !== profileId) {
+  if (post.profile_id && post.profile_id !== profileId) {
     return jsonError('내가 작성한 토크만 삭제할 수 있어요.', 403);
   }
 
-  await env.DB.prepare('delete from talk_posts where id = ? and profile_id = ?').bind(id, profileId).run();
+  await env.DB.prepare('delete from talk_posts where id = ? and (profile_id = ? or profile_id is null)').bind(id, profileId).run();
   return Response.json({ ok: true });
 };
