@@ -1,3 +1,5 @@
+import { declaredProfileMatchesRequest, jsonError } from '../../_shared/auth';
+
 type Env = { DB: D1Database };
 
 type BlockBody = {
@@ -26,7 +28,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const profileId = new URL(request.url).searchParams.get('profile_id')?.trim() ?? '';
 
   if (!profileId) {
-    return Response.json({ error: 'profile_id가 필요해요.' }, { status: 401 });
+    return jsonError('profile_id가 필요해요.', 401);
+  }
+
+  if (!declaredProfileMatchesRequest(request, profileId)) {
+    return jsonError('다른 사용자의 차단 목록은 조회할 수 없어요.', 403);
   }
 
   const { results } = await env.DB.prepare(
@@ -45,11 +51,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const blockedNickname = body.blocked_nickname?.trim().slice(0, 20) || '상대방';
 
   if (!blockerId || !blockedId) {
-    return Response.json({ error: 'blocker_id와 blocked_id가 필요해요.' }, { status: 400 });
+    return jsonError('blocker_id와 blocked_id가 필요해요.', 400);
+  }
+
+  if (!declaredProfileMatchesRequest(request, blockerId)) {
+    return jsonError('다른 사용자 이름으로 차단할 수 없어요.', 403);
   }
 
   if (blockerId === blockedId) {
-    return Response.json({ error: '내 프로필은 차단할 수 없어요.' }, { status: 400 });
+    return jsonError('내 프로필은 차단할 수 없어요.', 400);
   }
 
   await env.DB.prepare(
@@ -70,7 +80,11 @@ export const onRequestDelete: PagesFunction<Env> = async ({ env, request }) => {
   const blockedId = url.searchParams.get('blocked_id')?.trim() ?? '';
 
   if (!blockerId || !blockedId) {
-    return Response.json({ error: 'blocker_id와 blocked_id가 필요해요.' }, { status: 400 });
+    return jsonError('blocker_id와 blocked_id가 필요해요.', 400);
+  }
+
+  if (!declaredProfileMatchesRequest(request, blockerId, ['blocker_id', 'profile_id'])) {
+    return jsonError('다른 사용자의 차단을 해제할 수 없어요.', 403);
   }
 
   await env.DB.prepare('delete from user_blocks where blocker_id = ? and blocked_id = ?').bind(blockerId, blockedId).run();
