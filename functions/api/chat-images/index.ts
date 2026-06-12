@@ -1,3 +1,5 @@
+import { requireChatRoomParticipant } from '../../_shared/auth';
+
 type Env = {
   DB: D1Database;
   IMAGES: R2Bucket;
@@ -87,17 +89,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const profileId = String(formData.get('profile_id') ?? '').trim();
   const senderNickname = String(formData.get('sender_nickname') ?? '').trim().slice(0, 20) || '익명';
   const file = formData.get('image');
+  const authError = await requireChatRoomParticipant(env, roomId, profileId);
 
-  if (!profileId) {
-    return Response.json({ error: '가입한 사용자만 이미지를 보낼 수 있어요.' }, { status: 401 });
-  }
+  if (authError) return authError;
 
   if (!(await hasRecentUser(env, profileId))) {
     return Response.json({ error: '프로필 동기화 후 이미지를 보낼 수 있어요.' }, { status: 403 });
-  }
-
-  if (!roomId) {
-    return Response.json({ error: 'room_id가 필요해요.' }, { status: 400 });
   }
 
   if (!(file instanceof File)) {
