@@ -70,6 +70,7 @@ export const roomItemCatalog: MyRoomCatalogItem[] = [
   { catalog_id: 'wooden-desk', item_type: 'desk', asset_id: 'desk01', label: '나무책상', description: '따뜻한 분위기의 나무 책상', default_x: 54, default_y: 58, default_z_index: 4 },
   { catalog_id: 'wooden-side-desk', item_type: 'side-desk', asset_id: 'sidedesk01', label: '나무협탁', description: '침대 옆에 두기 좋은 작은 나무 협탁', default_x: 28, default_y: 56, default_z_index: 4 },
   { catalog_id: 'round-rug', item_type: 'rug', asset_id: 'round-rug', label: '러그', description: '방 중앙에 까는 둥근 러그', default_x: 46, default_y: 68, default_z_index: 1 },
+  { catalog_id: 'heart-rug', item_type: 'rug', asset_id: 'rug01', label: '하트러그', description: '하트 포인트가 있는 포근한 카페트', default_x: 48, default_y: 70, default_z_index: 1 },
   { catalog_id: 'tea-table', item_type: 'table', asset_id: 'tea-table', label: '테이블', description: '대화하기 좋은 작은 테이블', default_x: 58, default_y: 58, default_z_index: 4 },
   { catalog_id: 'small-plant', item_type: 'plant', asset_id: 'small-plant', label: '화분', description: '싱그러운 작은 화분', default_x: 82, default_y: 52, default_z_index: 4 },
   { catalog_id: 'heart-frame', item_type: 'frame', asset_id: 'heart-frame', label: '액자', description: '벽에 거는 작은 액자', default_x: 27, default_y: 22, default_z_index: 2 },
