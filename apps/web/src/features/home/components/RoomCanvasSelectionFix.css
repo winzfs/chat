@@ -1,0 +1,8 @@
+.room-canvas.is-editing .room-item:not(.is-selected):not(.is-dragging) .room-item-icon {
+  border-color: rgba(39, 39, 42, 0.12);
+  box-shadow: 0 6px 12px rgba(39, 39, 42, 0.06);
+}
+
+.room-canvas.is-editing .room-item:not(.is-selected):not(.is-dragging) .room-item-icon.has-image {
+  box-shadow: none;
+}
