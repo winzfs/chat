@@ -25,3 +25,11 @@
 .room-canvas.is-compact .room-item-rug .room-item-image {
   width: 104px;
 }
+
+.asset-light01 .room-item-image {
+  width: 72px;
+}
+
+.room-canvas.is-compact .asset-light01 .room-item-image {
+  width: 62px;
+}
