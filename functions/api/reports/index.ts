@@ -1,3 +1,5 @@
+import { isChatRoomParticipant } from '../../_shared/auth';
+
 type Env = { DB: D1Database; ADMIN_PROFILE_IDS?: string };
 
 type ReportBody = {
@@ -100,6 +102,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
   if (reporterId === reportedId) {
     return Response.json({ error: '내 프로필은 신고할 수 없어요.' }, { status: 400 });
+  }
+
+  if (roomId) {
+    const reporterInRoom = await isChatRoomParticipant(env, roomId, reporterId);
+    const reportedInRoom = await isChatRoomParticipant(env, roomId, reportedId);
+
+    if (!reporterInRoom || !reportedInRoom) {
+      return Response.json({ error: '해당 채팅방과 관련된 사용자만 신고할 수 있어요.' }, { status: 403 });
+    }
   }
 
   const id = crypto.randomUUID();
