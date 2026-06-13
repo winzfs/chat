@@ -3,6 +3,7 @@ import type { MyRoom, MyRoomItem } from '../api/myRoom';
 import './RoomCanvas.css';
 import './RoomCanvasFurnitureAssets.css';
 import './RoomCanvasRugFix.css';
+import './RoomCanvasLightAssets.css';
 
 export type RoomCharacter = {
   id: string;
@@ -61,6 +62,8 @@ const furnitureAssetPaths: Record<string, string> = {
   desk01: '/assets/room/furniture/desk01.png',
   sidedesk01: '/assets/room/furniture/sidedesk01.png',
   rug01: '/assets/room/furniture/rug01.png',
+  light01: '/assets/room/furniture/light01.png',
+  'mood-lamp': '/assets/room/furniture/light01.png',
   'soft-bed': '/assets/room/furniture/bed01.png',
 };
 
