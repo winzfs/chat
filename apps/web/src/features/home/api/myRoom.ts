@@ -76,7 +76,7 @@ export const roomItemCatalog: MyRoomCatalogItem[] = [
   { catalog_id: 'heart-frame', item_type: 'frame', asset_id: 'heart-frame', label: '액자', description: '벽에 거는 작은 액자', default_x: 27, default_y: 22, default_z_index: 2 },
   { catalog_id: 'cozy-sofa', item_type: 'sofa', asset_id: 'cozy-sofa', label: '소파', description: '둘이 앉기 좋은 소파', default_x: 28, default_y: 60, default_z_index: 4 },
   { catalog_id: 'book-shelf', item_type: 'shelf', asset_id: 'book-shelf', label: '책장', description: '아기자기한 책장', default_x: 14, default_y: 31, default_z_index: 3 },
-  { catalog_id: 'mood-lamp', item_type: 'lamp', asset_id: 'mood-lamp', label: '스탠드', description: '은은한 분위기의 조명', default_x: 78, default_y: 62, default_z_index: 5 },
+  { catalog_id: 'mood-lamp', item_type: 'lamp', asset_id: 'light01', label: '무드스탠드', description: '은은한 분위기의 스탠드 조명', default_x: 78, default_y: 62, default_z_index: 5 },
 ];
 
 const defaultCatalogIds = new Set(['basic-window', 'star-bed', 'wooden-desk', 'wooden-side-desk', 'round-rug', 'tea-table']);
@@ -122,6 +122,10 @@ export function createDefaultMyRoom(profileId = getProfileId()): MyRoom {
 function normalizeLegacyAssetId(item: MyRoomItem): MyRoomItem {
   if (item.item_type === 'bed' && (item.asset_id === 'soft-bed' || item.asset_id === 'bed01' || item.label === '침대')) {
     return { ...item, asset_id: 'bed01', label: '별침대' };
+  }
+
+  if (item.item_type === 'lamp' && item.asset_id === 'mood-lamp') {
+    return { ...item, asset_id: 'light01', label: item.label === '스탠드' ? '무드스탠드' : item.label };
   }
 
   return item;
