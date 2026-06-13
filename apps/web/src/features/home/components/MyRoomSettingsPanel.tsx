@@ -10,11 +10,12 @@ import './MyRoomSettingsRestoreSwatches.css';
 import './MyRoomFurnitureThumbs.css';
 import './RoomCanvasSelectionFix.css';
 
-type MyRoomEditorMenu = 'furniture' | 'carpet' | 'selected' | 'wallpaper' | 'floor' | 'manage';
+type MyRoomEditorMenu = 'furniture' | 'carpet' | 'lighting' | 'selected' | 'wallpaper' | 'floor' | 'manage';
 
 const editorMenus: { id: MyRoomEditorMenu; label: string }[] = [
   { id: 'furniture', label: '가구' },
   { id: 'carpet', label: '카페트' },
+  { id: 'lighting', label: '조명' },
   { id: 'selected', label: '선택' },
   { id: 'wallpaper', label: '벽지' },
   { id: 'floor', label: '바닥' },
@@ -26,6 +27,8 @@ const catalogThumbnailPaths: Record<string, string> = {
   desk01: '/assets/room/furniture/desk01.png',
   sidedesk01: '/assets/room/furniture/sidedesk01.png',
   rug01: '/assets/room/furniture/rug01.png',
+  light01: '/assets/room/furniture/light01.png',
+  'mood-lamp': '/assets/room/furniture/light01.png',
 };
 
 const catalogThumbnailIcons: Record<string, string> = {
@@ -42,8 +45,9 @@ const catalogThumbnailIcons: Record<string, string> = {
   lamp: '💡',
 };
 
-const furnitureCatalogItems = roomItemCatalog.filter((item) => item.item_type !== 'rug');
+const furnitureCatalogItems = roomItemCatalog.filter((item) => item.item_type !== 'rug' && item.item_type !== 'lamp');
 const carpetCatalogItems = roomItemCatalog.filter((item) => item.item_type === 'rug');
+const lightingCatalogItems = roomItemCatalog.filter((item) => item.item_type === 'lamp');
 
 function clampPercent(value: number) {
   return Math.min(Math.max(value, 0), 100);
@@ -233,6 +237,10 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
 
     if (activeMenu === 'carpet') {
       return renderCatalogPanel('카페트 추가', '러그와 카페트류만 모아뒀어요.', carpetCatalogItems);
+    }
+
+    if (activeMenu === 'lighting') {
+      return renderCatalogPanel('조명 추가', '스탠드와 조명 아이템을 모아뒀어요.', lightingCatalogItems);
     }
 
     if (activeMenu === 'selected') {
