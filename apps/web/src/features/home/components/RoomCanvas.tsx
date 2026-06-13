@@ -3,7 +3,6 @@ import type { MyRoom, MyRoomItem } from '../api/myRoom';
 import './RoomCanvas.css';
 import './RoomCanvasFurnitureAssets.css';
 import './RoomCanvasRugFix.css';
-import './RoomCanvasLightAssets.css';
 
 export type RoomCharacter = {
   id: string;
