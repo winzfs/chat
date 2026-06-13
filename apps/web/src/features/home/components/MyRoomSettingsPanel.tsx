@@ -8,6 +8,7 @@ import './MyRoomSettingsRestoreControls.css';
 import './MyRoomSettingsRestoreOptions.css';
 import './MyRoomSettingsRestoreSwatches.css';
 import './MyRoomFurnitureThumbs.css';
+import './RoomCanvasSelectionFix.css';
 
 type MyRoomEditorMenu = 'furniture' | 'carpet' | 'selected' | 'wallpaper' | 'floor' | 'manage';
 
@@ -85,7 +86,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
   const [room, setRoom] = useState<MyRoom>(() => createDefaultMyRoom());
   const [activeMenu, setActiveMenu] = useState<MyRoomEditorMenu>('furniture');
   const [isEditorMenuOpen, setIsEditorMenuOpen] = useState(false);
-  const [selectedItemId, setSelectedItemId] = useState(defaultMyRoomItems[0]?.id ?? '');
+  const [selectedItemId, setSelectedItemId] = useState('');
   const [notice, setNotice] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -95,13 +96,13 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
     loadMyRoom(getProfileId()).then((nextRoom) => {
       if (!isMounted) return;
       setRoom(nextRoom);
-      setSelectedItemId(nextRoom.items[0]?.id ?? '');
+      setSelectedItemId('');
       setIsLoading(false);
     }).catch(() => {
       if (!isMounted) return;
       const fallbackRoom = createDefaultMyRoom();
       setRoom(fallbackRoom);
-      setSelectedItemId(fallbackRoom.items[0]?.id ?? '');
+      setSelectedItemId('');
       setIsLoading(false);
     });
 
@@ -115,6 +116,10 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
   const selectItem = (itemId: string) => {
     setSelectedItemId(itemId);
     setActiveMenu('selected');
+  };
+
+  const clearSelection = () => {
+    setSelectedItemId('');
   };
 
   const updateItem = (itemId: string, patcher: (item: MyRoomItem) => MyRoomItem) => {
@@ -157,7 +162,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
 
     setRoom((current) => {
       const nextItems = current.items.filter((item) => item.id !== selectedItem.id);
-      setSelectedItemId(nextItems[0]?.id ?? '');
+      setSelectedItemId('');
       return { ...current, items: nextItems };
     });
     setNotice(`${selectedItem.label}을(를) 방에서 치웠어요. 저장을 눌러 반영해주세요.`);
@@ -185,13 +190,13 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
     }
 
     setRoom(saved);
-    setSelectedItemId(saved.items.find((item) => item.id === selectedItemId)?.id ?? saved.items[0]?.id ?? '');
+    setSelectedItemId(saved.items.some((item) => item.id === selectedItemId) ? selectedItemId : '');
     setNotice('마이룸이 저장됐어요. 새 채팅방에도 이 방이 보여요.');
   };
 
   const resetItems = () => {
     setRoom((current) => ({ ...current, items: defaultMyRoomItems }));
-    setSelectedItemId(defaultMyRoomItems[0]?.id ?? '');
+    setSelectedItemId('');
     setNotice('기본 가구 배치로 되돌렸어요. 저장을 눌러 반영해주세요.');
   };
 
@@ -235,7 +240,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
         <div className="my-room-panel-section">
           <div className="my-room-panel-title">
             <strong>선택한 가구</strong>
-            <p>{selectedItem ? `${selectedItem.label} · X ${Math.round(selectedItem.x)} / Y ${Math.round(selectedItem.y)} / 깊이 ${selectedItem.z_index} / 회전 ${normalizeRotation(selectedItem.rotation ?? 0)}°` : '방 안의 가구를 누르거나 아래 목록에서 선택하세요.'}</p>
+            <p>{selectedItem ? `${selectedItem.label} · X ${Math.round(selectedItem.x)} / Y ${Math.round(selectedItem.y)} / 깊이 ${selectedItem.z_index} / 회전 ${normalizeRotation(selectedItem.rotation ?? 0)}°` : '가구를 누르면 선택되고, 빈 바닥을 누르면 선택이 해제돼요.'}</p>
           </div>
           {selectedItem ? (
             <div className="my-room-control-grid">
@@ -250,7 +255,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
           <div className="my-room-item-list is-compact-list">
             {room.items.length === 0 && <span>배치된 가구가 없어요.</span>}
             {room.items.map((item) => (
-              <button className={selectedItemId === item.id ? 'is-selected' : ''} key={item.id} type="button" onClick={() => setSelectedItemId(item.id)}>
+              <button className={selectedItemId === item.id ? 'is-selected' : ''} key={item.id} type="button" onClick={() => selectItem(item.id)}>
                 {item.label}
               </button>
             ))}
@@ -339,7 +344,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
         <div className="my-room-card-title-row">
           <div>
             <strong>배치 편집</strong>
-            <p>가구를 끌어서 옮기고, 아래 버튼으로 꾸미기 메뉴를 열어요.</p>
+            <p>가구를 끌어서 옮기고, 빈 바닥을 누르면 선택을 해제해요.</p>
           </div>
           <span>{selectedItem ? selectedItem.label : '선택 없음'}</span>
         </div>
@@ -350,6 +355,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
             isEditing
             onItemMove={moveItem}
             onItemSelect={selectItem}
+            onStageClick={clearSelection}
             selectedItemId={selectedItemId}
             room={room}
           />
