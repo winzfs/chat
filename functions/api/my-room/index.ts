@@ -42,8 +42,6 @@ const defaultItems = [
   { id: 'star-bed', item_type: 'bed', asset_id: 'bed01', label: '별침대', x: 12, y: 48, z_index: 3, rotation: 0 },
   { id: 'rug-round', item_type: 'rug', asset_id: 'round-rug', label: '러그', x: 44, y: 66, z_index: 1, rotation: 0 },
   { id: 'table-tea', item_type: 'table', asset_id: 'tea-table', label: '테이블', x: 58, y: 58, z_index: 4, rotation: 0 },
-  { id: 'plant-small', item_type: 'plant', asset_id: 'small-plant', label: '화분', x: 82, y: 52, z_index: 4, rotation: 0 },
-  { id: 'frame-heart', item_type: 'frame', asset_id: 'heart-frame', label: '액자', x: 27, y: 22, z_index: 2, rotation: 0 },
 ];
 
 function defaultRoom(profileId: string) {
