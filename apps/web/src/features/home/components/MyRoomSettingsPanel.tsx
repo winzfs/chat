@@ -1,6 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
-import { createDefaultMyRoom, createMyRoomItemFromCatalog, defaultMyRoomItems, floorOptions, loadMyRoom, roomItemCatalog, saveMyRoom, wallpaperOptions, type MyRoom, type MyRoomItem } from '../api/myRoom';
+import {
+  createDefaultMyRoom,
+  createMyRoomItemFromCatalog,
+  defaultMyRoomItems,
+  floorOptions,
+  getRoomItemAssetPath,
+  loadMyRoom,
+  roomItemCatalog,
+  roomItemCategoryOptions,
+  saveMyRoom,
+  wallpaperOptions,
+  type MyRoom,
+  type MyRoomCatalogItem,
+  type MyRoomItem,
+  type MyRoomItemCategory,
+} from '../api/myRoom';
 import { getProfileId } from '../api/profileId';
 import { RoomCanvas } from './RoomCanvas';
 import './MyRoomSettingsPanel.css';
@@ -10,26 +25,22 @@ import './MyRoomSettingsRestoreSwatches.css';
 import './MyRoomFurnitureThumbs.css';
 import './RoomCanvasSelectionFix.css';
 
-type MyRoomEditorMenu = 'furniture' | 'carpet' | 'lighting' | 'selected' | 'wallpaper' | 'floor' | 'manage';
+type MyRoomEditorMenu = MyRoomItemCategory | 'selected' | 'wallpaper' | 'floor' | 'manage';
+
+const catalogPanels = roomItemCategoryOptions
+  .map((option) => ({
+    ...option,
+    items: roomItemCatalog.filter((item) => item.category === option.id),
+  }))
+  .filter((option) => option.items.length > 0);
 
 const editorMenus: { id: MyRoomEditorMenu; label: string }[] = [
-  { id: 'furniture', label: '가구' },
-  { id: 'carpet', label: '카페트' },
-  { id: 'lighting', label: '조명' },
+  ...catalogPanels.map((panel) => ({ id: panel.id, label: panel.label })),
   { id: 'selected', label: '선택' },
   { id: 'wallpaper', label: '벽지' },
   { id: 'floor', label: '바닥' },
   { id: 'manage', label: '관리' },
 ];
-
-const catalogThumbnailPaths: Record<string, string> = {
-  bed01: '/assets/room/furniture/bed01.png',
-  desk01: '/assets/room/furniture/desk01.png',
-  sidedesk01: '/assets/room/furniture/sidedesk01.png',
-  rug01: '/assets/room/furniture/rug01.png',
-  light01: '/assets/room/furniture/light01.png',
-  'mood-lamp': '/assets/room/furniture/light01.png',
-};
 
 const catalogThumbnailIcons: Record<string, string> = {
   bed: '🛏️',
@@ -45,10 +56,6 @@ const catalogThumbnailIcons: Record<string, string> = {
   lamp: '💡',
 };
 
-const furnitureCatalogItems = roomItemCatalog.filter((item) => item.item_type !== 'rug' && item.item_type !== 'lamp');
-const carpetCatalogItems = roomItemCatalog.filter((item) => item.item_type === 'rug');
-const lightingCatalogItems = roomItemCatalog.filter((item) => item.item_type === 'lamp');
-
 function clampPercent(value: number) {
   return Math.min(Math.max(value, 0), 100);
 }
@@ -61,6 +68,14 @@ function clampZIndex(value: number) {
   return Math.min(Math.max(value, 0), 99);
 }
 
+function serializeRoom(room: MyRoom) {
+  return JSON.stringify({
+    wallpaper: room.wallpaper,
+    floor: room.floor,
+    items: room.items,
+  });
+}
+
 function duplicateItem(item: MyRoomItem, index: number): MyRoomItem {
   return {
     ...item,
@@ -71,23 +86,24 @@ function duplicateItem(item: MyRoomItem, index: number): MyRoomItem {
   };
 }
 
-function CatalogThumbnail({ assetId, itemType, label }: { assetId: string; itemType: string; label: string }) {
-  const thumbnailPath = catalogThumbnailPaths[assetId];
+function CatalogThumbnail({ item }: { item: MyRoomCatalogItem }) {
+  const thumbnailPath = getRoomItemAssetPath(item);
 
   return (
     <span className={`my-room-catalog-thumb ${thumbnailPath ? 'has-image' : ''}`}>
       {thumbnailPath ? (
         <img alt="" aria-hidden="true" draggable={false} src={thumbnailPath} />
       ) : (
-        <span aria-hidden="true">{catalogThumbnailIcons[itemType] ?? '✨'}</span>
+        <span aria-hidden="true">{catalogThumbnailIcons[item.item_type] ?? '✨'}</span>
       )}
-      <span className="sr-only">{label}</span>
+      <span className="sr-only">{item.label}</span>
     </span>
   );
 }
 
 export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
   const [room, setRoom] = useState<MyRoom>(() => createDefaultMyRoom());
+  const [savedRoom, setSavedRoom] = useState<MyRoom>(() => createDefaultMyRoom());
   const [activeMenu, setActiveMenu] = useState<MyRoomEditorMenu>('furniture');
   const [isEditorMenuOpen, setIsEditorMenuOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState('');
@@ -100,12 +116,14 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
     loadMyRoom(getProfileId()).then((nextRoom) => {
       if (!isMounted) return;
       setRoom(nextRoom);
+      setSavedRoom(nextRoom);
       setSelectedItemId('');
       setIsLoading(false);
     }).catch(() => {
       if (!isMounted) return;
       const fallbackRoom = createDefaultMyRoom();
       setRoom(fallbackRoom);
+      setSavedRoom(fallbackRoom);
       setSelectedItemId('');
       setIsLoading(false);
     });
@@ -116,6 +134,20 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
   }, []);
 
   const selectedItem = useMemo(() => room.items.find((item) => item.id === selectedItemId) ?? null, [room.items, selectedItemId]);
+  const hasUnsavedChanges = useMemo(() => serializeRoom(room) !== serializeRoom(savedRoom), [room, savedRoom]);
+  const saveButtonLabel = isSaving ? '저장중' : hasUnsavedChanges ? '저장 필요' : '저장됨';
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   const selectItem = (itemId: string) => {
     setSelectedItemId(itemId);
@@ -124,6 +156,14 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
 
   const clearSelection = () => {
     setSelectedItemId('');
+  };
+
+  const handleClose = () => {
+    if (hasUnsavedChanges && !window.confirm('저장하지 않은 마이룸 변경사항이 있어요. 저장하지 않고 나갈까요?')) {
+      return;
+    }
+
+    onClose();
   };
 
   const updateItem = (itemId: string, patcher: (item: MyRoomItem) => MyRoomItem) => {
@@ -158,7 +198,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
       setIsEditorMenuOpen(true);
       return { ...current, items: [...current.items, nextItem] };
     });
-    setNotice(`${catalogItem.label}을(를) 방에 추가했어요. 바로 끌어서 위치를 잡아보세요.`);
+    setNotice(`${catalogItem.label}을(를) 방에 추가했어요. 저장을 눌러 반영해주세요.`);
   };
 
   const removeSelectedItem = () => {
@@ -180,10 +220,12 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
       setSelectedItemId(nextItem.id);
       return { ...current, items: [...current.items, nextItem] };
     });
-    setNotice(`${selectedItem.label}을(를) 하나 더 추가했어요.`);
+    setNotice(`${selectedItem.label}을(를) 하나 더 추가했어요. 저장을 눌러 반영해주세요.`);
   };
 
   const save = async () => {
+    if (!hasUnsavedChanges || isSaving) return;
+
     setIsSaving(true);
     const saved = await saveMyRoom(room);
     setIsSaving(false);
@@ -194,6 +236,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
     }
 
     setRoom(saved);
+    setSavedRoom(saved);
     setSelectedItemId(saved.items.some((item) => item.id === selectedItemId) ? selectedItemId : '');
     setNotice('마이룸이 저장됐어요. 새 채팅방에도 이 방이 보여요.');
   };
@@ -210,7 +253,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
     setNotice('가구를 비웠어요. 저장을 눌러 반영해주세요.');
   };
 
-  const renderCatalogPanel = (title: string, description: string, items: typeof roomItemCatalog) => (
+  const renderCatalogPanel = (title: string, description: string, items: MyRoomCatalogItem[]) => (
     <div className="my-room-panel-section">
       <div className="my-room-panel-title">
         <strong>{title}</strong>
@@ -219,7 +262,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
       <div className="my-room-catalog-grid">
         {items.map((item) => (
           <button key={item.catalog_id} type="button" onClick={() => addCatalogItem(item.catalog_id)}>
-            <CatalogThumbnail assetId={item.asset_id} itemType={item.item_type} label={item.label} />
+            <CatalogThumbnail item={item} />
             <span className="my-room-catalog-copy">
               <strong>{item.label}</strong>
               <small>{item.description}</small>
@@ -231,16 +274,9 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
   );
 
   const renderEditorPanel = () => {
-    if (activeMenu === 'furniture') {
-      return renderCatalogPanel('가구 추가', '원하는 가구를 누르면 방에 바로 추가돼요.', furnitureCatalogItems);
-    }
-
-    if (activeMenu === 'carpet') {
-      return renderCatalogPanel('카페트 추가', '러그와 카페트류만 모아뒀어요.', carpetCatalogItems);
-    }
-
-    if (activeMenu === 'lighting') {
-      return renderCatalogPanel('조명 추가', '스탠드와 조명 아이템을 모아뒀어요.', lightingCatalogItems);
+    const activeCatalogPanel = catalogPanels.find((panel) => panel.id === activeMenu);
+    if (activeCatalogPanel) {
+      return renderCatalogPanel(activeCatalogPanel.title, activeCatalogPanel.description, activeCatalogPanel.items);
     }
 
     if (activeMenu === 'selected') {
@@ -332,7 +368,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
           <button type="button" onClick={resetItems}>기본 배치로</button>
           <button className="danger-button" type="button" onClick={clearItems}>가구 모두 비우기</button>
         </div>
-        <p className="my-room-small-hint">지금은 임시 가구 카탈로그지만, 다음에는 실제 PNG/WebP 에셋과 포인트 상점 아이템을 `asset_id`에 연결하면 됩니다.</p>
+        <p className="my-room-small-hint">새 아이템은 `roomItemCatalog`에 category와 image_path만 연결하면 썸네일과 방 렌더링에 함께 반영돼요.</p>
       </div>
     );
   };
@@ -340,19 +376,26 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
   return (
     <section className="talk-list my-room-editor-screen" aria-label="마이룸 꾸미기">
       <Card className="settings-summary my-room-settings-header">
-        <button className="chat-back-button" type="button" onClick={onClose}>←</button>
+        <button className="chat-back-button" type="button" onClick={handleClose}>←</button>
         <div className="my-room-header-copy">
           <strong>마이룸 꾸미기</strong>
-          <p>방을 보면서 바로 가구와 분위기를 바꿔보세요.</p>
+          <p>{hasUnsavedChanges ? '저장하지 않은 변경사항이 있어요.' : '저장 완료된 상태예요.'}</p>
         </div>
-        <button className="my-room-save-chip" disabled={isSaving} onClick={save} type="button">{isSaving ? '저장중' : '저장'}</button>
+        <button
+          className={`my-room-save-chip ${hasUnsavedChanges ? 'needs-save' : 'is-saved'}`}
+          disabled={isSaving || isLoading || !hasUnsavedChanges}
+          onClick={save}
+          type="button"
+        >
+          {saveButtonLabel}
+        </button>
       </Card>
 
       <Card className="person-card my-room-preview-card is-sticky-preview">
         <div className="my-room-card-title-row">
           <div>
             <strong>배치 편집</strong>
-            <p>가구를 끌어서 옮기고, 빈 바닥을 누르면 선택을 해제해요.</p>
+            <p>{hasUnsavedChanges ? '변경사항 저장이 필요해요.' : '가구를 끌어서 옮기고, 빈 바닥을 누르면 선택을 해제해요.'}</p>
           </div>
           <span>{selectedItem ? selectedItem.label : '선택 없음'}</span>
         </div>
@@ -368,7 +411,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
             room={room}
           />
         )}
-        {notice && <p className="my-room-notice">{notice}</p>}
+        {(notice || hasUnsavedChanges) && <p className="my-room-notice">{notice || '저장하지 않은 변경사항이 있어요.'}</p>}
 
         <div className={isEditorMenuOpen ? 'my-room-floating-editor is-open' : 'my-room-floating-editor'}>
           <button
