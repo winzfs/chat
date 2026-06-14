@@ -46,7 +46,7 @@
 }
 
 .my-room-save-chip {
-  min-width: 64px !important;
+  min-width: 74px !important;
   min-height: 38px !important;
   margin: 0 !important;
   padding: 0 14px !important;
@@ -59,8 +59,20 @@
   font-weight: 950 !important;
 }
 
+.my-room-save-chip.needs-save {
+  background: linear-gradient(135deg, #ff347d, #ff7a3d) !important;
+  box-shadow: 0 10px 22px rgba(255, 91, 143, 0.28) !important;
+}
+
+.my-room-save-chip.is-saved {
+  border: 1px solid rgba(39, 39, 42, 0.08) !important;
+  background: #f4f4f5 !important;
+  box-shadow: none !important;
+  color: #71717a !important;
+}
+
 .my-room-save-chip:disabled {
-  opacity: 0.7;
+  opacity: 0.82;
 }
 
 .my-room-preview-card {
@@ -139,15 +151,23 @@
 
 .my-room-floating-editor-panel .my-room-menu-tabs {
   gap: 4px;
+  overflow-x: auto;
   padding: 3px;
   border-radius: 18px;
+  scrollbar-width: none;
+}
+
+.my-room-floating-editor-panel .my-room-menu-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .my-room-floating-editor-panel .my-room-menu-tabs button {
+  min-width: fit-content;
   min-height: 31px !important;
-  padding: 0 4px !important;
+  padding: 0 8px !important;
   border-radius: 14px !important;
   font-size: 11px !important;
+  white-space: nowrap;
 }
 
 .my-room-floating-editor-panel .my-room-panel-section {
