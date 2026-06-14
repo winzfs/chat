@@ -1,5 +1,5 @@
 import { memo, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
-import type { MyRoom, MyRoomItem } from '../api/myRoom';
+import { getRoomItemAssetPath, type MyRoom, type MyRoomItem } from '../api/myRoom';
 import './RoomCanvas.css';
 import './RoomCanvasFurnitureAssets.css';
 import './RoomCanvasRugFix.css';
@@ -56,16 +56,6 @@ const itemIcons: Record<string, string> = {
   lamp: '💡',
 };
 
-const furnitureAssetPaths: Record<string, string> = {
-  bed01: '/assets/room/furniture/bed01.png',
-  desk01: '/assets/room/furniture/desk01.png',
-  sidedesk01: '/assets/room/furniture/sidedesk01.png',
-  rug01: '/assets/room/furniture/rug01.png',
-  light01: '/assets/room/furniture/light01.png',
-  'mood-lamp': '/assets/room/furniture/light01.png',
-  'soft-bed': '/assets/room/furniture/bed01.png',
-};
-
 function clampPercent(value: number) {
   return Math.min(Math.max(value, 0), 100);
 }
@@ -92,7 +82,7 @@ function itemIcon(item: MyRoomItem) {
 }
 
 function itemAssetPath(item: MyRoomItem) {
-  return furnitureAssetPaths[item.asset_id] ?? '';
+  return getRoomItemAssetPath(item);
 }
 
 function RoomItemContent({ item }: { item: MyRoomItem }) {
