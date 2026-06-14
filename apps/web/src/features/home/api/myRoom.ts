@@ -3,6 +3,7 @@ import { getProfileId } from './profileId';
 
 export type MyRoomWallpaper = 'peach' | 'mint' | 'lavender' | 'sky' | 'terracotta' | 'olive' | 'butter' | 'ocean' | 'berry' | 'cobalt' | 'noir';
 export type MyRoomFloor = 'cream' | 'wood' | 'checker' | 'carpet' | 'walnut' | 'herringbone' | 'terrazzo' | 'mono-checker' | 'clay-tile' | 'ocean-tile' | 'moss-carpet' | 'night-wood' | 'black-marble';
+export type MyRoomItemCategory = 'furniture' | 'carpet' | 'lighting' | 'decor';
 
 export type MyRoomItem = {
   id: string;
@@ -17,8 +18,10 @@ export type MyRoomItem = {
 
 export type MyRoomCatalogItem = {
   catalog_id: string;
+  category: MyRoomItemCategory;
   item_type: string;
   asset_id: string;
+  image_path?: string;
   label: string;
   description: string;
   default_x: number;
@@ -33,6 +36,13 @@ export type MyRoom = {
   items: MyRoomItem[];
   updated_at?: string;
 };
+
+export const roomItemCategoryOptions: { id: MyRoomItemCategory; label: string; title: string; description: string }[] = [
+  { id: 'furniture', label: '가구', title: '가구 추가', description: '원하는 가구를 누르면 방에 바로 추가돼요.' },
+  { id: 'carpet', label: '카페트', title: '카페트 추가', description: '러그와 카페트류만 모아뒀어요.' },
+  { id: 'lighting', label: '조명', title: '조명 추가', description: '스탠드와 조명 아이템을 모아뒀어요.' },
+  { id: 'decor', label: '소품', title: '소품 추가', description: '방 분위기를 살리는 작은 장식들을 모아뒀어요.' },
+];
 
 export const wallpaperOptions: { id: MyRoomWallpaper; label: string; description: string }[] = [
   { id: 'peach', label: '복숭아빛 방', description: '따뜻하고 부드러운 기본 방' },
@@ -65,19 +75,30 @@ export const floorOptions: { id: MyRoomFloor; label: string; description: string
 ];
 
 export const roomItemCatalog: MyRoomCatalogItem[] = [
-  { catalog_id: 'basic-window', item_type: 'window', asset_id: 'basic-window', label: '창문', description: '방 분위기를 밝게 만드는 기본 창문', default_x: 68, default_y: 18, default_z_index: 2 },
-  { catalog_id: 'star-bed', item_type: 'bed', asset_id: 'bed01', label: '별침대', description: '별빛 느낌의 포근한 침대', default_x: 14, default_y: 52, default_z_index: 3 },
-  { catalog_id: 'wooden-desk', item_type: 'desk', asset_id: 'desk01', label: '나무책상', description: '따뜻한 분위기의 나무 책상', default_x: 54, default_y: 58, default_z_index: 4 },
-  { catalog_id: 'wooden-side-desk', item_type: 'side-desk', asset_id: 'sidedesk01', label: '나무협탁', description: '침대 옆에 두기 좋은 작은 나무 협탁', default_x: 28, default_y: 56, default_z_index: 4 },
-  { catalog_id: 'round-rug', item_type: 'rug', asset_id: 'round-rug', label: '러그', description: '방 중앙에 까는 둥근 러그', default_x: 46, default_y: 68, default_z_index: 1 },
-  { catalog_id: 'heart-rug', item_type: 'rug', asset_id: 'rug01', label: '하트러그', description: '하트 포인트가 있는 포근한 카페트', default_x: 48, default_y: 70, default_z_index: 1 },
-  { catalog_id: 'tea-table', item_type: 'table', asset_id: 'tea-table', label: '테이블', description: '대화하기 좋은 작은 테이블', default_x: 58, default_y: 58, default_z_index: 4 },
-  { catalog_id: 'small-plant', item_type: 'plant', asset_id: 'small-plant', label: '화분', description: '싱그러운 작은 화분', default_x: 82, default_y: 52, default_z_index: 4 },
-  { catalog_id: 'heart-frame', item_type: 'frame', asset_id: 'heart-frame', label: '액자', description: '벽에 거는 작은 액자', default_x: 27, default_y: 22, default_z_index: 2 },
-  { catalog_id: 'cozy-sofa', item_type: 'sofa', asset_id: 'cozy-sofa', label: '소파', description: '둘이 앉기 좋은 소파', default_x: 28, default_y: 60, default_z_index: 4 },
-  { catalog_id: 'book-shelf', item_type: 'shelf', asset_id: 'book-shelf', label: '책장', description: '아기자기한 책장', default_x: 14, default_y: 31, default_z_index: 3 },
-  { catalog_id: 'mood-lamp', item_type: 'lamp', asset_id: 'light01', label: '무드스탠드', description: '은은한 분위기의 스탠드 조명', default_x: 78, default_y: 62, default_z_index: 5 },
+  { catalog_id: 'basic-window', category: 'decor', item_type: 'window', asset_id: 'basic-window', label: '창문', description: '방 분위기를 밝게 만드는 기본 창문', default_x: 68, default_y: 18, default_z_index: 2 },
+  { catalog_id: 'star-bed', category: 'furniture', item_type: 'bed', asset_id: 'bed01', image_path: '/assets/room/furniture/bed01.png', label: '별침대', description: '별빛 느낌의 포근한 침대', default_x: 14, default_y: 52, default_z_index: 3 },
+  { catalog_id: 'wooden-desk', category: 'furniture', item_type: 'desk', asset_id: 'desk01', image_path: '/assets/room/furniture/desk01.png', label: '나무책상', description: '따뜻한 분위기의 나무 책상', default_x: 54, default_y: 58, default_z_index: 4 },
+  { catalog_id: 'wooden-side-desk', category: 'furniture', item_type: 'side-desk', asset_id: 'sidedesk01', image_path: '/assets/room/furniture/sidedesk01.png', label: '나무협탁', description: '침대 옆에 두기 좋은 작은 나무 협탁', default_x: 28, default_y: 56, default_z_index: 4 },
+  { catalog_id: 'round-rug', category: 'carpet', item_type: 'rug', asset_id: 'round-rug', label: '러그', description: '방 중앙에 까는 둥근 러그', default_x: 46, default_y: 68, default_z_index: 1 },
+  { catalog_id: 'heart-rug', category: 'carpet', item_type: 'rug', asset_id: 'rug01', image_path: '/assets/room/furniture/rug01.png', label: '하트러그', description: '하트 포인트가 있는 포근한 카페트', default_x: 48, default_y: 70, default_z_index: 1 },
+  { catalog_id: 'tea-table', category: 'furniture', item_type: 'table', asset_id: 'tea-table', label: '테이블', description: '대화하기 좋은 작은 테이블', default_x: 58, default_y: 58, default_z_index: 4 },
+  { catalog_id: 'small-plant', category: 'decor', item_type: 'plant', asset_id: 'small-plant', label: '화분', description: '싱그러운 작은 화분', default_x: 82, default_y: 52, default_z_index: 4 },
+  { catalog_id: 'heart-frame', category: 'decor', item_type: 'frame', asset_id: 'heart-frame', label: '액자', description: '벽에 거는 작은 액자', default_x: 27, default_y: 22, default_z_index: 2 },
+  { catalog_id: 'cozy-sofa', category: 'furniture', item_type: 'sofa', asset_id: 'cozy-sofa', label: '소파', description: '둘이 앉기 좋은 소파', default_x: 28, default_y: 60, default_z_index: 4 },
+  { catalog_id: 'book-shelf', category: 'furniture', item_type: 'shelf', asset_id: 'book-shelf', label: '책장', description: '아기자기한 책장', default_x: 14, default_y: 31, default_z_index: 3 },
+  { catalog_id: 'mood-lamp', category: 'lighting', item_type: 'lamp', asset_id: 'light01', image_path: '/assets/room/furniture/light01.png', label: '무드스탠드', description: '은은한 분위기의 스탠드 조명', default_x: 78, default_y: 62, default_z_index: 5 },
 ];
+
+const catalogAssetPaths = new Map(roomItemCatalog.filter((item) => item.image_path).map((item) => [item.asset_id, item.image_path ?? '']));
+const legacyAssetPaths: Record<string, string> = {
+  'mood-lamp': '/assets/room/furniture/light01.png',
+  'soft-bed': '/assets/room/furniture/bed01.png',
+};
+
+export function getRoomItemAssetPath(item: Pick<MyRoomItem, 'asset_id'> | Pick<MyRoomCatalogItem, 'asset_id' | 'image_path'>) {
+  if ('image_path' in item && item.image_path) return item.image_path;
+  return catalogAssetPaths.get(item.asset_id) ?? legacyAssetPaths[item.asset_id] ?? '';
+}
 
 const defaultCatalogIds = new Set(['basic-window', 'star-bed', 'wooden-desk', 'wooden-side-desk', 'round-rug', 'tea-table']);
 
