@@ -23,6 +23,8 @@ export type AuthResult =
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
+const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const CLOCK_SKEW_MS = 5 * 60 * 1000;
 
 export function jsonError(error: string, status = 400) {
   return Response.json({ error }, { status });
@@ -99,7 +101,17 @@ export async function authenticatedProfileId(env: EnvWithAuth, request: Request)
     if (!valid) return '';
 
     const payload = JSON.parse(decoder.decode(base64UrlToBytes(encodedPayload))) as Partial<SessionPayload>;
-    return payload.v === 1 && typeof payload.sub === 'string' && payload.sub.trim() ? payload.sub.trim() : '';
+    const now = Date.now();
+    const validIssuedAt = typeof payload.iat === 'number'
+      && payload.iat <= now + CLOCK_SKEW_MS
+      && payload.iat >= now - SESSION_MAX_AGE_MS;
+
+    return payload.v === 1
+      && validIssuedAt
+      && typeof payload.sub === 'string'
+      && payload.sub.trim()
+      ? payload.sub.trim()
+      : '';
   } catch {
     return '';
   }
