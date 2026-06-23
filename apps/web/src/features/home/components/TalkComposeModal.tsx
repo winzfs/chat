@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '../../../shared/components/Button';
+import { Modal } from '../../../shared/components/Modal';
 import './TalkComposeModal.css';
 
 export type TalkComposeValues = {
@@ -33,8 +34,8 @@ export function TalkComposeModal({ isOpen, onClose, onSubmit }: TalkComposeModal
   };
 
   return (
-    <div className="modal-backdrop" role="presentation">
-      <section className="compose-modal" aria-labelledby="compose-modal-title" role="dialog" aria-modal="true">
+    <Modal labelledBy="compose-modal-title" onClose={onClose} preventClose={isSubmitting}>
+      <section className="compose-modal">
         <header className="compose-modal-header">
           <div>
             <p>한줄 토크</p>
@@ -53,6 +54,6 @@ export function TalkComposeModal({ isOpen, onClose, onSubmit }: TalkComposeModal
           <Button disabled={!trimmedText || isSubmitting} onClick={handleSubmit}>{isSubmitting ? '등록 중...' : '등록하기'}</Button>
         </div>
       </section>
-    </div>
+    </Modal>
   );
 }
