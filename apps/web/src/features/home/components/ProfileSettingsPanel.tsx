@@ -1,11 +1,11 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
-import { apiUrl } from '../api/apiBase';
+import { apiUrl, assetUrl } from '../api/apiBase';
+import { parseApiResponse } from '../api/apiResponse';
 import { loadAdminStatus } from '../api/admin';
 import { isKoreaRegion, KOREA_REGIONS } from '../api/koreaRegions';
 import { claimAdRewardPoints, claimAttendancePoints, loadPointStatus, type PointStatus } from '../api/points';
-import { getProfileId } from '../api/profileId';
 import type { MyProfile } from '../api/profileStorage';
 import { AvatarCropModal } from './AvatarCropModal';
 import { BlockedUsersPanel } from './BlockedUsersPanel';
@@ -15,22 +15,25 @@ import './SettingsLegalLinks.css';
 
 async function uploadAvatar(image: File) {
   const formData = new FormData();
-  formData.append('profile_id', getProfileId());
   formData.append('image', image);
 
   const response = await fetch(apiUrl('/api/profile-image'), { method: 'POST', body: formData });
-  if (!response.ok) return null;
-
-  const data = await response.json() as { avatar_url?: string };
-  return data.avatar_url ?? null;
+  const data = await parseApiResponse<{ avatar_url?: string }>(response, '프로필 사진을 업로드하지 못했어요.');
+  if (!data.avatar_url) throw new Error('업로드된 프로필 사진을 확인하지 못했어요.');
+  return data.avatar_url;
 }
 
 async function deleteAvatar(avatarUrl?: string) {
-  const params = new URLSearchParams({ profile_id: getProfileId() });
+  const params = new URLSearchParams();
   if (avatarUrl) params.set('avatar_url', avatarUrl);
 
-  const response = await fetch(apiUrl(`/api/profile-image?${params.toString()}`), { method: 'DELETE' });
-  return response.ok;
+  const query = params.toString();
+  const response = await fetch(apiUrl(`/api/profile-image${query ? `?${query}` : ''}`), { method: 'DELETE' });
+  await parseApiResponse<{ avatar_url: string }>(response, '프로필 사진을 초기화하지 못했어요.');
+}
+
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
 }
 
 const pointProducts = [
@@ -47,9 +50,11 @@ function formatPointDate(value: string) {
   return date.toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfile; onSave: (profile: MyProfile) => void }) {
+export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfile; onSave: (profile: MyProfile) => Promise<void> | void }) {
   const [form, setForm] = useState<MyProfile>(myProfile);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileNotice, setProfileNotice] = useState('');
   const [cropImageUrl, setCropImageUrl] = useState('');
   const [isReportAdminOpen, setIsReportAdminOpen] = useState(false);
   const [isBlockListOpen, setIsBlockListOpen] = useState(false);
@@ -63,7 +68,10 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
   const [isWatchingAd, setIsWatchingAd] = useState(false);
 
   const refreshPoints = () => {
-    loadPointStatus().then(setPointStatus).catch(() => setPointStatus(null));
+    loadPointStatus().then(setPointStatus).catch((error) => {
+      setPointStatus(null);
+      setPointNotice(errorMessage(error, '포인트 정보를 불러오지 못했어요.'));
+    });
   };
 
   useEffect(() => {
@@ -79,9 +87,25 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
     if (cropImageUrl) URL.revokeObjectURL(cropImageUrl);
   }, [cropImageUrl]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const persistProfile = async (next: MyProfile) => {
+    setIsSavingProfile(true);
+    setProfileNotice('');
+
+    try {
+      await onSave(next);
+      setProfileNotice('프로필이 저장됐어요.');
+      return true;
+    } catch (error) {
+      setProfileNotice(errorMessage(error, '프로필을 저장하지 못했어요.'));
+      return false;
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onSave(form);
+    await persistProfile(form);
   };
 
   const handleAvatarPick = (file?: File) => {
@@ -92,25 +116,35 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
 
   const uploadCroppedAvatar = async (file: File) => {
     setIsUploading(true);
-    const avatarUrl = await uploadAvatar(file);
-    setIsUploading(false);
-    setCropImageUrl('');
+    setProfileNotice('');
 
-    if (avatarUrl) {
+    try {
+      const avatarUrl = await uploadAvatar(file);
       const next = { ...form, avatar_url: avatarUrl };
       setForm(next);
-      onSave(next);
+      await persistProfile(next);
+    } catch (error) {
+      setProfileNotice(errorMessage(error, '프로필 사진을 저장하지 못했어요.'));
+    } finally {
+      setIsUploading(false);
+      setCropImageUrl('');
     }
   };
 
   const resetAvatar = async () => {
     setIsUploading(true);
-    await deleteAvatar(form.avatar_url);
-    setIsUploading(false);
+    setProfileNotice('');
 
-    const next = { ...form, avatar_url: '' };
-    setForm(next);
-    onSave(next);
+    try {
+      await deleteAvatar(form.avatar_url);
+      const next = { ...form, avatar_url: '' };
+      setForm(next);
+      await persistProfile(next);
+    } catch (error) {
+      setProfileNotice(errorMessage(error, '프로필 사진을 초기화하지 못했어요.'));
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const checkAttendance = async () => {
@@ -165,7 +199,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
     <section className="talk-list" aria-label="프로필 설정">
       <Card className="settings-summary profile-summary-card">
         <div className="profile-avatar-preview">
-          {myProfile.avatar_url ? <img alt="프로필 사진" src={myProfile.avatar_url} /> : <span>{myProfile.nickname.slice(0, 1)}</span>}
+          {myProfile.avatar_url ? <img alt="프로필 사진" src={assetUrl(myProfile.avatar_url)} /> : <span>{myProfile.nickname.slice(0, 1)}</span>}
         </div>
         <strong>{myProfile.nickname}님</strong>
         <p>{myProfile.age}세 · {profileLocation}</p>
@@ -175,7 +209,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
 
       <Card className="person-card">
         <strong>포인트</strong>
-        <p>{pointStatus ? `${pointStatus.balance.toLocaleString()}P 보유 중` : '포인트를 불러오는 중...'}</p>
+        <p>{pointStatus ? `${pointStatus.balance.toLocaleString()}P 보유 중` : '포인트 정보를 불러오지 못했어요.'}</p>
         <p>쪽지를 보낼 때 100P가 사용돼요.</p>
         {pointNotice && <p>{pointNotice}</p>}
         <div className="chat-room-card-actions">
@@ -218,7 +252,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
             프로필 사진
             <div className="profile-photo-input-row">
               <div className="profile-avatar-preview is-small">
-                {form.avatar_url ? <img alt="프로필 사진 미리보기" src={form.avatar_url} /> : <span>{form.nickname.slice(0, 1) || '?'}</span>}
+                {form.avatar_url ? <img alt="프로필 사진 미리보기" src={assetUrl(form.avatar_url)} /> : <span>{form.nickname.slice(0, 1) || '?'}</span>}
               </div>
               <input accept="image/*" onChange={(event) => handleAvatarPick(event.target.files?.[0])} type="file" />
               {form.avatar_url && <button className="secondary-button" disabled={isUploading} onClick={resetAvatar} type="button">기본 이미지</button>}
@@ -230,7 +264,8 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
           <label>지역<select value={regionValue} onChange={(event) => setForm({ ...form, location: event.target.value })}><option value="">지역 선택</option>{KOREA_REGIONS.map((region) => <option key={region} value={region}>{region}</option>)}</select></label>
           <label>성별<select value={form.gender} onChange={(event) => setForm({ ...form, gender: event.target.value as MyProfile['gender'] })}><option value="female">여성</option><option value="male">남성</option><option value="none">선택 안 함</option></select></label>
           <label>소개<textarea value={form.bio} maxLength={80} onChange={(event) => setForm({ ...form, bio: event.target.value })} /></label>
-          <Button type="submit">프로필 저장</Button>
+          {profileNotice && <p className="error-text">{profileNotice}</p>}
+          <Button disabled={isSavingProfile || isUploading} type="submit">{isSavingProfile ? '저장 중...' : '프로필 저장'}</Button>
         </form>
       </Card>
 
