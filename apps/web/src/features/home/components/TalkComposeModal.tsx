@@ -10,24 +10,26 @@ export type TalkComposeValues = {
 type TalkComposeModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (values: TalkComposeValues) => void;
+  onSubmit: (values: TalkComposeValues) => Promise<boolean>;
 };
 
 export function TalkComposeModal({ isOpen, onClose, onSubmit }: TalkComposeModalProps) {
   const [text, setText] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const trimmedText = text.trim();
 
-  if (!isOpen) {
-    return null;
-  }
+  if (!isOpen) return null;
 
-  const handleSubmit = () => {
-    if (!trimmedText) {
-      return;
+  const handleSubmit = async () => {
+    if (!trimmedText || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const submitted = await onSubmit({ text: trimmedText, mood: '가벼운 수다' });
+      if (submitted) setText('');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    onSubmit({ text: trimmedText, mood: '가벼운 수다' });
-    setText('');
   };
 
   return (
@@ -38,17 +40,17 @@ export function TalkComposeModal({ isOpen, onClose, onSubmit }: TalkComposeModal
             <p>한줄 토크</p>
             <h2 id="compose-modal-title">지금 하고 싶은 말을 남겨보세요</h2>
           </div>
-          <button className="modal-close-button" type="button" aria-label="닫기" onClick={onClose}>×</button>
+          <button className="modal-close-button" disabled={isSubmitting} type="button" aria-label="닫기" onClick={onClose}>×</button>
         </header>
 
         <label className="compose-field">
           <span>내용 · {text.length}/80</span>
-          <textarea value={text} maxLength={80} placeholder="예: 오늘 카페에서 수다 떨 사람 있나요?" rows={4} onChange={(event) => setText(event.target.value)} />
+          <textarea autoFocus disabled={isSubmitting} value={text} maxLength={80} placeholder="예: 오늘 카페에서 수다 떨 사람 있나요?" rows={4} onChange={(event) => setText(event.target.value)} />
         </label>
 
         <div className="compose-modal-actions">
-          <Button variant="secondary" onClick={onClose}>취소</Button>
-          <Button disabled={!trimmedText} onClick={handleSubmit}>등록하기</Button>
+          <Button disabled={isSubmitting} variant="secondary" onClick={onClose}>취소</Button>
+          <Button disabled={!trimmedText || isSubmitting} onClick={handleSubmit}>{isSubmitting ? '등록 중...' : '등록하기'}</Button>
         </div>
       </section>
     </div>
