@@ -21,6 +21,18 @@ API 요청마다 실행하던 `create table if not exists`와 호환용 스키�
 4. `migrations/0004_request_gates.sql`
    - 중복 1:1 채팅 요청 잠금
 
+## 자동 검증
+
+`pnpm verify`는 `scripts/check-d1-migrations.mjs`를 실행해 아래 계약을 확인합니다.
+
+- migration 파일명이 `0000_snake_case.sql` 형식인지
+- migration 번호가 중복되지 않는지
+- 현재 배포 대상 migration 4개가 모두 존재하는지
+- checked migration에 `drop table`, `delete from`, `truncate`, `alter table ... drop` 같은 파괴적 SQL이 없는지
+- 이 runbook과 `docs/13-security-hardening-status.md`가 D1 적용 상태를 계속 언급하는지
+
+이 검사는 실제 Preview/Production 데이터베이스에 SQL을 적용하지 않습니다. 배포 전에는 아래 절차대로 Cloudflare D1에 직접 적용하고 회귀 확인을 해야 합니다.
+
 ## 적용 순서
 
 1. Cloudflare D1 데이터베이스를 백업하거나 내보냅니다.
