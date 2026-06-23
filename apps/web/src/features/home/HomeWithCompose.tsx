@@ -55,6 +55,7 @@ export function HomeWithCompose() {
     setPosts((currentPosts) => [savedPost, ...currentPosts]);
     setIsComposeOpen(false);
     setActiveTab('talk');
+    return true;
   };
 
   return (
