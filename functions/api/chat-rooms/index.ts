@@ -87,6 +87,38 @@ async function consumePoints(env: Env, profileId: string, amount: number, reason
   return { ok: true, balance: await getPointBalance(env, profileId) };
 }
 
+async function refundDirectChatCharge(env: Env, profileId: string, directReferenceId: string) {
+  await ensurePointAccount(env, profileId);
+
+  const existingRefund = await env.DB.prepare(
+    `select id
+     from point_transactions
+     where profile_id = ?
+       and reason = 'direct_chat_refund'
+       and reference_id = ?
+       and amount = ?
+     limit 1`,
+  ).bind(profileId, directReferenceId, DIRECT_CHAT_COST).first<{ id: string }>();
+
+  if (existingRefund) {
+    return getPointBalance(env, profileId);
+  }
+
+  await env.DB.batch([
+    env.DB.prepare(
+      `update user_points
+       set balance = balance + ?, updated_at = datetime('now')
+       where profile_id = ?`,
+    ).bind(DIRECT_CHAT_COST, profileId),
+    env.DB.prepare(
+      `insert into point_transactions (id, profile_id, amount, reason, reference_id, description)
+       values (?, ?, ?, 'direct_chat_refund', ?, ?)`,
+    ).bind(crypto.randomUUID(), profileId, DIRECT_CHAT_COST, directReferenceId, '쪽지 생성 실패 복구'),
+  ]);
+
+  return getPointBalance(env, profileId);
+}
+
 async function ensureChatRoomColumns(env: Env) {
   const columns = [
     'alter table chat_rooms add column direct_key text',
@@ -262,6 +294,28 @@ const roomSelectColumns = `r.id, r.title, r.last_message, r.last_message_at, r.c
   coalesce(r.room_owner_profile_id, r.participant_a_id) as room_owner_profile_id,
   coalesce(r.room_owner_nickname, r.participant_a_nickname) as room_owner_nickname`;
 
+async function directRoomByKey(env: Env, key: string) {
+  return env.DB.prepare(
+    `select ${roomSelectColumns},
+      au.avatar_url as participant_a_avatar_url,
+      bu.avatar_url as participant_b_avatar_url,
+      0 as unread_count
+     from chat_rooms r
+     left join recent_users au on au.id = r.participant_a_id
+     left join recent_users bu on bu.id = r.participant_b_id
+     where r.direct_key = ?
+     limit 1`,
+  ).bind(key).first<ChatRoomRow>();
+}
+
+async function settledDirectRoomForViewer(env: Env, key: string, viewerId: string) {
+  const room = await directRoomByKey(env, key);
+  if (!room) return null;
+
+  const stillNeedsCharge = await viewerNeedsDirectChatCharge(env, room.id, viewerId);
+  return stillNeedsCharge ? null : room;
+}
+
 async function listRooms(env: Env, viewerId: string) {
   await ensureChatRoomColumns(env);
 
@@ -347,60 +401,55 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
   if (peerId) {
     const key = directKey(viewerId, peerId);
-    const existingDirectRoom = await env.DB.prepare(
-      `select ${roomSelectColumns},
-        au.avatar_url as participant_a_avatar_url,
-        bu.avatar_url as participant_b_avatar_url,
-        0 as unread_count
-       from chat_rooms r
-       left join recent_users au on au.id = r.participant_a_id
-       left join recent_users bu on bu.id = r.participant_b_id
-       where r.direct_key = ?
-       limit 1`,
-    ).bind(key).first<ChatRoomRow>();
-
+    const existingDirectRoom = await directRoomByKey(env, key);
     const shouldCharge = await viewerNeedsDirectChatCharge(env, existingDirectRoom?.id ?? null, viewerId);
+    let charged = false;
 
     if (shouldCharge) {
       const payment = await consumePoints(env, viewerId, DIRECT_CHAT_COST, 'direct_chat', key, '쪽지 보내기');
       if (!payment.ok) {
         return Response.json({ error: `포인트가 부족해요. 쪽지를 보내려면 ${DIRECT_CHAT_COST}포인트가 필요해요.`, balance: payment.balance }, { status: 402 });
       }
+      charged = true;
     }
 
-    if (existingDirectRoom) {
-      await resetExitedProfilesForNewConversation(env, existingDirectRoom.id, [viewerId, peerId]);
-      await markRoomAsRead(env, existingDirectRoom.id, viewerId);
-      return Response.json(displayRoomForViewer(existingDirectRoom, viewerId));
+    try {
+      if (existingDirectRoom) {
+        await resetExitedProfilesForNewConversation(env, existingDirectRoom.id, [viewerId, peerId]);
+        await markRoomAsRead(env, existingDirectRoom.id, viewerId);
+        return Response.json(displayRoomForViewer(existingDirectRoom, viewerId));
+      }
+
+      const id = crypto.randomUUID();
+      const [aId, bId] = [viewerId, peerId].sort();
+      const aNickname = aId === viewerId ? viewerNickname : peerNickname;
+      const bNickname = bId === viewerId ? viewerNickname : peerNickname;
+      const title = `${peerNickname}님과의 대화`;
+
+      await env.DB.prepare(
+        `insert into chat_rooms (
+          id, title, last_message, last_message_at, direct_key,
+          participant_a_id, participant_a_nickname, participant_b_id, participant_b_nickname,
+          room_owner_profile_id, room_owner_nickname
+        ) values (?, ?, ?, datetime("now"), ?, ?, ?, ?, ?, ?, ?)`,
+      ).bind(id, title, '아직 메시지가 없어요.', key, aId, aNickname, bId, bNickname, viewerId, viewerNickname).run();
+
+      const room = await directRoomByKey(env, key);
+      await markRoomAsRead(env, id, viewerId);
+      return Response.json(room ? displayRoomForViewer(room, viewerId) : null, { status: 201 });
+    } catch {
+      const settledRoom = await settledDirectRoomForViewer(env, key, viewerId).catch(() => null);
+      if (settledRoom) {
+        return Response.json(displayRoomForViewer(settledRoom, viewerId));
+      }
+
+      const refundedBalance = charged ? await refundDirectChatCharge(env, viewerId, key) : await getPointBalance(env, viewerId);
+      return Response.json({
+        error: '채팅방을 열지 못해 차감된 포인트를 복구했어요. 잠시 뒤 다시 시도해주세요.',
+        code: 'DIRECT_CHAT_OPEN_FAILED_REFUNDED',
+        balance: refundedBalance,
+      }, { status: 500 });
     }
-
-    const id = crypto.randomUUID();
-    const [aId, bId] = [viewerId, peerId].sort();
-    const aNickname = aId === viewerId ? viewerNickname : peerNickname;
-    const bNickname = bId === viewerId ? viewerNickname : peerNickname;
-    const title = `${peerNickname}님과의 대화`;
-
-    await env.DB.prepare(
-      `insert into chat_rooms (
-        id, title, last_message, last_message_at, direct_key,
-        participant_a_id, participant_a_nickname, participant_b_id, participant_b_nickname,
-        room_owner_profile_id, room_owner_nickname
-      ) values (?, ?, ?, datetime("now"), ?, ?, ?, ?, ?, ?, ?)`,
-    ).bind(id, title, '아직 메시지가 없어요.', key, aId, aNickname, bId, bNickname, viewerId, viewerNickname).run();
-
-    const room = await env.DB.prepare(
-      `select ${roomSelectColumns},
-        au.avatar_url as participant_a_avatar_url,
-        bu.avatar_url as participant_b_avatar_url,
-        0 as unread_count
-       from chat_rooms r
-       left join recent_users au on au.id = r.participant_a_id
-       left join recent_users bu on bu.id = r.participant_b_id
-       where r.id = ?`,
-    ).bind(id).first<ChatRoomRow>();
-
-    await markRoomAsRead(env, id, viewerId);
-    return Response.json(room ? displayRoomForViewer(room, viewerId) : null, { status: 201 });
   }
 
   const title = body.title?.trim() || '새 채팅방';
