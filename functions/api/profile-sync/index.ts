@@ -36,6 +36,7 @@ async function ensureProfileSyncColumns(env: Env) {
     'alter table chat_rooms add column participant_a_nickname text',
     'alter table chat_rooms add column participant_b_id text',
     'alter table chat_rooms add column participant_b_nickname text',
+    'alter table chat_messages add column sender_profile_id text',
   ];
 
   for (const query of chatRoomColumns) {
@@ -51,8 +52,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   await ensureProfileSyncColumns(env);
 
   const body = await request.json() as ProfileSyncBody;
-  const profileId = body.profile_id?.trim() || '';
-  const previousNickname = body.previous_nickname?.trim().slice(0, 20) || '';
+  const profileId = request.headers.get('x-auth-profile-id')?.trim() || '';
   const nickname = body.nickname?.trim().slice(0, 20) || '익명';
   const age = Number.isFinite(body.age) ? body.age : 25;
   const location = body.location?.trim().slice(0, 20) || '내 주변';
@@ -60,7 +60,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const avatarUrl = body.avatar_url?.trim() || '';
 
   if (!profileId) {
-    return Response.json({ error: 'profile_id가 필요해요.' }, { status: 400 });
+    return Response.json({ error: '로그인이 필요해요.' }, { status: 401 });
+  }
+
+  if (!Number.isInteger(age) || age < 20 || age > 80) {
+    return Response.json({ error: '나이는 20세 이상 80세 이하로 입력해주세요.' }, { status: 400 });
   }
 
   await env.DB.prepare(
@@ -89,11 +93,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     'update chat_rooms set participant_b_nickname = ?, updated_at = datetime("now") where participant_b_id = ?',
   ).bind(nickname, profileId).run();
 
-  if (previousNickname && previousNickname !== nickname) {
-    await env.DB.prepare('update chat_messages set sender_nickname = ? where sender_nickname = ?').bind(nickname, previousNickname).run();
-    await env.DB.prepare('update talk_posts set nickname = ?, age = ?, location = ?, avatar_url = ? where nickname = ? and (profile_id is null or profile_id = "")').bind(nickname, age, location, avatarUrl, previousNickname).run();
-    await env.DB.prepare('delete from recent_users where id = ?').bind(previousNickname).run();
-  }
+  await env.DB.prepare(
+    'update chat_messages set sender_nickname = ? where sender_profile_id = ?',
+  ).bind(nickname, profileId).run();
 
   return Response.json({ ok: true });
 };
