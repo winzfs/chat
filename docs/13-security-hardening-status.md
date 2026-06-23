@@ -59,6 +59,7 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - `pnpm verify`에 D1 migration 계약 검사를 추가해 migration 번호·비파괴 SQL·runbook/status 문서 동기화를 자동 확인
 - `pnpm verify`의 클라이언트 안정화 계약에 1:1 채팅 실패 복구 코드·환불 거래 기록·최종 방 상태 확인을 추가
 - 배포된 Cloudflare Pages의 `/api/auth/session`이 `AUTH_SECRET` 누락 없이 세션을 발급하는지 확인하는 수동 실행형 Pages auth smoke workflow 추가
+- Pages auth smoke에서 발급된 Bearer 세션 검증, 변조 토큰 거부, 인증 응답 `Cache-Control: no-store`까지 확인
 - 실제 D1의 `sqlite_master`와 `pragma table_info(...)`를 artifact로 남기는 수동 실행형 D1 Schema Inspect workflow 추가
 - D1 Schema Inspect 결과에서 migration 대상 테이블 존재 여부를 확인하는 `check:d1-schema-report` 스크립트 추가
 
