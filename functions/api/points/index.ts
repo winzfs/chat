@@ -86,25 +86,32 @@ async function claimDailyReward(env: Env, profileId: string, claimType: string, 
   await ensurePointAccount(env, profileId);
   const today = await getToday(env);
 
-  const inserted = await env.DB.prepare(
-    `insert or ignore into daily_point_claims (profile_id, claim_type, claim_date, amount)
-     values (?, ?, ?, ?)`,
-  ).bind(profileId, claimType, today, amount).run();
-
-  if ((inserted.meta.changes ?? 0) < 1) {
+  if (await hasClaimedToday(env, profileId, claimType, today)) {
     return { awarded: false, balance: await getBalance(env, profileId), today };
   }
 
-  await env.DB.prepare(
-    `update user_points
-     set balance = balance + ?, updated_at = datetime('now')
-     where profile_id = ?`,
-  ).bind(amount, profileId).run();
-
-  await env.DB.prepare(
-    `insert into point_transactions (id, profile_id, amount, reason, reference_id, description)
-     values (?, ?, ?, ?, ?, ?)`,
-  ).bind(crypto.randomUUID(), profileId, amount, claimType, today, description).run();
+  try {
+    await env.DB.batch([
+      env.DB.prepare(
+        `insert into daily_point_claims (profile_id, claim_type, claim_date, amount)
+         values (?, ?, ?, ?)`,
+      ).bind(profileId, claimType, today, amount),
+      env.DB.prepare(
+        `update user_points
+         set balance = balance + ?, updated_at = datetime('now')
+         where profile_id = ?`,
+      ).bind(amount, profileId),
+      env.DB.prepare(
+        `insert into point_transactions (id, profile_id, amount, reason, reference_id, description)
+         values (?, ?, ?, ?, ?, ?)`,
+      ).bind(crypto.randomUUID(), profileId, amount, claimType, today, description),
+    ]);
+  } catch (error) {
+    if (await hasClaimedToday(env, profileId, claimType, today)) {
+      return { awarded: false, balance: await getBalance(env, profileId), today };
+    }
+    throw error;
+  }
 
   return { awarded: true, balance: await getBalance(env, profileId), today };
 }
