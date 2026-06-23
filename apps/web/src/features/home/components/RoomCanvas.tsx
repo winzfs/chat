@@ -1,4 +1,4 @@
-import { memo, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
+import { memo, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import { getRoomItemAssetPath, type MyRoom, type MyRoomItem } from '../api/myRoom';
 import './RoomCanvas.css';
 import './RoomCanvasFurnitureAssets.css';
@@ -86,14 +86,15 @@ function itemAssetPath(item: MyRoomItem) {
 }
 
 function RoomItemContent({ item }: { item: MyRoomItem }) {
-  const [imageFailed, setImageFailed] = useState(false);
   const assetPath = itemAssetPath(item);
+  const [failedAssetPath, setFailedAssetPath] = useState('');
+  const imageFailed = Boolean(assetPath && failedAssetPath === assetPath);
 
   if (assetPath && !imageFailed) {
-    return <img alt={item.label} className="room-item-image" draggable={false} onError={() => setImageFailed(true)} src={assetPath} />;
+    return <img alt={item.label} className="room-item-image" draggable={false} onError={() => setFailedAssetPath(assetPath)} src={assetPath} />;
   }
 
-  return <span className="room-item-emoji">{itemIcon(item)}</span>;
+  return <span className="room-item-emoji" aria-label={item.label}>{itemIcon(item)}</span>;
 }
 
 function positionFromStagePointer(event: PointerEvent<HTMLElement>) {
@@ -126,6 +127,15 @@ function RoomCanvasComponent({
 }: RoomCanvasProps) {
   const dragStateRef = useRef<DragState | null>(null);
 
+  useEffect(() => () => {
+    const dragState = dragStateRef.current;
+    if (dragState?.frameId !== null && dragState?.frameId !== undefined) {
+      cancelAnimationFrame(dragState.frameId);
+    }
+    dragState?.element.classList.remove('is-dragging');
+    dragStateRef.current = null;
+  }, []);
+
   const handleClick = (event: MouseEvent<HTMLDivElement>) => {
     if (!onStageClick) return;
 
@@ -138,10 +148,15 @@ function RoomCanvasComponent({
     onStageClick({ x: clampPercent(x), y: clampPercent(y) });
   };
 
+  const handleStageKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!onStageClick || (event.key !== 'Enter' && event.key !== ' ')) return;
+    event.preventDefault();
+    onStageClick({ x: 50, y: 70 });
+  };
+
   const scheduleDomMove = (element: HTMLDivElement, position: { x: number; y: number }) => {
     const dragState = dragStateRef.current;
     if (!dragState) return;
-
     dragState.position = position;
 
     if (dragState.frameId !== null) return;
@@ -149,7 +164,6 @@ function RoomCanvasComponent({
     dragState.frameId = requestAnimationFrame(() => {
       const latestState = dragStateRef.current;
       if (!latestState) return;
-
       applyItemDomPosition(element, latestState.position);
       latestState.frameId = null;
     });
@@ -170,7 +184,7 @@ function RoomCanvasComponent({
     try {
       dragState.element.releasePointerCapture(dragState.pointerId);
     } catch {
-      // pointer capture may already be released
+      // Pointer capture may already be released.
     }
 
     dragState.element.classList.remove('is-dragging');
@@ -216,12 +230,38 @@ function RoomCanvasComponent({
     finishDrag(event);
   };
 
+  const handleItemKeyDown = (event: KeyboardEvent<HTMLDivElement>, item: MyRoomItem) => {
+    if (!isEditing) return;
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onItemSelect?.(item.id);
+      return;
+    }
+
+    const offsets: Record<string, { x: number; y: number }> = {
+      ArrowLeft: { x: -2, y: 0 },
+      ArrowRight: { x: 2, y: 0 },
+      ArrowUp: { x: 0, y: -2 },
+      ArrowDown: { x: 0, y: 2 },
+    };
+    const offset = offsets[event.key];
+    if (!offset) return;
+
+    event.preventDefault();
+    onItemSelect?.(item.id);
+    onItemMove?.(item.id, {
+      x: clampPercent(item.x + offset.x),
+      y: clampPercent(item.y + offset.y),
+    });
+  };
+
   return (
     <div className={`room-canvas ${isCompact ? 'is-compact' : ''} ${isEditing ? 'is-editing' : ''} wallpaper-${room.wallpaper} floor-${room.floor}`}>
       <div className="room-wall">
         <span className="room-wall-shine" />
       </div>
-      <div className="room-stage" onClick={handleClick} role={onStageClick ? 'button' : undefined} tabIndex={onStageClick ? 0 : undefined}>
+      <div className="room-stage" aria-label={onStageClick ? '방 안에서 이동할 위치 선택' : undefined} onClick={handleClick} onKeyDown={handleStageKeyDown} role={onStageClick ? 'button' : undefined} tabIndex={onStageClick ? 0 : undefined}>
         <div className="room-floor" />
         {chatHistoryLines.length > 0 && (
           <div className="room-chat-history" aria-label="최근 채팅 기록">
@@ -238,13 +278,17 @@ function RoomCanvasComponent({
 
           return (
             <div
+              aria-label={isEditing ? `${item.label} 선택 및 이동` : undefined}
               className={`room-item room-item-${item.item_type} asset-${item.asset_id} ${selectedItemId === item.id ? 'is-selected' : ''}`}
               key={item.id}
+              onKeyDown={(event) => handleItemKeyDown(event, item)}
               onPointerCancel={handleItemPointerCancel}
               onPointerDown={(event) => handleItemPointerDown(event, item)}
               onPointerMove={handleItemPointerMove}
               onPointerUp={finishDrag}
+              role={isEditing ? 'button' : undefined}
               style={getItemStyle(item)}
+              tabIndex={isEditing ? 0 : undefined}
               title={item.label}
             >
               <span className="room-item-shadow" />
