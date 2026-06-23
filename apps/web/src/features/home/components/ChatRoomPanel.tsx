@@ -37,6 +37,7 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
   const [uploadStatus, setUploadStatus] = useState('');
   const [errorText, setErrorText] = useState('');
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [safetyAction, setSafetyAction] = useState<'report' | 'block' | ''>('');
   const peer = getPeerFromRoom(room);
   const previewMessages = useMemo(() => messages.slice(-3), [messages]);
 
@@ -56,6 +57,17 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
       cancelled = true;
     };
   }, [room.id]);
+
+  useEffect(() => {
+    if (!isHistoryOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsHistoryOpen(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isHistoryOpen]);
 
   useMessagePolling(room.id, setMessages);
 
@@ -107,9 +119,16 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
       setErrorText('신고할 상대 정보를 찾지 못했어요.');
       return;
     }
+    if (safetyAction) return;
 
-    const ok = await reportUser(peer.id, peer.nickname, room.id);
-    setErrorText(ok ? '신고가 접수됐어요.' : '신고를 접수하지 못했어요.');
+    setSafetyAction('report');
+    setErrorText('');
+    try {
+      const ok = await reportUser(peer.id, peer.nickname, room.id);
+      setErrorText(ok ? '신고가 접수됐어요.' : '신고를 접수하지 못했어요. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setSafetyAction('');
+    }
   };
 
   const handleBlock = async () => {
@@ -117,33 +136,39 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
       setErrorText('차단할 상대 정보를 찾지 못했어요.');
       return;
     }
+    if (safetyAction || !window.confirm(`${peer.nickname}님을 차단할까요?`)) return;
 
-    const ok = await blockUser(peer.id, peer.nickname);
-    if (ok) {
-      setErrorText(`${peer.nickname}님을 차단했어요. 목록에서 더 이상 보이지 않아요.`);
-      onClose();
-      return;
+    setSafetyAction('block');
+    setErrorText('');
+    try {
+      const ok = await blockUser(peer.id, peer.nickname);
+      if (ok) {
+        onClose();
+        return;
+      }
+
+      setErrorText('차단하지 못했어요. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setSafetyAction('');
     }
-
-    setErrorText('차단하지 못했어요. 잠시 후 다시 시도해주세요.');
   };
 
   return (
     <section className="talk-list chat-room-view" aria-label="채팅방">
       <Card className="settings-summary chat-room-header-card">
         <div className="chat-room-header-main">
-          <button className="chat-back-button" type="button" onClick={onClose}>←</button>
+          <button aria-label="채팅 목록으로 돌아가기" className="chat-back-button" type="button" onClick={onClose}>←</button>
           <div>
             <strong>{room.title ?? '새 채팅방'}</strong>
-            <p>{uploadStatus || `${messages.length}개 메시지 · 마이룸 채팅 중`}</p>
+            <p aria-live="polite">{uploadStatus || `${messages.length}개 메시지 · 마이룸 채팅 중`}</p>
           </div>
         </div>
         <div className="talk-actions chat-room-safety-actions">
           <button type="button" onClick={() => setIsHistoryOpen(true)}>기록</button>
-          <button type="button" onClick={handleReport}>신고</button>
-          <button type="button" onClick={handleBlock}>차단</button>
+          <button disabled={Boolean(safetyAction)} type="button" onClick={handleReport}>{safetyAction === 'report' ? '신고 중...' : '신고'}</button>
+          <button disabled={Boolean(safetyAction)} type="button" onClick={handleBlock}>{safetyAction === 'block' ? '차단 중...' : '차단'}</button>
         </div>
-        {errorText && <p className="error-text">{errorText}</p>}
+        {errorText && <p className="error-text" role="status">{errorText}</p>}
       </Card>
 
       <ChatRoomGameScene messages={messages} room={room} />
@@ -161,14 +186,14 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
 
       {isHistoryOpen && (
         <div className="chat-history-overlay" role="dialog" aria-modal="true" aria-labelledby="chat-history-title">
-          <div className="chat-history-backdrop" onClick={() => setIsHistoryOpen(false)} />
+          <button aria-label="대화 기록 닫기" className="chat-history-backdrop" type="button" onClick={() => setIsHistoryOpen(false)} />
           <Card className="person-card chat-history-sheet">
             <div className="chat-history-sheet-header">
               <div>
                 <strong id="chat-history-title">대화 기록</strong>
                 <p>{messages.length}개 메시지</p>
               </div>
-              <button type="button" onClick={() => setIsHistoryOpen(false)}>닫기</button>
+              <button autoFocus type="button" onClick={() => setIsHistoryOpen(false)}>닫기</button>
             </div>
             <div className="talk-list chat-message-list chat-history-scroll">
               {messages.length === 0 && <Card className="person-card"><strong>아직 메시지가 없어요</strong><p>첫 메시지를 보내서 대화를 시작해보세요.</p></Card>}
@@ -179,9 +204,9 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
       )}
 
       <form className="quick-compose chat-compose-bar" onSubmit={handleSubmit}>
-        <input aria-label="메시지 입력" maxLength={500} onChange={(event) => setText(event.target.value)} placeholder="말풍선으로 띄울 메시지" value={text} />
-        <label className="secondary-button">사진<input accept="image/*" hidden onChange={handleImageChange} type="file" /></label>
-        <Button disabled={isSending || text.trim().length === 0} type="submit">보내기</Button>
+        <input aria-label="메시지 입력" disabled={isSending} maxLength={500} onChange={(event) => setText(event.target.value)} placeholder="말풍선으로 띄울 메시지" value={text} />
+        <label className="secondary-button">사진<input accept="image/*" aria-label="채팅 이미지 선택" disabled={isSending} hidden onChange={handleImageChange} type="file" /></label>
+        <Button disabled={isSending || text.trim().length === 0} type="submit">{isSending ? '전송 중...' : '보내기'}</Button>
       </form>
     </section>
   );
