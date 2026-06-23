@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm --filter @chat/web dev",
+    "typecheck": "pnpm --filter @chat/web typecheck",
     "build": "pnpm --filter @chat/web build",
+    "verify": "pnpm typecheck && pnpm build",
     "preview": "pnpm --filter @chat/web preview",
     "android:sync": "pnpm build && npx cap sync android",
     "android:assets": "npx @capacitor/assets generate --android",
