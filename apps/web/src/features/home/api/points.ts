@@ -1,4 +1,5 @@
 import { apiUrl } from './apiBase';
+import { parseApiResponse } from './apiResponse';
 import { getProfileId } from './profileId';
 
 export type PointHistoryItem = {
@@ -46,14 +47,8 @@ const emptyStatus: PointStatus = {
 };
 
 export async function loadPointStatus(): Promise<PointStatus> {
-  const params = new URLSearchParams({ profile_id: getProfileId() });
-  const response = await fetch(apiUrl(`/api/points?${params.toString()}`), { cache: 'no-store' });
-
-  if (!response.ok) {
-    return emptyStatus;
-  }
-
-  const data = await response.json() as Partial<PointStatus>;
+  const response = await fetch(apiUrl('/api/points'), { cache: 'no-store' });
+  const data = await parseApiResponse<Partial<PointStatus>>(response, '포인트 정보를 불러오지 못했어요.');
   return { ...emptyStatus, ...data, history: data.history ?? [] };
 }
 
