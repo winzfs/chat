@@ -1,4 +1,5 @@
 import { jsonError } from '../../_shared/auth';
+import { acquireRequestGate, releaseRequestGate } from '../../_shared/requestGate';
 
 type Env = { DB: D1Database };
 
@@ -126,67 +127,82 @@ export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
   const peerId = String(body?.peer_id ?? '').trim();
   const referenceId = peerId ? directReference(authenticatedId, peerId) : '';
   const attemptId = crypto.randomUUID();
-  let previousCharge: ChargeRow | null = null;
-  let balanceBefore = 0;
-  let transactionBefore = '';
-
-  if (referenceId) {
-    [previousCharge, balanceBefore, transactionBefore] = await Promise.all([
-      latestCharge(env, authenticatedId, referenceId),
-      pointBalance(env, authenticatedId),
-      latestTransactionId(env, authenticatedId),
-    ]);
-  }
-
-  const restoreFailedRequest = async () => {
-    if (!referenceId) return;
-    const restored = await restoreNewCharge(env, authenticatedId, referenceId, previousCharge?.id);
-    if (!restored) {
-      await restoreUntrackedDrop(
-        env,
-        authenticatedId,
-        referenceId,
-        balanceBefore,
-        transactionBefore,
-        attemptId,
-      );
-    }
-  };
-
-  let response: Response;
-  try {
-    response = await next();
-  } catch (error) {
-    await restoreFailedRequest();
-    throw error;
-  }
+  let gateAcquired = false;
 
   if (request.method === 'POST' && referenceId) {
-    const room = response.ok
-      ? await response.clone().json().catch(() => null) as ChatRoomSummary | null
-      : null;
-
-    if (!response.ok || !room?.id) {
-      await restoreFailedRequest();
-      if (response.ok) {
-        return jsonError('채팅방을 만들지 못했어요. 차감된 포인트는 복구했어요.', 500);
-      }
+    gateAcquired = await acquireRequestGate(env, `direct-chat:${referenceId}`, attemptId);
+    if (!gateAcquired) {
+      return jsonError('같은 채팅 요청을 처리 중이에요. 잠시 후 다시 시도해주세요.', 409);
     }
   }
 
-  if (request.method !== 'GET' || !response.ok) return response;
+  try {
+    let previousCharge: ChargeRow | null = null;
+    let balanceBefore = 0;
+    let transactionBefore = '';
 
-  const data = await response.clone().json().catch(() => null) as { rooms?: ChatRoomSummary[] } | null;
-  if (!data?.rooms) return response;
+    if (referenceId) {
+      [previousCharge, balanceBefore, transactionBefore] = await Promise.all([
+        latestCharge(env, authenticatedId, referenceId),
+        pointBalance(env, authenticatedId),
+        latestTransactionId(env, authenticatedId),
+      ]);
+    }
 
-  const rooms = data.rooms.filter((room) => (
-    room.participant_a_id === authenticatedId
-    || room.participant_b_id === authenticatedId
-    || room.room_owner_profile_id === authenticatedId
-  ));
+    const restoreFailedRequest = async () => {
+      if (!referenceId) return;
+      const restored = await restoreNewCharge(env, authenticatedId, referenceId, previousCharge?.id);
+      if (!restored) {
+        await restoreUntrackedDrop(
+          env,
+          authenticatedId,
+          referenceId,
+          balanceBefore,
+          transactionBefore,
+          attemptId,
+        );
+      }
+    };
 
-  return Response.json({ ...data, rooms }, {
-    status: response.status,
-    headers: response.headers,
-  });
+    let response: Response;
+    try {
+      response = await next();
+    } catch (error) {
+      await restoreFailedRequest();
+      throw error;
+    }
+
+    if (request.method === 'POST' && referenceId) {
+      const room = response.ok
+        ? await response.clone().json().catch(() => null) as ChatRoomSummary | null
+        : null;
+
+      if (!response.ok || !room?.id) {
+        await restoreFailedRequest();
+        if (response.ok) {
+          return jsonError('채팅방을 만들지 못했어요. 차감된 포인트는 복구했어요.', 500);
+        }
+      }
+    }
+
+    if (request.method !== 'GET' || !response.ok) return response;
+
+    const data = await response.clone().json().catch(() => null) as { rooms?: ChatRoomSummary[] } | null;
+    if (!data?.rooms) return response;
+
+    const rooms = data.rooms.filter((room) => (
+      room.participant_a_id === authenticatedId
+      || room.participant_b_id === authenticatedId
+      || room.room_owner_profile_id === authenticatedId
+    ));
+
+    return Response.json({ ...data, rooms }, {
+      status: response.status,
+      headers: response.headers,
+    });
+  } finally {
+    if (gateAcquired) {
+      await releaseRequestGate(env, `direct-chat:${referenceId}`, attemptId);
+    }
+  }
 };
