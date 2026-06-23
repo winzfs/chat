@@ -3,6 +3,9 @@ name: Android Debug APK
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-debug-apk:
     name: Build debug APK
@@ -32,7 +35,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile=false
+        run: pnpm install --frozen-lockfile
 
       - name: Copy splash artwork
         run: |
