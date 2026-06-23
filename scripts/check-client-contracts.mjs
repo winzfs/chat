@@ -27,6 +27,13 @@ requireText('apps/web/src/features/home/api/d1ChatRooms.ts', chatRoomsApi, 'norm
 requireText('apps/web/src/features/home/api/d1ChatRooms.ts', chatRoomsApi, 'peer_id: normalizedPeerId', 'direct chat must send the validated peer profile id');
 requireMatch('apps/web/src/features/home/api/d1ChatRooms.ts', chatRoomsApi, /if \(!response\.ok\)[\s\S]*parseApiResponse/, 'leave room errors must preserve server details');
 
+const chatRoomsFunction = read('functions/api/chat-rooms/index.ts');
+requireText('functions/api/chat-rooms/index.ts', chatRoomsFunction, 'refundDirectChatCharge', 'direct chat failure path must refund charged points');
+requireText('functions/api/chat-rooms/index.ts', chatRoomsFunction, 'direct_chat_refund', 'direct chat refund must be recorded separately from the charge');
+requireText('functions/api/chat-rooms/index.ts', chatRoomsFunction, 'DIRECT_CHAT_OPEN_FAILED_REFUNDED', 'direct chat refund response must expose a stable error code');
+requireText('functions/api/chat-rooms/index.ts', chatRoomsFunction, 'settledDirectRoomForViewer', 'direct chat failure path must check final room state before refunding');
+requireMatch('functions/api/chat-rooms/index.ts', chatRoomsFunction, /catch \{[\s\S]*settledDirectRoomForViewer[\s\S]*refundDirectChatCharge[\s\S]*balance: refundedBalance/, 'direct chat catch path must avoid false refunds and return refunded balance');
+
 const talkPanel = read('apps/web/src/features/home/components/TalkPanel2.tsx');
 requireText('apps/web/src/features/home/components/TalkPanel2.tsx', talkPanel, 'formatApiError', 'talk direct chat errors must use the shared formatter');
 requireText('apps/web/src/features/home/components/TalkPanel2.tsx', talkPanel, 'openingProfileId', 'talk direct chat button needs a duplicate-click lock');
