@@ -33,7 +33,7 @@ export async function loadD1TalkPosts(): Promise<D1TalkPost[]> {
   return data.posts ?? [];
 }
 
-export async function createD1TalkPost(text: string, mood: string): Promise<D1TalkPostCreateResult> {
+export async function createD1TalkPost(text: string, mood: string, _legacyProfile?: unknown): Promise<D1TalkPostCreateResult> {
   const response = await fetch(apiUrl('/api/talk-posts'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
