@@ -1,6 +1,6 @@
 import { apiUrl } from './apiBase';
+import { parseApiResponse } from './apiResponse';
 import { getProfileId } from './profileId';
-import type { MyProfile } from './profileStorage';
 
 export type D1TalkPost = {
   id: string;
@@ -29,43 +29,29 @@ export type D1TalkPostCreateResult = {
 
 export async function loadD1TalkPosts(): Promise<D1TalkPost[]> {
   const response = await fetch(apiUrl('/api/talk-posts'), { cache: 'no-store' });
-
-  if (!response.ok) {
-    return [];
-  }
-
-  const data = await response.json() as { posts?: D1TalkPost[] };
+  const data = await parseApiResponse<{ posts?: D1TalkPost[] }>(response, '토크 목록을 불러오지 못했어요.');
   return data.posts ?? [];
 }
 
-export async function createD1TalkPost(text: string, mood: string, profile?: MyProfile): Promise<D1TalkPostCreateResult | null> {
-  const profileId = getProfileId();
+export async function createD1TalkPost(text: string, mood: string): Promise<D1TalkPostCreateResult> {
   const response = await fetch(apiUrl('/api/talk-posts'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      profile_id: profileId,
-      avatar_url: profile?.avatar_url,
+      profile_id: getProfileId(),
       text,
       mood,
-      nickname: profile?.nickname,
-      age: profile?.age,
-      location: profile?.location,
     }),
   });
 
-  if (!response.ok) {
-    return null;
-  }
-
-  return response.json() as Promise<D1TalkPostCreateResult>;
+  return parseApiResponse<D1TalkPostCreateResult>(response, '토크를 등록하지 못했어요.');
 }
 
-export async function deleteD1TalkPost(id: string): Promise<boolean> {
+export async function deleteD1TalkPost(id: string): Promise<void> {
   const params = new URLSearchParams({ id, profile_id: getProfileId() });
   const response = await fetch(apiUrl(`/api/talk-posts?${params.toString()}`), {
     method: 'DELETE',
   });
 
-  return response.ok;
+  await parseApiResponse<{ ok: boolean }>(response, '토크를 삭제하지 못했어요.');
 }
