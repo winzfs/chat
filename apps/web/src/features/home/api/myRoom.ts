@@ -95,6 +95,7 @@ const legacyAssetPaths: Record<string, string> = {
   'mood-lamp': '/assets/room/furniture/light01.png',
   'soft-bed': '/assets/room/furniture/bed01.png',
 };
+const failedRoomLoads = new Set<string>();
 
 export function getRoomItemAssetPath(item: Pick<MyRoomItem, 'asset_id'> | Pick<MyRoomCatalogItem, 'asset_id' | 'image_path'>) {
   if ('image_path' in item && item.image_path) return item.image_path;
@@ -166,19 +167,32 @@ function normalizeRoom(room?: Partial<MyRoom> | null, profileId = getProfileId()
 
 export async function loadMyRoom(profileId = getProfileId()): Promise<MyRoom> {
   const params = new URLSearchParams({ profile_id: profileId });
-  const response = await fetch(apiUrl(`/api/my-room?${params.toString()}`), { cache: 'no-store' });
-  const data = await parseApiResponse<{ room?: MyRoom }>(response, '마이룸을 불러오지 못했어요.');
-  return normalizeRoom(data.room, profileId);
+
+  try {
+    const response = await fetch(apiUrl(`/api/my-room?${params.toString()}`), { cache: 'no-store' });
+    const data = await parseApiResponse<{ room?: MyRoom }>(response, '마이룸을 불러오지 못했어요.');
+    failedRoomLoads.delete(profileId);
+    return normalizeRoom(data.room, profileId);
+  } catch (error) {
+    failedRoomLoads.add(profileId);
+    throw error;
+  }
 }
 
-export async function saveMyRoom(room: MyRoom): Promise<MyRoom> {
-  const response = await fetch(apiUrl('/api/my-room'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(room),
-  });
+export async function saveMyRoom(room: MyRoom): Promise<MyRoom | null> {
+  if (failedRoomLoads.has(room.profile_id)) return null;
 
-  const data = await parseApiResponse<{ room?: MyRoom }>(response, '마이룸을 저장하지 못했어요.');
-  if (!data.room) throw new Error('저장된 마이룸을 확인하지 못했어요.');
-  return normalizeRoom(data.room, room.profile_id);
+  try {
+    const response = await fetch(apiUrl('/api/my-room'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(room),
+    });
+
+    const data = await parseApiResponse<{ room?: MyRoom }>(response, '마이룸을 저장하지 못했어요.');
+    if (!data.room) return null;
+    return normalizeRoom(data.room, room.profile_id);
+  } catch {
+    return null;
+  }
 }
