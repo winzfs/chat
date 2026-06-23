@@ -110,14 +110,21 @@ export async function createD1ChatRoom(title: string): Promise<D1ChatRoom> {
 }
 
 export async function openDirectD1ChatRoom(peerNickname: string, peerId?: string): Promise<D1ChatRoom> {
+  const normalizedPeerId = peerId?.trim() ?? '';
+  const normalizedNickname = peerNickname.trim();
+
+  if (!normalizedPeerId) {
+    throw new Error('상대 사용자 정보를 찾지 못했어요. 목록을 새로고침한 뒤 다시 시도해주세요.');
+  }
+
   const response = await fetch(apiUrl('/api/chat-rooms'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       profile_id: getProfileId(),
       viewer_nickname: loadMyProfile().nickname,
-      peer_id: peerId,
-      peer_nickname: peerNickname,
+      peer_id: normalizedPeerId,
+      peer_nickname: normalizedNickname || '상대방',
     }),
   });
 
