@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
+import { Modal } from '../../../shared/components/Modal';
 
 function loadImage(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
@@ -75,7 +76,7 @@ export function AvatarCropModal({ imageUrl, onApply, onClose }: { imageUrl: stri
   };
 
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="avatar-crop-title">
+    <Modal labelledBy="avatar-crop-title" onClose={onClose} preventClose={isWorking}>
       <Card className="avatar-crop-card">
         <strong id="avatar-crop-title">프로필 사진 맞추기</strong>
         <p>정사각형 영역에 얼굴이 잘 보이도록 위치와 크기를 맞춰주세요.</p>
@@ -95,6 +96,6 @@ export function AvatarCropModal({ imageUrl, onApply, onClose }: { imageUrl: stri
           <Button disabled={isWorking} type="button" onClick={apply}>{isWorking ? '적용 중...' : '적용하기'}</Button>
         </div>
       </Card>
-    </div>
+    </Modal>
   );
 }
