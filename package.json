@@ -14,13 +14,13 @@
     "android:open": "npx cap open android"
   },
   "dependencies": {
-    "@capacitor/android": "latest",
-    "@capacitor/app": "latest",
-    "@capacitor/core": "latest"
+    "@capacitor/android": "8.4.1",
+    "@capacitor/app": "8.1.0",
+    "@capacitor/core": "8.4.1"
   },
   "devDependencies": {
-    "@capacitor/assets": "latest",
-    "@capacitor/cli": "latest"
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "8.4.1"
   },
   "packageManager": "pnpm@9.15.0",
   "engines": {
