@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ensureAuthSession } from './authSession';
 
+const legacyProfileIdKey = 'chitchat.profileId.v1';
+
 export function AuthSessionGate({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [error, setError] = useState('');
@@ -11,7 +13,10 @@ export function AuthSessionGate({ children }: { children: ReactNode }) {
     setError('');
 
     ensureAuthSession()
-      .then(() => setStatus('ready'))
+      .then((session) => {
+        localStorage.setItem(legacyProfileIdKey, session.profile_id);
+        setStatus('ready');
+      })
       .catch((reason) => {
         setError(reason instanceof Error ? reason.message : '로그인 세션을 만들지 못했어요.');
         setStatus('error');
