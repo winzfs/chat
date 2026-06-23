@@ -1,7 +1,6 @@
 type Env = { DB: D1Database };
 
 type PointActionBody = {
-  profile_id?: string;
   action?: 'attendance' | 'ad_reward';
 };
 
@@ -110,12 +109,16 @@ async function claimDailyReward(env: Env, profileId: string, claimType: string, 
   return { awarded: true, balance: await getBalance(env, profileId), today };
 }
 
+function authenticatedProfileId(request: Request) {
+  return request.headers.get('x-auth-profile-id')?.trim() ?? '';
+}
+
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   await ensurePointTables(env);
-  const profileId = new URL(request.url).searchParams.get('profile_id')?.trim() ?? '';
+  const profileId = authenticatedProfileId(request);
 
   if (!profileId) {
-    return Response.json({ error: 'profile_id가 필요해요.' }, { status: 400 });
+    return Response.json({ error: '로그인이 필요해요.' }, { status: 401 });
   }
 
   const today = await getToday(env);
@@ -130,10 +133,10 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const body = await request.json() as PointActionBody;
-  const profileId = body.profile_id?.trim() ?? '';
+  const profileId = authenticatedProfileId(request);
 
   if (!profileId) {
-    return Response.json({ error: 'profile_id가 필요해요.' }, { status: 400 });
+    return Response.json({ error: '로그인이 필요해요.' }, { status: 401 });
   }
 
   if (body.action === 'attendance') {
