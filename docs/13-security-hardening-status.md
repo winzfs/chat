@@ -23,6 +23,7 @@ Cloudflare Pages의 Production과 Preview 환경에 32자 이상의 `AUTH_SECRET
 - 1:1 채팅 중복 요청 잠금
 - 1:1 채팅 생성·재입장 실패 시 중복 없는 100P 복구
 - 실제 방 생성·재입장이 완료된 경우 잘못 환불하지 않는 최종 상태 검사
+- 1:1 채팅방 생성 실패 복구 응답에 안정적인 오류 코드와 환불 후 잔액 표시
 - 출석·광고 포인트 지급의 D1 batch 처리
 - 프로필·최근 사용자·토크·포인트·마이룸 저장 요청자 검증
 - 관리자 본인 확인 API의 검증된 세션 ID 사용
@@ -54,6 +55,7 @@ Cloudflare Pages의 Production과 Preview 환경에 32자 이상의 `AUTH_SECRET
 - 토크·최근 접속자 1:1 채팅 실패 시 서버 오류와 복구된 잔액 표시
 - `pnpm verify`에 클라이언트 안정화 계약 검사를 추가해 API 오류 표시, 1:1 채팅 profile_id 검증, Android 뒤로가기 처리, CI lockfile 조건을 자동 확인
 - `pnpm verify`에 D1 migration 계약 검사를 추가해 migration 번호·비파괴 SQL·runbook/status 문서 동기화를 자동 확인
+- `pnpm verify`의 클라이언트 안정화 계약에 1:1 채팅 실패 복구 코드·환불 거래 기록·최종 방 상태 확인을 추가
 
 ## 남은 작업
 
