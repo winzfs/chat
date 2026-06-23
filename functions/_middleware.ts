@@ -38,6 +38,14 @@ export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
     if (declaredId !== profileId) return jsonError('다른 사용자로 접속 상태를 갱신할 수 없어요.', 403);
   }
 
+  if (pathname === '/api/talk-posts' && request.method !== 'GET') {
+    const bodyId = request.method === 'POST'
+      ? ((await request.clone().json().catch(() => ({}))) as { profile_id?: string }).profile_id?.trim() ?? ''
+      : url.searchParams.get('profile_id')?.trim() ?? '';
+    if (!bodyId) return jsonError('profile_id가 필요해요.', 400);
+    if (bodyId !== profileId) return jsonError('다른 사용자 이름으로 토크를 변경할 수 없어요.', 403);
+  }
+
   const headers = new Headers(request.headers);
   headers.set('x-auth-profile-id', profileId);
   headers.set('x-profile-id', profileId);
