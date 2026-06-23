@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
 import { assetUrl } from '../api/apiBase';
+import { formatApiError } from '../api/apiResponse';
 import { openDirectD1ChatRoom, type D1ChatRoom } from '../api/d1ChatRooms';
 import type { D1TalkPost } from '../api/d1TalkPosts';
 import { ProfilePreviewModal, type ProfilePreview } from './ProfilePreviewModal';
@@ -32,7 +33,7 @@ export function TalkPanel2({ myProfileId, onDeletePost, onOpenCompose, onOpenRoo
       setPreviewProfile(null);
       onOpenRoom(room);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : '채팅방을 열지 못했어요.');
+      setNotice(formatApiError(error, '채팅방을 열지 못했어요.'));
     } finally {
       setOpeningProfileId('');
     }
