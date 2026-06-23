@@ -18,7 +18,7 @@ async function ensureRecentUsersTable(env: Env) {
   try {
     await env.DB.prepare('alter table recent_users add column avatar_url text').run();
   } catch {
-    // column already exists
+    // Legacy databases may already contain the column.
   }
 }
 
@@ -26,8 +26,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   await ensureRecentUsersTable(env);
 
   const url = new URL(request.url);
-  const profileId = url.searchParams.get('profile_id')?.trim() ?? '';
-  const nickname = url.searchParams.get('nickname')?.trim() ?? '';
+  const profileId = url.searchParams.get('profile_id')?.trim().slice(0, 64) ?? '';
+  const nickname = url.searchParams.get('nickname')?.trim().slice(0, 12) ?? '';
 
   if (!profileId && !nickname) {
     return Response.json({ error: 'profile_id 또는 nickname이 필요해요.' }, { status: 400 });
@@ -35,12 +35,13 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 
   const profile = profileId
     ? await env.DB.prepare(
-      `select id, nickname, age, location, bio, avatar_url, online, last_seen_at
+      `select id, nickname, age, location, bio, avatar_url, online
        from recent_users
-       where id = ?`,
+       where id = ?
+       limit 1`,
     ).bind(profileId).first()
     : await env.DB.prepare(
-      `select id, nickname, age, location, bio, avatar_url, online, last_seen_at
+      `select id, nickname, age, location, bio, avatar_url, online
        from recent_users
        where nickname = ?
        order by last_seen_at desc
@@ -48,8 +49,13 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     ).bind(nickname).first();
 
   if (!profile) {
-    return Response.json({ profile: null }, { status: 404 });
+    return Response.json({ profile: null }, {
+      status: 404,
+      headers: { 'Cache-Control': 'no-store' },
+    });
   }
 
-  return Response.json({ profile: { ...profile, online: Boolean(profile.online) } });
+  return Response.json({ profile: { ...profile, online: Boolean(profile.online) } }, {
+    headers: { 'Cache-Control': 'no-store' },
+  });
 };
