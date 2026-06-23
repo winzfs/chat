@@ -1,12 +1,13 @@
+import { validateProfileInput } from '../../_shared/profile';
+
 type Env = { DB: D1Database };
 
 type RecentUserBody = {
-  profile_id?: string;
-  nickname?: string;
-  age?: number;
-  location?: string;
-  bio?: string;
-  avatar_url?: string;
+  nickname?: unknown;
+  age?: unknown;
+  location?: unknown;
+  bio?: unknown;
+  avatar_url?: unknown;
 };
 
 async function ensureRecentUsersTable(env: Env) {
@@ -27,7 +28,7 @@ async function ensureRecentUsersTable(env: Env) {
   try {
     await env.DB.prepare('alter table recent_users add column avatar_url text').run();
   } catch {
-    // column already exists
+    // Legacy databases may already contain the column.
   }
 
   await env.DB.prepare(
@@ -40,26 +41,29 @@ async function ensureRecentUsersTable(env: Env) {
     )`,
   ).run();
 
-  await env.DB.prepare(
-    'create index if not exists recent_users_last_seen_idx on recent_users(last_seen_at desc)',
-  ).run();
+  await env.DB.prepare('create index if not exists recent_users_last_seen_idx on recent_users(last_seen_at desc)').run();
   await env.DB.prepare('create index if not exists user_blocks_blocked_idx on user_blocks(blocked_id)').run();
+}
+
+function authenticatedProfileId(request: Request) {
+  return request.headers.get('x-auth-profile-id')?.trim() ?? '';
 }
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   await ensureRecentUsersTable(env);
+  const viewerId = authenticatedProfileId(request);
 
-  const viewerId = new URL(request.url).searchParams.get('profile_id')?.trim() ?? '';
+  if (!viewerId) return Response.json({ error: '로그인이 필요해요.' }, { status: 401 });
 
   const { results } = await env.DB.prepare(
     `select id, nickname, age, location, bio, avatar_url, online, last_seen_at
      from recent_users u
-     where ? = ''
-        or not exists (
-          select 1 from user_blocks b
-          where (b.blocker_id = ? and b.blocked_id = u.id)
-             or (b.blocked_id = ? and b.blocker_id = u.id)
-        )
+     where u.id != ?
+       and not exists (
+         select 1 from user_blocks b
+         where (b.blocker_id = ? and b.blocked_id = u.id)
+            or (b.blocked_id = ? and b.blocker_id = u.id)
+       )
      order by last_seen_at desc
      limit 30`,
   ).bind(viewerId, viewerId, viewerId).all();
@@ -75,18 +79,14 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   await ensureRecentUsersTable(env);
 
+  const id = authenticatedProfileId(request);
+  if (!id) return Response.json({ error: '로그인이 필요해요.' }, { status: 401 });
+
   const body = await request.json() as RecentUserBody;
-  const nickname = body.nickname?.trim().slice(0, 20) || '익명';
-  const id = body.profile_id?.trim() || nickname;
-  const age = Number.isFinite(body.age) ? body.age : 25;
-  const location = body.location?.trim().slice(0, 20) || '내 주변';
-  const bio = body.bio?.trim().slice(0, 80) || '';
-  const avatarUrl = body.avatar_url?.trim() || '';
+  const validation = validateProfileInput(body);
+  if ('error' in validation) return Response.json({ error: validation.error }, { status: 400 });
 
-  if (id !== nickname) {
-    await env.DB.prepare('delete from recent_users where id = ?').bind(nickname).run();
-  }
-
+  const { nickname, age, location, bio, avatarUrl } = validation.profile;
   await env.DB.prepare(
     `insert into recent_users (id, nickname, age, location, bio, avatar_url, online, last_seen_at, updated_at)
      values (?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))
