@@ -33,11 +33,17 @@ export const onRequest: PagesFunction = async (context) => {
   }
 
   const response = await context.next();
-  if (!origin) return response;
-
   const headers = new Headers(response.headers);
-  for (const [key, value] of Object.entries(corsHeaders(origin))) {
-    headers.set(key, value);
+
+  if (context.request.headers.has('authorization')) {
+    headers.set('Cache-Control', 'no-store');
+    headers.set('Pragma', 'no-cache');
+  }
+
+  if (origin) {
+    for (const [key, value] of Object.entries(corsHeaders(origin))) {
+      headers.set(key, value);
+    }
   }
 
   return new Response(response.body, {
