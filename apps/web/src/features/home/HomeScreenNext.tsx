@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Card } from '../../shared/components/Card';
 import { loadD1ChatRooms, type D1ChatRoom } from './api/d1ChatRooms';
 import { createD1TalkPost, deleteD1TalkPost, loadD1TalkPosts, type D1TalkPost } from './api/d1TalkPosts';
+import { getProfileId } from './api/profileId';
 import { POLLING_INTERVALS } from './api/pollingIntervals';
 import { defaultProfile, loadMyProfile, saveMyProfile, type MyProfile } from './api/profileStorage';
 import { syncProfile } from './api/profileSync';
@@ -203,7 +204,7 @@ export function HomeScreenNext() {
       <section className="home-screen" aria-labelledby="home-title">
         <header className="home-header"><div><p className="home-kicker">플러팅</p><h1 id="home-title">{titles[activeTab]}</h1></div></header>
         {notice && <Card className="settings-summary"><strong>{notice}</strong></Card>}
-        {activeTab === 'talk' && <TalkPanel2 posts={posts} myNickname={profile.nickname} onDeletePost={removeTalk} onOpenCompose={() => setIsComposeOpen(true)} onOpenRoom={openDirectRoom} />}
+        {activeTab === 'talk' && <TalkPanel2 posts={posts} myProfileId={getProfileId()} onDeletePost={removeTalk} onOpenCompose={() => setIsComposeOpen(true)} onOpenRoom={openDirectRoom} />}
         {activeTab === 'people' && <RecentUsersPanel onOpenRoom={openDirectRoom} />}
         {activeTab === 'chats' && <ChatRoomsList key={chatListKey} initialRoom={openRoom} />}
         {activeTab === 'settings' && <ProfileSettingsPanel myProfile={profile} onSave={saveProfile} />}
