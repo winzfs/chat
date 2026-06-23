@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
+import { installAuthenticatedFetch } from './authFetch';
 import { ensureAuthSession } from './authSession';
 
 const legacyProfileIdKey = 'chitchat.profileId.v1';
@@ -15,6 +16,7 @@ export function AuthSessionGate({ children }: { children: ReactNode }) {
     ensureAuthSession()
       .then((session) => {
         localStorage.setItem(legacyProfileIdKey, session.profile_id);
+        installAuthenticatedFetch(session.token);
         setStatus('ready');
       })
       .catch((reason) => {
