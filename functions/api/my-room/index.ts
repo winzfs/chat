@@ -1,56 +1,31 @@
 type Env = { DB: D1Database };
 
 type MyRoomBody = {
-  profile_id?: string;
   wallpaper?: string;
   floor?: string;
   items?: unknown;
 };
 
 const allowedWallpapers = new Set([
-  'peach',
-  'mint',
-  'lavender',
-  'sky',
-  'terracotta',
-  'olive',
-  'butter',
-  'ocean',
-  'berry',
-  'cobalt',
-  'noir',
+  'peach', 'mint', 'lavender', 'sky', 'terracotta', 'olive', 'butter', 'ocean', 'berry', 'cobalt', 'noir',
 ]);
 
 const allowedFloors = new Set([
-  'cream',
-  'wood',
-  'checker',
-  'carpet',
-  'walnut',
-  'herringbone',
-  'terrazzo',
-  'mono-checker',
-  'clay-tile',
-  'ocean-tile',
-  'moss-carpet',
-  'night-wood',
-  'black-marble',
+  'cream', 'wood', 'checker', 'carpet', 'walnut', 'herringbone', 'terrazzo', 'mono-checker', 'clay-tile',
+  'ocean-tile', 'moss-carpet', 'night-wood', 'black-marble',
 ]);
 
 const defaultItems = [
   { id: 'window-main', item_type: 'window', asset_id: 'basic-window', label: '창문', x: 68, y: 18, z_index: 2, rotation: 0 },
-  { id: 'star-bed', item_type: 'bed', asset_id: 'bed01', label: '별침대', x: 12, y: 48, z_index: 3, rotation: 0 },
-  { id: 'rug-round', item_type: 'rug', asset_id: 'round-rug', label: '러그', x: 44, y: 66, z_index: 1, rotation: 0 },
+  { id: 'star-bed', item_type: 'bed', asset_id: 'bed01', label: '별침대', x: 14, y: 52, z_index: 3, rotation: 0 },
+  { id: 'wooden-desk', item_type: 'desk', asset_id: 'desk01', label: '나무책상', x: 54, y: 58, z_index: 4, rotation: 0 },
+  { id: 'wooden-side-desk', item_type: 'side-desk', asset_id: 'sidedesk01', label: '나무협탁', x: 28, y: 56, z_index: 4, rotation: 0 },
+  { id: 'rug-round', item_type: 'rug', asset_id: 'round-rug', label: '러그', x: 46, y: 68, z_index: 1, rotation: 0 },
   { id: 'table-tea', item_type: 'table', asset_id: 'tea-table', label: '테이블', x: 58, y: 58, z_index: 4, rotation: 0 },
 ];
 
 function defaultRoom(profileId: string) {
-  return {
-    profile_id: profileId,
-    wallpaper: 'peach',
-    floor: 'cream',
-    items: defaultItems,
-  };
+  return { profile_id: profileId, wallpaper: 'peach', floor: 'cream', items: defaultItems };
 }
 
 function normalizeWallpaper(value?: string) {
@@ -61,9 +36,13 @@ function normalizeFloor(value?: string) {
   return allowedFloors.has(value ?? '') ? value as string : 'cream';
 }
 
+function finiteNumber(value: unknown, fallback: number) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
 function normalizeRotation(value: unknown) {
-  const rotation = Number(value ?? 0);
-  if (!Number.isFinite(rotation)) return 0;
+  const rotation = finiteNumber(value, 0);
   return ((Math.round(rotation / 45) * 45) % 360 + 360) % 360;
 }
 
@@ -82,17 +61,21 @@ async function ensureMyRoomTable(env: Env) {
 function normalizeItems(value: unknown) {
   if (!Array.isArray(value)) return defaultItems;
 
+  const usedIds = new Set<string>();
   return value.slice(0, 40).map((item, index) => {
     const record = item && typeof item === 'object' ? item as Record<string, unknown> : {};
-    const id = typeof record.id === 'string' && record.id.trim() ? record.id.trim().slice(0, 40) : `item-${index}`;
+    const baseId = typeof record.id === 'string' && record.id.trim() ? record.id.trim().slice(0, 40) : `item-${index}`;
+    const id = usedIds.has(baseId) ? `${baseId}-${index}`.slice(0, 40) : baseId;
+    usedIds.add(id);
+
     const itemType = typeof record.item_type === 'string' && record.item_type.trim() ? record.item_type.trim().slice(0, 30) : 'decor';
     const rawAssetId = typeof record.asset_id === 'string' && record.asset_id.trim() ? record.asset_id.trim().slice(0, 40) : itemType;
     const assetId = itemType === 'bed' && (rawAssetId === 'soft-bed' || rawAssetId === 'bed01') ? 'bed01' : rawAssetId;
     const rawLabel = typeof record.label === 'string' && record.label.trim() ? record.label.trim().slice(0, 20) : '소품';
     const label = itemType === 'bed' && assetId === 'bed01' ? '별침대' : rawLabel;
-    const x = Math.min(Math.max(Number(record.x ?? 50), 0), 100);
-    const y = Math.min(Math.max(Number(record.y ?? 50), 0), 100);
-    const zIndex = Math.min(Math.max(Number(record.z_index ?? index + 1), 0), 99);
+    const x = Math.min(Math.max(finiteNumber(record.x, 50), 0), 100);
+    const y = Math.min(Math.max(finiteNumber(record.y, 50), 0), 100);
+    const zIndex = Math.min(Math.max(Math.round(finiteNumber(record.z_index, index + 1)), 0), 99);
     const rotation = normalizeRotation(record.rotation);
 
     return { id, item_type: itemType, asset_id: assetId, label, x, y, z_index: zIndex, rotation };
@@ -101,7 +84,6 @@ function normalizeItems(value: unknown) {
 
 function parseItems(value?: string | null) {
   if (!value) return defaultItems;
-
   try {
     return normalizeItems(JSON.parse(value));
   } catch {
@@ -111,7 +93,6 @@ function parseItems(value?: string | null) {
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   await ensureMyRoomTable(env);
-
   const profileId = new URL(request.url).searchParams.get('profile_id')?.trim() ?? '';
 
   if (!profileId) {
@@ -122,9 +103,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     'select profile_id, wallpaper, floor, items, updated_at from my_rooms where profile_id = ? limit 1',
   ).bind(profileId).first<{ profile_id: string; wallpaper: string; floor: string; items: string; updated_at: string }>();
 
-  if (!row) {
-    return Response.json({ room: defaultRoom(profileId) });
-  }
+  if (!row) return Response.json({ room: defaultRoom(profileId) });
 
   return Response.json({
     room: {
@@ -140,13 +119,12 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   await ensureMyRoomTable(env);
 
-  const body = await request.json() as MyRoomBody;
-  const profileId = body.profile_id?.trim() ?? '';
-
+  const profileId = request.headers.get('x-auth-profile-id')?.trim() ?? '';
   if (!profileId) {
-    return Response.json({ error: 'profile_id가 필요해요.' }, { status: 400 });
+    return Response.json({ error: '로그인이 필요해요.' }, { status: 401 });
   }
 
+  const body = await request.json() as MyRoomBody;
   const wallpaper = normalizeWallpaper(body.wallpaper);
   const floor = normalizeFloor(body.floor);
   const items = normalizeItems(body.items);
