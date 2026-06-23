@@ -26,14 +26,8 @@ function findLatestMessages(messages: D1ChatMessage[], myId: string, myNickname:
     const message = messages[index];
     const isMine = isMyMessage(message, myId, myNickname);
 
-    if (isMine && !mine) {
-      mine = message;
-    }
-
-    if (!isMine && !theirs) {
-      theirs = message;
-    }
-
+    if (isMine && !mine) mine = message;
+    if (!isMine && !theirs) theirs = message;
     if (mine && theirs) break;
   }
 
@@ -51,9 +45,15 @@ export function ChatRoomGameScene({ messages, room }: { messages: D1ChatMessage[
 
   useEffect(() => {
     let isMounted = true;
-    loadMyRoom(roomOwnerId).then((nextRoom) => {
-      if (isMounted) setMyRoom(nextRoom);
-    });
+    setMyRoom(createDefaultMyRoom(roomOwnerId));
+
+    loadMyRoom(roomOwnerId)
+      .then((nextRoom) => {
+        if (isMounted) setMyRoom(nextRoom);
+      })
+      .catch(() => {
+        // Keep the default room when the remote room is temporarily unavailable.
+      });
 
     return () => {
       isMounted = false;
@@ -98,11 +98,7 @@ export function ChatRoomGameScene({ messages, room }: { messages: D1ChatMessage[
 
   return (
     <section className="chat-room-game-scene" aria-label="마이룸 채팅 화면">
-      <RoomCanvas
-        characters={characters}
-        onStageClick={moveMyCharacter}
-        room={myRoom}
-      />
+      <RoomCanvas characters={characters} onStageClick={moveMyCharacter} room={myRoom} />
     </section>
   );
 }
