@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
+import { Modal } from '../../../shared/components/Modal';
 import { leaveD1ChatRoom, loadD1ChatRooms, type D1ChatRoom } from '../api/d1ChatRooms';
 import { getProfileId } from '../api/profileId';
 import { POLLING_INTERVALS } from '../api/pollingIntervals';
@@ -168,26 +169,17 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
 }
 
 function LeaveConfirmDialog({ isLeaving, onCancel, onConfirm, room }: { isLeaving: boolean; onCancel: () => void; onConfirm: () => void; room: D1ChatRoom }) {
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !isLeaving) onCancel();
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isLeaving, onCancel]);
-
   return (
-    <div className="chat-leave-overlay" role="dialog" aria-modal="true" aria-labelledby="chat-leave-title">
+    <Modal backdropClassName="chat-leave-overlay" labelledBy="chat-leave-title" onClose={onCancel} preventClose={isLeaving}>
       <div className="chat-leave-sheet">
         <strong id="chat-leave-title">채팅방을 나갈까요?</strong>
         <p>{room.title ?? '이 채팅방'}에서 나가면 내 목록에서 사라져요.</p>
         <div className="chat-leave-actions">
-          <button autoFocus className="chat-leave-cancel" disabled={isLeaving} type="button" onClick={onCancel}>취소</button>
+          <button className="chat-leave-cancel" disabled={isLeaving} type="button" onClick={onCancel}>취소</button>
           <button className="chat-leave-confirm" disabled={isLeaving} type="button" onClick={onConfirm}>{isLeaving ? '나가는 중...' : '나가기'}</button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
