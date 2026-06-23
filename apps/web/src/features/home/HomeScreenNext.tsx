@@ -195,12 +195,11 @@ export function HomeScreenNext() {
     }
   };
 
-  const saveProfile = (next: MyProfile) => {
+  const saveProfile = async (next: MyProfile) => {
     const previousNickname = profile.nickname;
+    await syncProfile(previousNickname, next);
     saveMyProfile(next);
     setProfile(next);
-    syncProfile(previousNickname, next).catch(() => undefined);
-    touchRecentUser(next).catch(() => undefined);
     void refreshTalkPosts(false);
     setNotice('프로필이 저장됐어요.');
   };
