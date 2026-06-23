@@ -4,8 +4,6 @@ type Env = { DB: D1Database };
 
 type LeaveBody = {
   room_id?: string;
-  profile_id?: string;
-  nickname?: string;
 };
 
 async function ensureChatRoomExitTable(env: Env) {
@@ -23,7 +21,7 @@ async function ensureChatRoomExitTable(env: Env) {
   try {
     await env.DB.prepare('alter table chat_messages add column sender_profile_id text').run();
   } catch {
-    // column already exists
+    // Legacy databases may already contain the column.
   }
 }
 
@@ -32,12 +30,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
   const body = await request.json() as LeaveBody;
   const roomId = body.room_id?.trim() ?? '';
-  const profileId = body.profile_id?.trim() ?? '';
-  const nickname = body.nickname?.trim().slice(0, 20) || '상대방';
+  const profileId = request.headers.get('x-auth-profile-id')?.trim() ?? '';
   const authError = await requireChatRoomParticipant(env, roomId, profileId);
 
   if (authError) return authError;
 
+  const profile = await env.DB.prepare('select nickname from recent_users where id = ? limit 1')
+    .bind(profileId)
+    .first<{ nickname?: string | null }>();
+  const nickname = profile?.nickname?.trim().slice(0, 20) || '상대방';
   const message = `${nickname}님이 나갔습니다.`;
   const id = crypto.randomUUID();
 
