@@ -6,6 +6,7 @@ export type AuthSession = {
 };
 
 const sessionKey = 'chitchat.authSession.v1';
+let pendingSession: Promise<AuthSession> | null = null;
 
 export function loadAuthSession(): AuthSession | null {
   try {
@@ -28,10 +29,20 @@ function saveAuthSession(session: AuthSession) {
   localStorage.setItem(sessionKey, JSON.stringify(session));
 }
 
-export async function ensureAuthSession() {
-  const existing = loadAuthSession();
-  if (existing) return existing;
+async function isValidSession(session: AuthSession) {
+  const response = await fetch(apiUrl('/api/auth/session'), {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${session.token}` },
+    cache: 'no-store',
+  }).catch(() => null);
 
+  if (!response?.ok) return false;
+
+  const data = await response.json().catch(() => null) as { profile_id?: string } | null;
+  return data?.profile_id === session.profile_id;
+}
+
+async function createAuthSession() {
   const response = await fetch(apiUrl('/api/auth/session'), {
     method: 'POST',
     cache: 'no-store',
@@ -49,6 +60,24 @@ export async function ensureAuthSession() {
 
   saveAuthSession(session);
   return session;
+}
+
+export async function ensureAuthSession() {
+  if (pendingSession) return pendingSession;
+
+  pendingSession = (async () => {
+    const existing = loadAuthSession();
+    if (existing && await isValidSession(existing)) return existing;
+
+    clearAuthSession();
+    return createAuthSession();
+  })();
+
+  try {
+    return await pendingSession;
+  } finally {
+    pendingSession = null;
+  }
 }
 
 export function getAuthHeaders() {
