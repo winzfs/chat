@@ -34,12 +34,22 @@ function clearLegacyHiddenRoom(roomId: string) {
   }
 }
 
+async function readApiError(response: Response, fallback: string) {
+  const data = await response.json().catch(() => null) as { error?: string; balance?: number } | null;
+  return new PointError(data?.error || fallback, data?.balance);
+}
+
 function resolveRoomTitle(room: D1ChatRoom): D1ChatRoom {
   const profile = loadMyProfile();
   const myId = getProfileId();
   const myNickname = profile.nickname;
-  const isA = room.participant_a_id === myId || room.participant_a_nickname === myNickname;
-  const isB = room.participant_b_id === myId || room.participant_b_nickname === myNickname;
+  const hasParticipantIds = Boolean(room.participant_a_id || room.participant_b_id);
+  const isA = hasParticipantIds
+    ? room.participant_a_id === myId
+    : room.participant_a_nickname === myNickname;
+  const isB = hasParticipantIds
+    ? room.participant_b_id === myId
+    : room.participant_b_nickname === myNickname;
   const normalized = {
     ...room,
     unread_count: Number(room.unread_count ?? 0),
@@ -72,7 +82,7 @@ export async function loadD1ChatRooms(): Promise<D1ChatRoom[]> {
   const response = await fetch(apiUrl(`/api/chat-rooms?${params.toString()}`), { cache: 'no-store' });
 
   if (!response.ok) {
-    return [];
+    throw await readApiError(response, '채팅 목록을 불러오지 못했어요.');
   }
 
   const data = await response.json() as { rooms?: D1ChatRoom[] };
@@ -81,7 +91,7 @@ export async function loadD1ChatRooms(): Promise<D1ChatRoom[]> {
     : [];
 }
 
-export async function createD1ChatRoom(title: string): Promise<D1ChatRoom | null> {
+export async function createD1ChatRoom(title: string): Promise<D1ChatRoom> {
   const response = await fetch(apiUrl('/api/chat-rooms'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -89,20 +99,17 @@ export async function createD1ChatRoom(title: string): Promise<D1ChatRoom | null
   });
 
   if (!response.ok) {
-    return null;
+    throw await readApiError(response, '채팅방을 만들지 못했어요.');
   }
 
   const data = await response.json() as D1ChatRoom;
-
-  if (!data.id) {
-    return null;
-  }
+  if (!data.id) throw new Error('생성된 채팅방을 확인하지 못했어요.');
 
   clearLegacyHiddenRoom(data.id);
   return resolveRoomTitle(data);
 }
 
-export async function openDirectD1ChatRoom(peerNickname: string, peerId?: string): Promise<D1ChatRoom | null> {
+export async function openDirectD1ChatRoom(peerNickname: string, peerId?: string): Promise<D1ChatRoom> {
   const response = await fetch(apiUrl('/api/chat-rooms'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -115,15 +122,11 @@ export async function openDirectD1ChatRoom(peerNickname: string, peerId?: string
   });
 
   if (!response.ok) {
-    const data = await response.json().catch(() => null) as { error?: string; balance?: number } | null;
-    throw new PointError(data?.error || '채팅방을 열지 못했어요.', data?.balance);
+    throw await readApiError(response, '채팅방을 열지 못했어요.');
   }
 
   const data = await response.json() as D1ChatRoom;
-
-  if (!data.id) {
-    return null;
-  }
+  if (!data.id) throw new Error('열린 채팅방을 확인하지 못했어요.');
 
   clearLegacyHiddenRoom(data.id);
   return resolveRoomTitle(data);
