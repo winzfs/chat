@@ -38,6 +38,10 @@ function clearRoomHash() {
   }
 }
 
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export function HomeScreenNext() {
   const [activeTab, setActiveTab] = useState<HomeTab>('talk');
   const [isComposeOpen, setIsComposeOpen] = useState(false);
@@ -50,13 +54,19 @@ export function HomeScreenNext() {
   const lastRoomTimesRef = useRef<Record<string, string>>({});
   const initializedChatWatchRef = useRef(false);
 
-  const refreshTalkPosts = () => {
-    loadD1TalkPosts().then(setPosts);
+  const refreshTalkPosts = async (showError = false) => {
+    try {
+      setPosts(await loadD1TalkPosts());
+    } catch (error) {
+      if (showError) {
+        setNotice(errorMessage(error, '토크 목록을 불러오지 못했어요.'));
+      }
+    }
   };
 
   const changeTab = (tab: HomeTab) => {
     setActiveTab(tab);
-    if (tab === 'talk') refreshTalkPosts();
+    if (tab === 'talk') void refreshTalkPosts(true);
     if (tab === 'chats') {
       clearRoomHash();
       setOpenRoom(null);
@@ -84,13 +94,13 @@ export function HomeScreenNext() {
       }
 
       setActiveTab('talk');
-      refreshTalkPosts();
+      void refreshTalkPosts(true);
       return true;
     }
 
     if (activeTab !== 'talk') {
       setActiveTab('talk');
-      refreshTalkPosts();
+      void refreshTalkPosts(true);
       return true;
     }
 
@@ -101,7 +111,7 @@ export function HomeScreenNext() {
     const savedProfile = loadMyProfile();
     setProfile(savedProfile);
     touchRecentUser(savedProfile).catch(() => undefined);
-    refreshTalkPosts();
+    void refreshTalkPosts(true);
   }, []);
 
   useEffect(() => {
@@ -119,7 +129,7 @@ export function HomeScreenNext() {
 
     const timer = window.setInterval(() => {
       if (document.hidden || isComposeOpen) return;
-      refreshTalkPosts();
+      void refreshTalkPosts(false);
     }, POLLING_INTERVALS.talkPosts);
 
     return () => window.clearInterval(timer);
@@ -158,29 +168,31 @@ export function HomeScreenNext() {
   }, [activeTab]);
 
   const submitTalk = async (values: TalkComposeValues) => {
-    await touchRecentUser(profile).catch(() => undefined);
-    const result = await createD1TalkPost(values.text, values.mood, profile);
+    try {
+      await touchRecentUser(profile);
+      const result = await createD1TalkPost(values.text, values.mood);
 
-    if (!result) {
-      setNotice('토크를 등록하지 못했어요. 잠시 후 다시 시도해주세요.');
-      return;
+      setPosts((current) => [result.post, ...current]);
+      setIsComposeOpen(false);
+      setActiveTab('talk');
+
+      if (result.point_reward?.awarded) {
+        setNotice('토크 작성 보상으로 100포인트를 받았어요.');
+      }
+
+      void refreshTalkPosts(false);
+    } catch (error) {
+      setNotice(errorMessage(error, '토크를 등록하지 못했어요. 잠시 후 다시 시도해주세요.'));
     }
-
-    setPosts((current) => [result.post, ...current]);
-    setIsComposeOpen(false);
-    setActiveTab('talk');
-
-    if (result.point_reward?.awarded) {
-      setNotice('토크 작성 보상으로 100포인트를 받았어요.');
-    }
-
-    refreshTalkPosts();
   };
 
   const removeTalk = async (id: string) => {
-    setPosts((current) => current.filter((post) => post.id !== id));
-    await deleteD1TalkPost(id);
-    refreshTalkPosts();
+    try {
+      await deleteD1TalkPost(id);
+      setPosts((current) => current.filter((post) => post.id !== id));
+    } catch (error) {
+      setNotice(errorMessage(error, '토크를 삭제하지 못했어요.'));
+    }
   };
 
   const saveProfile = (next: MyProfile) => {
@@ -189,7 +201,7 @@ export function HomeScreenNext() {
     setProfile(next);
     syncProfile(previousNickname, next).catch(() => undefined);
     touchRecentUser(next).catch(() => undefined);
-    refreshTalkPosts();
+    void refreshTalkPosts(false);
     setNotice('프로필이 저장됐어요.');
   };
 
