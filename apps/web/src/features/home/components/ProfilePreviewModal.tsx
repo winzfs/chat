@@ -43,7 +43,7 @@ export function ProfilePreviewModal({ onClose, onStartChat, profile }: { profile
   }, [profile]);
 
   return (
-    <Modal className="profile-preview-backdrop" labelledBy="profile-preview-title" onClose={onClose}>
+    <Modal backdropClassName="profile-preview-backdrop" labelledBy="profile-preview-title" onClose={onClose}>
       <Card className="profile-modal">
         <div className="profile-preview-avatar">
           <UserAvatar imageUrl={displayProfile.avatar_url} name={displayProfile.nickname} />
