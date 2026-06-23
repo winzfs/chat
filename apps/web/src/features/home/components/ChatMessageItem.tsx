@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Card } from '../../../shared/components/Card';
+import { assetUrl } from '../api/apiBase';
 import type { D1ChatMessage } from '../api/d1ChatMessages';
 import { getProfileId } from '../api/profileId';
 import { loadMyProfile } from '../api/profileStorage';
@@ -19,15 +20,16 @@ function isMyMessage(message: D1ChatMessage) {
 export function ChatMessageItem({ message }: { message: D1ChatMessage }) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const isMe = isMyMessage(message);
+  const imageUrl = assetUrl(message.image_url);
 
   return (
     <>
       <Card className={isMe ? 'person-card chat-message is-me' : 'person-card chat-message'}>
         <div className="message-bubble-body">
           <span className="message-time">{formatTime(message.created_at)}</span>
-          {message.message_type === 'image' && message.image_url ? (
-            <button className="image-message-button" type="button" onClick={() => setPreviewImage(message.image_url)}>
-              <img alt="image" src={message.image_url} />
+          {message.message_type === 'image' && imageUrl ? (
+            <button className="image-message-button" type="button" onClick={() => setPreviewImage(imageUrl)}>
+              <img alt="채팅 이미지" src={imageUrl} />
             </button>
           ) : (
             <p>{message.body}</p>
@@ -37,7 +39,7 @@ export function ChatMessageItem({ message }: { message: D1ChatMessage }) {
 
       {previewImage && (
         <button className="image-preview-backdrop" type="button" onClick={() => setPreviewImage(null)}>
-          <img alt="preview" src={previewImage} />
+          <img alt="채팅 이미지 크게 보기" src={previewImage} />
         </button>
       )}
     </>
