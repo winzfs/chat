@@ -1,0 +1,5 @@
+# Copy this file to .dev.vars for local Pages Functions development.
+# Never commit the real .dev.vars file.
+
+AUTH_SECRET=replace-with-at-least-32-random-characters
+ADMIN_PROFILE_IDS=replace-with-signed-session-profile-id
