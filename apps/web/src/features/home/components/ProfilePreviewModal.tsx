@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
+import { Modal } from '../../../shared/components/Modal';
 import { loadProfile } from '../api/profileLookup';
 import { UserAvatar } from './UserAvatar';
 import './ProfilePreviewModal.css';
@@ -41,18 +42,9 @@ export function ProfilePreviewModal({ onClose, onStartChat, profile }: { profile
     };
   }, [profile]);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
   return (
-    <div className="modal-backdrop profile-preview-backdrop" role="presentation" onClick={onClose}>
-      <Card className="profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-preview-title" onClick={(event) => event.stopPropagation()}>
+    <Modal className="profile-preview-backdrop" labelledBy="profile-preview-title" onClose={onClose}>
+      <Card className="profile-modal">
         <div className="profile-preview-avatar">
           <UserAvatar imageUrl={displayProfile.avatar_url} name={displayProfile.nickname} />
         </div>
@@ -60,10 +52,10 @@ export function ProfilePreviewModal({ onClose, onStartChat, profile }: { profile
         <p>{displayProfile.age ?? '-'}세 · {displayProfile.location || '지역 없음'}</p>
         <p>{displayProfile.bio || '소개글이 아직 없어요.'}</p>
         <div className="profile-modal-actions">
-          <button autoFocus type="button" onClick={onClose}>닫기</button>
+          <button type="button" onClick={onClose}>닫기</button>
           {onStartChat && <button type="button" onClick={onStartChat}>채팅 시작</button>}
         </div>
       </Card>
-    </div>
+    </Modal>
   );
 }
