@@ -8,9 +8,7 @@ import { isKoreaRegion, KOREA_REGIONS } from '../api/koreaRegions';
 import { claimAdRewardPoints, claimAttendancePoints, loadPointStatus, type PointStatus } from '../api/points';
 import type { MyProfile } from '../api/profileStorage';
 import { AvatarCropModal } from './AvatarCropModal';
-import { BlockedUsersPanel } from './BlockedUsersPanel';
-import { MyRoomSettingsPanel } from './MyRoomSettingsPanel';
-import { ReportsAdminPanel } from './ReportsAdminPanel';
+import { SettingsLazyPanel, type SettingsSubpanel } from './SettingsLazyPanel';
 import './SettingsLegalLinks.css';
 
 async function uploadAvatar(image: File) {
@@ -53,9 +51,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileNotice, setProfileNotice] = useState('');
   const [cropImageUrl, setCropImageUrl] = useState('');
-  const [isReportAdminOpen, setIsReportAdminOpen] = useState(false);
-  const [isBlockListOpen, setIsBlockListOpen] = useState(false);
-  const [isMyRoomOpen, setIsMyRoomOpen] = useState(false);
+  const [activeSubpanel, setActiveSubpanel] = useState<SettingsSubpanel | null>(null);
   const [isChargeOpen, setIsChargeOpen] = useState(false);
   const [isPointHistoryOpen, setIsPointHistoryOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -210,9 +206,9 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
   const profileLocation = isKoreaRegion(myProfile.location) ? myProfile.location : '지역 재선택 필요';
   const pointHistory = pointStatus?.history ?? [];
 
-  if (isReportAdminOpen) return <ReportsAdminPanel onClose={() => setIsReportAdminOpen(false)} />;
-  if (isBlockListOpen) return <BlockedUsersPanel onClose={() => setIsBlockListOpen(false)} />;
-  if (isMyRoomOpen) return <MyRoomSettingsPanel onClose={() => setIsMyRoomOpen(false)} />;
+  if (activeSubpanel) {
+    return <SettingsLazyPanel panel={activeSubpanel} onClose={() => setActiveSubpanel(null)} />;
+  }
 
   return (
     <section className="talk-list" aria-label="프로필 설정">
@@ -290,11 +286,11 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
 
       {cropImageUrl && <AvatarCropModal imageUrl={cropImageUrl} onApply={uploadCroppedAvatar} onClose={() => setCropImageUrl('')} />}
 
-      <Card className="setting-item"><strong>마이룸 꾸미기</strong><button className="secondary-button" onClick={() => setIsMyRoomOpen(true)} type="button">열기</button></Card>
+      <Card className="setting-item"><strong>마이룸 꾸미기</strong><button className="secondary-button" onClick={() => setActiveSubpanel('my-room')} type="button">열기</button></Card>
       <Card className="setting-item"><strong>알림 설정</strong><span>준비 중</span></Card>
-      <Card className="setting-item"><strong>차단 관리</strong><button className="secondary-button" onClick={() => setIsBlockListOpen(true)} type="button">열기</button></Card>
+      <Card className="setting-item"><strong>차단 관리</strong><button className="secondary-button" onClick={() => setActiveSubpanel('blocked-users')} type="button">열기</button></Card>
       <Card className="person-card"><strong>안전 기능</strong><p>불쾌한 상대는 채팅방에서 바로 신고하거나 차단할 수 있어요. 차단한 사용자는 사람 목록과 새 쪽지에서 제외돼요.</p></Card>
-      {isAdmin && <Card className="setting-item"><strong>신고 관리</strong><button className="secondary-button" onClick={() => setIsReportAdminOpen(true)} type="button">열기</button></Card>}
+      {isAdmin && <Card className="setting-item"><strong>신고 관리</strong><button className="secondary-button" onClick={() => setActiveSubpanel('reports')} type="button">열기</button></Card>}
 
       <Card className="person-card settings-legal-card">
         <strong>서비스 안내</strong>
