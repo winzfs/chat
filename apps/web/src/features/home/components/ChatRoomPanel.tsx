@@ -1,6 +1,7 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
+import { Modal } from '../../../shared/components/Modal';
 import { compressImageToWebp } from '../../../shared/lib/compressImage';
 import { loadD1ChatMessages, sendD1ChatImage, sendD1ChatMessage, type D1ChatMessage } from '../api/d1ChatMessages';
 import type { D1ChatRoom } from '../api/d1ChatRooms';
@@ -17,13 +18,8 @@ function previewMessageText(message: D1ChatMessage) {
 
 function formatPreviewTime(value: string) {
   const date = new Date(value);
-
   if (Number.isNaN(date.getTime())) return '';
-
-  return date.toLocaleTimeString('ko-KR', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+  return date.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' });
 }
 
 function errorMessage(error: unknown, fallback: string) {
@@ -58,23 +54,11 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
     };
   }, [room.id]);
 
-  useEffect(() => {
-    if (!isHistoryOpen) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsHistoryOpen(false);
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isHistoryOpen]);
-
   useMessagePolling(room.id, setMessages);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const body = text.trim();
-
     if (!body || isSending) return;
 
     setIsSending(true);
@@ -94,7 +78,6 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
   const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const image = event.target.files?.[0];
     event.target.value = '';
-
     if (!image || isSending) return;
 
     setIsSending(true);
@@ -146,7 +129,6 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
         onClose();
         return;
       }
-
       setErrorText('차단하지 못했어요. 잠시 후 다시 시도해주세요.');
     } finally {
       setSafetyAction('');
@@ -185,22 +167,21 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
       </div>
 
       {isHistoryOpen && (
-        <div className="chat-history-overlay" role="dialog" aria-modal="true" aria-labelledby="chat-history-title">
-          <button aria-label="대화 기록 닫기" className="chat-history-backdrop" type="button" onClick={() => setIsHistoryOpen(false)} />
+        <Modal backdropClassName="chat-history-overlay" labelledBy="chat-history-title" onClose={() => setIsHistoryOpen(false)}>
           <Card className="person-card chat-history-sheet">
             <div className="chat-history-sheet-header">
               <div>
                 <strong id="chat-history-title">대화 기록</strong>
                 <p>{messages.length}개 메시지</p>
               </div>
-              <button autoFocus type="button" onClick={() => setIsHistoryOpen(false)}>닫기</button>
+              <button type="button" onClick={() => setIsHistoryOpen(false)}>닫기</button>
             </div>
             <div className="talk-list chat-message-list chat-history-scroll">
               {messages.length === 0 && <Card className="person-card"><strong>아직 메시지가 없어요</strong><p>첫 메시지를 보내서 대화를 시작해보세요.</p></Card>}
               {messages.map((message) => <ChatMessageItem key={message.id} message={message} />)}
             </div>
           </Card>
-        </div>
+        </Modal>
       )}
 
       <form className="quick-compose chat-compose-bar" onSubmit={handleSubmit}>
