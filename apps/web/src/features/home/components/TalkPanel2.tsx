@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
+import { assetUrl } from '../api/apiBase';
 import { openDirectD1ChatRoom, type D1ChatRoom } from '../api/d1ChatRooms';
 import type { D1TalkPost } from '../api/d1TalkPosts';
 import { ProfilePreviewModal, type ProfilePreview } from './ProfilePreviewModal';
@@ -51,5 +52,6 @@ export function TalkPanel2({ myProfileId, onDeletePost, onOpenCompose, onOpenRoo
 }
 
 function TalkCard({ isMine, onDelete, onPreview, onStart, post }: { post: D1TalkPost; isMine: boolean; onDelete: () => void; onPreview: () => void; onStart: () => void }) {
-  return <Card as="article" className={isMine ? 'talk-card is-mine' : 'talk-card'}><div className="talk-card-header"><button className="profile-icon-button" type="button" onClick={onPreview}>{post.avatar_url ? <img alt={`${post.nickname} 프로필`} className="avatar-image" src={post.avatar_url} /> : <span className="avatar">{post.nickname.slice(0, 1)}</span>}<span className={post.online ? 'status-dot is-online' : 'status-dot'} /></button><div><strong>{post.nickname}{isMine ? ' · 내 글' : ''}</strong><p>{post.age} · {post.location}</p></div></div><p className="talk-text">{post.text}</p><div className="talk-actions"><span>♡ {post.likes}</span><span>댓글 {post.replies}</span>{isMine ? <button type="button" onClick={onDelete}>삭제</button> : <button type="button" onClick={onStart}>쪽지 100P</button>}</div></Card>;
+  const avatarUrl = assetUrl(post.avatar_url);
+  return <Card as="article" className={isMine ? 'talk-card is-mine' : 'talk-card'}><div className="talk-card-header"><button className="profile-icon-button" type="button" onClick={onPreview}>{avatarUrl ? <img alt={`${post.nickname} 프로필`} className="avatar-image" src={avatarUrl} /> : <span className="avatar">{post.nickname.slice(0, 1)}</span>}<span className={post.online ? 'status-dot is-online' : 'status-dot'} /></button><div><strong>{post.nickname}{isMine ? ' · 내 글' : ''}</strong><p>{post.age} · {post.location}</p></div></div><p className="talk-text">{post.text}</p><div className="talk-actions"><span>♡ {post.likes}</span><span>댓글 {post.replies}</span>{isMine ? <button type="button" onClick={onDelete}>삭제</button> : <button type="button" onClick={onStart}>쪽지 100P</button>}</div></Card>;
 }
