@@ -1,5 +1,5 @@
 import { apiUrl } from './apiBase';
-import { parseApiResponse } from './apiResponse';
+import { ApiResponseError, parseApiResponse } from './apiResponse';
 import { getProfileId } from './profileId';
 
 export type PointHistoryItem = {
@@ -28,12 +28,9 @@ export type PointClaimResult = {
   message: string;
 };
 
-export class PointError extends Error {
-  balance?: number;
-
+export class PointError extends ApiResponseError {
   constructor(message: string, balance?: number) {
-    super(message);
-    this.balance = balance;
+    super(message, { balance });
   }
 }
 
