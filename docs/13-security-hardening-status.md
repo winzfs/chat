@@ -53,6 +53,7 @@ Cloudflare Pages의 Production과 Preview 환경에 32자 이상의 `AUTH_SECRET
 - 클라이언트 API 오류 공통 파서에 HTTP status, error code, 환불 후 잔액 표시 추가
 - 토크·최근 접속자 1:1 채팅 실패 시 서버 오류와 복구된 잔액 표시
 - `pnpm verify`에 클라이언트 안정화 계약 검사를 추가해 API 오류 표시, 1:1 채팅 profile_id 검증, Android 뒤로가기 처리, CI lockfile 조건을 자동 확인
+- `pnpm verify`에 D1 migration 계약 검사를 추가해 migration 번호·비파괴 SQL·runbook/status 문서 동기화를 자동 확인
 
 ## 남은 작업
 
