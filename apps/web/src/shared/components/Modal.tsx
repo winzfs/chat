@@ -29,6 +29,11 @@ export function Modal({
   preventClose = false,
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  const preventCloseRef = useRef(preventClose);
+
+  onCloseRef.current = onClose;
+  preventCloseRef.current = preventClose;
 
   useEffect(() => {
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -41,7 +46,7 @@ export function Modal({
     });
 
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !preventClose) onClose();
+      if (event.key === 'Escape' && !preventCloseRef.current) onCloseRef.current();
     };
 
     window.addEventListener('keydown', handleEscape);
@@ -52,7 +57,7 @@ export function Modal({
       document.body.style.overflow = previousOverflow;
       previousFocus?.focus();
     };
-  }, [onClose, preventClose]);
+  }, []);
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (event.key !== 'Tab') return;
@@ -81,7 +86,7 @@ export function Modal({
     <div
       className={`app-modal-backdrop ${backdropClassName}`.trim()}
       onMouseDown={(event) => {
-        if (!preventClose && event.target === event.currentTarget) onClose();
+        if (!preventCloseRef.current && event.target === event.currentTarget) onCloseRef.current();
       }}
       role="presentation"
     >
