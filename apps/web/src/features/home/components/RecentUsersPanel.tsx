@@ -11,24 +11,33 @@ function confirmPointSpend() {
   return window.confirm('쪽지를 시작하면 100P가 사용될 수 있어요. 계속할까요?');
 }
 
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRoom: (room: D1ChatRoom) => void }) {
   const [users, setUsers] = useState<RecentUser[]>([]);
   const [notice, setNotice] = useState('');
   const [previewProfile, setPreviewProfile] = useState<ProfilePreview | null>(null);
   const currentProfileId = getProfileId();
 
-  const refreshUsers = () => {
-    loadRecentUsers().then((loadedUsers) => {
-      setUsers(loadedUsers.filter((user) => user.id !== currentProfileId));
-    });
+  const refreshUsers = (showError = false) => {
+    loadRecentUsers()
+      .then((loadedUsers) => {
+        setUsers(loadedUsers.filter((user) => user.id !== currentProfileId));
+        if (showError) setNotice('');
+      })
+      .catch((error) => {
+        if (showError) setNotice(errorMessage(error, '최근 접속자를 불러오지 못했어요.'));
+      });
   };
 
   useEffect(() => {
-    refreshUsers();
+    refreshUsers(true);
 
     const timer = window.setInterval(() => {
       if (document.hidden) return;
-      refreshUsers();
+      refreshUsers(false);
     }, POLLING_INTERVALS.recentUsers);
 
     return () => window.clearInterval(timer);
@@ -46,14 +55,10 @@ export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRo
 
     try {
       const room = await openDirectD1ChatRoom(user.nickname, user.id);
-      if (room) {
-        setNotice('');
-        onOpenRoom(room);
-        return;
-      }
-      setNotice('채팅방을 열지 못했어요. 잠시 후 다시 시도해주세요.');
+      setNotice('');
+      onOpenRoom(room);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : '채팅방을 열지 못했어요.');
+      setNotice(errorMessage(error, '채팅방을 열지 못했어요.'));
     }
   };
 
@@ -62,12 +67,10 @@ export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRo
 
     try {
       const room = await openDirectD1ChatRoom(previewProfile.nickname, previewProfile.profile_id || undefined);
-      if (room) {
-        setPreviewProfile(null);
-        onOpenRoom(room);
-      }
+      setPreviewProfile(null);
+      onOpenRoom(room);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : '채팅방을 열지 못했어요.');
+      setNotice(errorMessage(error, '채팅방을 열지 못했어요.'));
     }
   };
 
@@ -79,7 +82,7 @@ export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRo
     <section className="talk-list" aria-label="최근 접속자">
       <Card className="settings-summary"><strong>최근 접속자</strong><p>{users.length}명이 최근 접속했어요. 쪽지는 100포인트를 사용해요.</p></Card>
       {notice && <Card className="settings-summary"><strong>{notice}</strong></Card>}
-      {users.length === 0 && <Card className="person-card"><strong>아직 다른 접속자가 없어요</strong><p>다른 탭이나 기기에서 다른 닉네임으로 프로필 저장 후 다시 확인해보세요.</p></Card>}
+      {users.length === 0 && !notice && <Card className="person-card"><strong>아직 다른 접속자가 없어요</strong><p>다른 탭이나 기기에서 다른 닉네임으로 프로필 저장 후 다시 확인해보세요.</p></Card>}
       {users.map((user) => (
         <Card className="person-card" key={user.id}>
           <div className="talk-card-header">
