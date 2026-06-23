@@ -64,11 +64,12 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
   const [isCheckingAttendance, setIsCheckingAttendance] = useState(false);
   const [isWatchingAd, setIsWatchingAd] = useState(false);
 
-  const refreshPoints = () => {
-    loadPointStatus().then(setPointStatus).catch((error) => {
-      setPointStatus(null);
+  const refreshPoints = async () => {
+    try {
+      setPointStatus(await loadPointStatus());
+    } catch (error) {
       setPointNotice(errorMessage(error, '포인트 정보를 불러오지 못했어요.'));
-    });
+    }
   };
 
   useEffect(() => {
@@ -77,7 +78,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
 
   useEffect(() => {
     loadAdminStatus().then(setIsAdmin).catch(() => setIsAdmin(false));
-    refreshPoints();
+    void refreshPoints();
   }, []);
 
   useEffect(() => () => {
@@ -102,7 +103,26 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await persistProfile(form);
+
+    const nickname = form.nickname.trim();
+    if (nickname.length < 2 || nickname.length > 12) {
+      setProfileNotice('닉네임은 2자 이상 12자 이하로 입력해주세요.');
+      return;
+    }
+    if (!Number.isFinite(form.age) || form.age < 20 || form.age > 80) {
+      setProfileNotice('나이는 20세 이상 80세 이하로 입력해주세요.');
+      return;
+    }
+    if (!isKoreaRegion(form.location)) {
+      setProfileNotice('지역을 선택해주세요.');
+      return;
+    }
+    if (form.gender === 'none') {
+      setProfileNotice('성별을 선택해주세요.');
+      return;
+    }
+
+    await persistProfile({ ...form, nickname });
   };
 
   const handleAvatarPick = (file?: File) => {
@@ -151,31 +171,35 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
   };
 
   const checkAttendance = async () => {
+    if (isCheckingAttendance) return;
+
     setIsCheckingAttendance(true);
-    const result = await claimAttendancePoints();
-    setIsCheckingAttendance(false);
-
-    if (!result) {
-      setPointNotice('출석체크를 처리하지 못했어요. 잠시 후 다시 시도해주세요.');
-      return;
+    setPointNotice('');
+    try {
+      const result = await claimAttendancePoints();
+      setPointNotice(result.message);
+      await refreshPoints();
+    } catch (error) {
+      setPointNotice(errorMessage(error, '출석체크를 처리하지 못했어요. 잠시 후 다시 시도해주세요.'));
+    } finally {
+      setIsCheckingAttendance(false);
     }
-
-    setPointNotice(result.message);
-    refreshPoints();
   };
 
   const watchAd = async () => {
+    if (isWatchingAd) return;
+
     setIsWatchingAd(true);
-    const result = await claimAdRewardPoints();
-    setIsWatchingAd(false);
-
-    if (!result) {
-      setPointNotice('광고 보상을 처리하지 못했어요. 잠시 후 다시 시도해주세요.');
-      return;
+    setPointNotice('');
+    try {
+      const result = await claimAdRewardPoints();
+      setPointNotice(result.message);
+      await refreshPoints();
+    } catch (error) {
+      setPointNotice(errorMessage(error, '광고 보상을 처리하지 못했어요. 잠시 후 다시 시도해주세요.'));
+    } finally {
+      setIsWatchingAd(false);
     }
-
-    setPointNotice(result.message);
-    refreshPoints();
   };
 
   const showChargeNotice = (productLabel: string) => {
@@ -186,17 +210,9 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
   const profileLocation = isKoreaRegion(myProfile.location) ? myProfile.location : '지역 재선택 필요';
   const pointHistory = pointStatus?.history ?? [];
 
-  if (isReportAdminOpen) {
-    return <ReportsAdminPanel onClose={() => setIsReportAdminOpen(false)} />;
-  }
-
-  if (isBlockListOpen) {
-    return <BlockedUsersPanel onClose={() => setIsBlockListOpen(false)} />;
-  }
-
-  if (isMyRoomOpen) {
-    return <MyRoomSettingsPanel onClose={() => setIsMyRoomOpen(false)} />;
-  }
+  if (isReportAdminOpen) return <ReportsAdminPanel onClose={() => setIsReportAdminOpen(false)} />;
+  if (isBlockListOpen) return <BlockedUsersPanel onClose={() => setIsBlockListOpen(false)} />;
+  if (isMyRoomOpen) return <MyRoomSettingsPanel onClose={() => setIsMyRoomOpen(false)} />;
 
   return (
     <section className="talk-list" aria-label="프로필 설정">
@@ -212,9 +228,9 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
 
       <Card className="person-card">
         <strong>포인트</strong>
-        <p>{pointStatus ? `${pointStatus.balance.toLocaleString()}P 보유 중` : '포인트 정보를 불러오지 못했어요.'}</p>
+        <p>{pointStatus ? `${pointStatus.balance.toLocaleString()}P 보유 중` : '포인트 확인 중...'}</p>
         <p>쪽지를 보낼 때 100P가 사용돼요.</p>
-        {pointNotice && <p>{pointNotice}</p>}
+        {pointNotice && <p aria-live="polite">{pointNotice}</p>}
         <div className="chat-room-card-actions">
           <button type="button" disabled={isCheckingAttendance || Boolean(pointStatus?.attendance_claimed)} onClick={checkAttendance}>{pointStatus?.attendance_claimed ? '출석완료' : isCheckingAttendance ? '처리 중' : '출석체크 100P'}</button>
           <button type="button" disabled={isWatchingAd || Boolean(pointStatus?.ad_reward_claimed)} onClick={watchAd}>{pointStatus?.ad_reward_claimed ? '광고보상 완료' : isWatchingAd ? '처리 중' : '광고보기 100P'}</button>
@@ -257,17 +273,17 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
               <div className="profile-avatar-preview is-small">
                 {form.avatar_url ? <img alt="프로필 사진 미리보기" src={assetUrl(form.avatar_url)} /> : <span>{form.nickname.slice(0, 1) || '?'}</span>}
               </div>
-              <input accept="image/*" onChange={(event) => handleAvatarPick(event.target.files?.[0])} type="file" />
-              {form.avatar_url && <button className="secondary-button" disabled={isUploading} onClick={resetAvatar} type="button">기본 이미지</button>}
+              <input accept="image/*" disabled={isUploading || isSavingProfile} onChange={(event) => handleAvatarPick(event.target.files?.[0])} type="file" />
+              {form.avatar_url && <button className="secondary-button" disabled={isUploading || isSavingProfile} onClick={resetAvatar} type="button">기본 이미지</button>}
             </div>
             {isUploading && <span className="upload-hint">사진 처리 중...</span>}
           </label>
-          <label>닉네임<input value={form.nickname} maxLength={12} onChange={(event) => setForm({ ...form, nickname: event.target.value })} /></label>
-          <label>나이<input type="number" value={form.age} min={20} max={80} onChange={(event) => setForm({ ...form, age: Number(event.target.value) })} /></label>
-          <label>지역<select value={regionValue} onChange={(event) => setForm({ ...form, location: event.target.value })}><option value="">지역 선택</option>{KOREA_REGIONS.map((region) => <option key={region} value={region}>{region}</option>)}</select></label>
-          <label>성별<select value={form.gender} onChange={(event) => setForm({ ...form, gender: event.target.value as MyProfile['gender'] })}><option value="female">여성</option><option value="male">남성</option><option value="none">선택 안 함</option></select></label>
-          <label>소개<textarea value={form.bio} maxLength={80} onChange={(event) => setForm({ ...form, bio: event.target.value })} /></label>
-          {profileNotice && <p className="error-text">{profileNotice}</p>}
+          <label>닉네임<input disabled={isSavingProfile || isUploading} value={form.nickname} maxLength={12} onChange={(event) => setForm({ ...form, nickname: event.target.value })} /></label>
+          <label>나이<input disabled={isSavingProfile || isUploading} type="number" value={form.age} min={20} max={80} onChange={(event) => setForm({ ...form, age: Number(event.target.value) })} /></label>
+          <label>지역<select disabled={isSavingProfile || isUploading} value={regionValue} onChange={(event) => setForm({ ...form, location: event.target.value })}><option value="">지역 선택</option>{KOREA_REGIONS.map((region) => <option key={region} value={region}>{region}</option>)}</select></label>
+          <label>성별<select disabled={isSavingProfile || isUploading} value={form.gender} onChange={(event) => setForm({ ...form, gender: event.target.value as MyProfile['gender'] })}><option value="female">여성</option><option value="male">남성</option><option value="none">선택 안 함</option></select></label>
+          <label>소개<textarea disabled={isSavingProfile || isUploading} value={form.bio} maxLength={80} onChange={(event) => setForm({ ...form, bio: event.target.value })} /></label>
+          {profileNotice && <p className="error-text" aria-live="polite">{profileNotice}</p>}
           <Button disabled={isSavingProfile || isUploading} type="submit">{isSavingProfile ? '저장 중...' : '프로필 저장'}</Button>
         </form>
       </Card>
@@ -275,7 +291,7 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
       {cropImageUrl && <AvatarCropModal imageUrl={cropImageUrl} onApply={uploadCroppedAvatar} onClose={() => setCropImageUrl('')} />}
 
       <Card className="setting-item"><strong>마이룸 꾸미기</strong><button className="secondary-button" onClick={() => setIsMyRoomOpen(true)} type="button">열기</button></Card>
-      <Card className="setting-item"><strong>알림 설정</strong><span>›</span></Card>
+      <Card className="setting-item"><strong>알림 설정</strong><span>준비 중</span></Card>
       <Card className="setting-item"><strong>차단 관리</strong><button className="secondary-button" onClick={() => setIsBlockListOpen(true)} type="button">열기</button></Card>
       <Card className="person-card"><strong>안전 기능</strong><p>불쾌한 상대는 채팅방에서 바로 신고하거나 차단할 수 있어요. 차단한 사용자는 사람 목록과 새 쪽지에서 제외돼요.</p></Card>
       {isAdmin && <Card className="setting-item"><strong>신고 관리</strong><button className="secondary-button" onClick={() => setIsReportAdminOpen(true)} type="button">열기</button></Card>}
