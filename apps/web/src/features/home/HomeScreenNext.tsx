@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card } from '../../shared/components/Card';
 import { loadD1ChatRooms, type D1ChatRoom } from './api/d1ChatRooms';
 import { createD1TalkPost, deleteD1TalkPost, loadD1TalkPosts, type D1TalkPost } from './api/d1TalkPosts';
@@ -51,10 +51,8 @@ export function HomeScreenNext() {
   const [chatListKey, setChatListKey] = useState(0);
   const [notice, setNotice] = useState('');
   const [hasNewChat, setHasNewChat] = useState(false);
-  const lastRoomTimesRef = useRef<Record<string, string>>({});
-  const initializedChatWatchRef = useRef(false);
 
-  const refreshTalkPosts = async (showError = false) => {
+  const refreshTalkPosts = useCallback(async (showError = false) => {
     try {
       setPosts(await loadD1TalkPosts());
     } catch (error) {
@@ -62,7 +60,7 @@ export function HomeScreenNext() {
         setNotice(errorMessage(error, '토크 목록을 불러오지 못했어요.'));
       }
     }
-  };
+  }, []);
 
   const changeTab = (tab: HomeTab) => {
     setActiveTab(tab);
@@ -105,14 +103,14 @@ export function HomeScreenNext() {
     }
 
     return false;
-  }, [activeTab, closeChatRoom, isComposeOpen, openRoom]));
+  }, [activeTab, closeChatRoom, isComposeOpen, openRoom, refreshTalkPosts]));
 
   useEffect(() => {
     const savedProfile = loadMyProfile();
     setProfile(savedProfile);
     touchRecentUser(savedProfile).catch(() => undefined);
     void refreshTalkPosts(true);
-  }, []);
+  }, [refreshTalkPosts]);
 
   useEffect(() => {
     if (!notice) return;
@@ -133,28 +131,14 @@ export function HomeScreenNext() {
     }, POLLING_INTERVALS.talkPosts);
 
     return () => window.clearInterval(timer);
-  }, [activeTab, isComposeOpen]);
+  }, [activeTab, isComposeOpen, refreshTalkPosts]);
 
   useEffect(() => {
     const checkRooms = async () => {
       const rooms = await loadD1ChatRooms();
-      const previous = lastRoomTimesRef.current;
-      let hasNew = rooms.some((room) => Number(room.unread_count ?? 0) > 0);
+      const hasUnread = rooms.some((room) => Number(room.unread_count ?? 0) > 0);
 
-      for (const room of rooms) {
-        const currentTime = room.last_message_at ?? '';
-        const previousTime = previous[room.id];
-
-        if (initializedChatWatchRef.current && currentTime && previousTime && currentTime !== previousTime) {
-          hasNew = true;
-        }
-
-        previous[room.id] = currentTime;
-      }
-
-      initializedChatWatchRef.current = true;
-
-      if (hasNew && activeTab !== 'chats') {
+      if (hasUnread && activeTab !== 'chats') {
         setHasNewChat(true);
       }
     };
@@ -169,7 +153,7 @@ export function HomeScreenNext() {
 
   const submitTalk = async (values: TalkComposeValues) => {
     try {
-      await touchRecentUser(profile);
+      touchRecentUser(profile).catch(() => undefined);
       const result = await createD1TalkPost(values.text, values.mood);
 
       setPosts((current) => [result.post, ...current]);
@@ -181,8 +165,10 @@ export function HomeScreenNext() {
       }
 
       void refreshTalkPosts(false);
+      return true;
     } catch (error) {
       setNotice(errorMessage(error, '토크를 등록하지 못했어요. 잠시 후 다시 시도해주세요.'));
+      return false;
     }
   };
 
@@ -214,13 +200,13 @@ export function HomeScreenNext() {
     <main className="app-shell">
       <section className="home-screen" aria-labelledby="home-title">
         <header className="home-header"><div><p className="home-kicker">플러팅</p><h1 id="home-title">{titles[activeTab]}</h1></div></header>
-        {notice && <Card className="settings-summary"><strong>{notice}</strong></Card>}
+        {notice && <Card className="settings-summary"><strong aria-live="polite">{notice}</strong></Card>}
         {activeTab === 'talk' && <TalkPanel2 posts={posts} myProfileId={getProfileId()} onDeletePost={removeTalk} onOpenCompose={() => setIsComposeOpen(true)} onOpenRoom={openDirectRoom} />}
         {activeTab === 'people' && <RecentUsersPanel onOpenRoom={openDirectRoom} />}
         {activeTab === 'chats' && <ChatRoomsList key={chatListKey} initialRoom={openRoom} />}
         {activeTab === 'settings' && <ProfileSettingsPanel myProfile={profile} onSave={saveProfile} />}
       </section>
-      <nav className="bottom-nav" aria-label="주요 메뉴">{tabs.map((tab) => <button className={activeTab === tab.id ? 'nav-item is-active' : 'nav-item'} key={tab.id} onClick={() => changeTab(tab.id)} type="button"><span>{tab.icon}</span>{tab.label}{tab.id === 'chats' && hasNewChat ? <em className="nav-dot" aria-label="새 채팅 알림" /> : null}</button>)}</nav>
+      <nav className="bottom-nav" aria-label="주요 메뉴">{tabs.map((tab) => <button aria-current={activeTab === tab.id ? 'page' : undefined} className={activeTab === tab.id ? 'nav-item is-active' : 'nav-item'} key={tab.id} onClick={() => changeTab(tab.id)} type="button"><span aria-hidden="true">{tab.icon}</span>{tab.label}{tab.id === 'chats' && hasNewChat ? <em className="nav-dot" aria-label="새 채팅 알림" /> : null}</button>)}</nav>
       <TalkComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} onSubmit={submitTalk} />
     </main>
   );
