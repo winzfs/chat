@@ -1,7 +1,7 @@
 import { apiUrl } from './apiBase';
+import { parseApiResponse } from './apiResponse';
 import { getProfileId } from './profileId';
 import { loadMyProfile } from './profileStorage';
-import { PointError } from './points';
 
 export type D1ChatRoom = {
   id: string;
@@ -32,11 +32,6 @@ function clearLegacyHiddenRoom(roomId: string) {
   } catch {
     localStorage.removeItem(hiddenRoomsKey());
   }
-}
-
-async function readApiError(response: Response, fallback: string) {
-  const data = await response.json().catch(() => null) as { error?: string; balance?: number } | null;
-  return new PointError(data?.error || fallback, data?.balance);
 }
 
 function resolveRoomTitle(room: D1ChatRoom): D1ChatRoom {
@@ -80,12 +75,7 @@ export async function loadD1ChatRooms(): Promise<D1ChatRoom[]> {
   });
 
   const response = await fetch(apiUrl(`/api/chat-rooms?${params.toString()}`), { cache: 'no-store' });
-
-  if (!response.ok) {
-    throw await readApiError(response, '채팅 목록을 불러오지 못했어요.');
-  }
-
-  const data = await response.json() as { rooms?: D1ChatRoom[] };
+  const data = await parseApiResponse<{ rooms?: D1ChatRoom[] }>(response, '채팅 목록을 불러오지 못했어요.');
   return data.rooms && data.rooms.length > 0
     ? data.rooms.map(resolveRoomTitle)
     : [];
@@ -98,11 +88,7 @@ export async function createD1ChatRoom(title: string): Promise<D1ChatRoom> {
     body: JSON.stringify({ title, profile_id: getProfileId(), viewer_nickname: loadMyProfile().nickname }),
   });
 
-  if (!response.ok) {
-    throw await readApiError(response, '채팅방을 만들지 못했어요.');
-  }
-
-  const data = await response.json() as D1ChatRoom;
+  const data = await parseApiResponse<D1ChatRoom>(response, '채팅방을 만들지 못했어요.');
   if (!data.id) throw new Error('생성된 채팅방을 확인하지 못했어요.');
 
   clearLegacyHiddenRoom(data.id);
@@ -128,11 +114,7 @@ export async function openDirectD1ChatRoom(peerNickname: string, peerId?: string
     }),
   });
 
-  if (!response.ok) {
-    throw await readApiError(response, '채팅방을 열지 못했어요.');
-  }
-
-  const data = await response.json() as D1ChatRoom;
+  const data = await parseApiResponse<D1ChatRoom>(response, '채팅방을 열지 못했어요.');
   if (!data.id) throw new Error('열린 채팅방을 확인하지 못했어요.');
 
   clearLegacyHiddenRoom(data.id);
@@ -146,5 +128,9 @@ export async function leaveD1ChatRoom(id: string): Promise<boolean> {
     body: JSON.stringify({ room_id: id, profile_id: getProfileId(), nickname: loadMyProfile().nickname }),
   });
 
-  return response.ok;
+  if (!response.ok) {
+    await parseApiResponse<{ ok: boolean }>(response, '채팅방을 나가지 못했어요.');
+  }
+
+  return true;
 }
