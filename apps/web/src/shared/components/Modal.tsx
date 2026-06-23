@@ -1,8 +1,9 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import './Modal.css';
 
 type ModalProps = {
+  backdropClassName?: string;
   children: ReactNode;
   className?: string;
   labelledBy?: string;
@@ -10,7 +11,23 @@ type ModalProps = {
   preventClose?: boolean;
 };
 
-export function Modal({ children, className = '', labelledBy, onClose, preventClose = false }: ModalProps) {
+const focusableSelector = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+export function Modal({
+  backdropClassName = '',
+  children,
+  className = '',
+  labelledBy,
+  onClose,
+  preventClose = false,
+}: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -19,7 +36,7 @@ export function Modal({ children, className = '', labelledBy, onClose, preventCl
     document.body.style.overflow = 'hidden';
 
     const frame = requestAnimationFrame(() => {
-      const first = panelRef.current?.querySelector<HTMLElement>('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])');
+      const first = panelRef.current?.querySelector<HTMLElement>(focusableSelector);
       (first ?? panelRef.current)?.focus();
     });
 
@@ -37,11 +54,46 @@ export function Modal({ children, className = '', labelledBy, onClose, preventCl
     };
   }, [onClose, preventClose]);
 
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Tab') return;
+
+    const focusable = Array.from(panelRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? []);
+    if (focusable.length === 0) {
+      event.preventDefault();
+      panelRef.current?.focus();
+      return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+
+    if (event.shiftKey && active === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
   return createPortal(
-    <div className="app-modal-backdrop" role="presentation" onMouseDown={(event) => {
-      if (!preventClose && event.target === event.currentTarget) onClose();
-    }}>
-      <div aria-labelledby={labelledBy} aria-modal="true" className={`app-modal-panel ${className}`.trim()} ref={panelRef} role="dialog" tabIndex={-1}>
+    <div
+      className={`app-modal-backdrop ${backdropClassName}`.trim()}
+      onMouseDown={(event) => {
+        if (!preventClose && event.target === event.currentTarget) onClose();
+      }}
+      role="presentation"
+    >
+      <div
+        aria-labelledby={labelledBy}
+        aria-modal="true"
+        className={`app-modal-panel ${className}`.trim()}
+        onKeyDown={handleKeyDown}
+        ref={panelRef}
+        role="dialog"
+        tabIndex={-1}
+      >
         {children}
       </div>
     </div>,
