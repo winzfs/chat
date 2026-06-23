@@ -1,4 +1,5 @@
 import { requireChatRoomParticipant } from '../../_shared/auth';
+import { validateImageFile } from '../../_shared/images';
 
 type Env = {
   DB: D1Database;
@@ -6,16 +7,15 @@ type Env = {
 };
 
 async function ensureChatImageColumns(env: Env) {
-  try {
-    await env.DB.prepare('alter table chat_messages add column sender_profile_id text').run();
-  } catch {
-    // column already exists
-  }
-
-  try {
-    await env.DB.prepare('alter table chat_rooms add column updated_at text').run();
-  } catch {
-    // column already exists
+  for (const query of [
+    'alter table chat_messages add column sender_profile_id text',
+    'alter table chat_rooms add column updated_at text',
+  ]) {
+    try {
+      await env.DB.prepare(query).run();
+    } catch {
+      // Legacy databases may already contain the column.
+    }
   }
 
   await env.DB.prepare(
@@ -28,20 +28,47 @@ async function ensureChatImageColumns(env: Env) {
       primary key (room_id, profile_id)
     )`,
   ).run();
+
+  await env.DB.prepare(
+    `create table if not exists user_blocks (
+      blocker_id text not null,
+      blocked_id text not null,
+      blocked_nickname text,
+      created_at text not null default (datetime('now')),
+      primary key (blocker_id, blocked_id)
+    )`,
+  ).run();
 }
 
 async function hasRecentUser(env: Env, profileId: string) {
-  try {
-    const user = await env.DB.prepare('select id from recent_users where id = ? limit 1').bind(profileId).first();
-    return Boolean(user);
-  } catch {
-    return true;
-  }
+  const user = await env.DB.prepare('select id from recent_users where id = ? limit 1').bind(profileId).first();
+  return Boolean(user);
+}
+
+async function isBlockedRoom(env: Env, roomId: string) {
+  const room = await env.DB.prepare(
+    'select participant_a_id, participant_b_id from chat_rooms where id = ? limit 1',
+  ).bind(roomId).first<{ participant_a_id?: string | null; participant_b_id?: string | null }>();
+
+  const first = room?.participant_a_id?.trim() ?? '';
+  const second = room?.participant_b_id?.trim() ?? '';
+  if (!first || !second) return false;
+
+  const blocked = await env.DB.prepare(
+    'select 1 as value from user_blocks where (blocker_id = ? and blocked_id = ?) or (blocker_id = ? and blocked_id = ?) limit 1',
+  ).bind(first, second, second, first).first<{ value: number }>();
+
+  return Boolean(blocked?.value);
+}
+
+async function senderNickname(env: Env, profileId: string) {
+  const user = await env.DB.prepare('select nickname from recent_users where id = ? limit 1')
+    .bind(profileId)
+    .first<{ nickname?: string | null }>();
+  return user?.nickname?.trim().slice(0, 20) || '익명';
 }
 
 async function unhideRoom(env: Env, roomId: string, profileId: string) {
-  if (!profileId) return;
-
   await env.DB.prepare(
     `update chat_room_exits
      set is_hidden = 0, updated_at = datetime('now')
@@ -49,26 +76,14 @@ async function unhideRoom(env: Env, roomId: string, profileId: string) {
   ).bind(roomId, profileId).run();
 }
 
-async function unhideRoomParticipants(env: Env, roomId: string) {
-  const room = await env.DB.prepare(
-    'select participant_a_id, participant_b_id from chat_rooms where id = ? limit 1',
-  ).bind(roomId).first<{ participant_a_id?: string | null; participant_b_id?: string | null }>();
-
-  for (const profileId of [room?.participant_a_id, room?.participant_b_id]) {
-    if (profileId) await unhideRoom(env, roomId, profileId);
-  }
-}
-
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
-  const url = new URL(request.url);
-  const key = url.searchParams.get('key');
+  const key = new URL(request.url).searchParams.get('key');
 
   if (!key) {
     return Response.json({ error: 'key가 필요해요.' }, { status: 400 });
   }
 
   const object = await env.IMAGES.get(key);
-
   if (!object) {
     return Response.json({ error: '이미지를 찾을 수 없어요.' }, { status: 404 });
   }
@@ -76,7 +91,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   return new Response(object.body, {
     headers: {
       'Content-Type': object.httpMetadata?.contentType ?? 'application/octet-stream',
-      'Cache-Control': 'public, max-age=31536000',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+      'X-Content-Type-Options': 'nosniff',
     },
   });
 };
@@ -86,44 +102,36 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
   const formData = await request.formData();
   const roomId = String(formData.get('room_id') ?? '').trim();
-  const profileId = String(formData.get('profile_id') ?? '').trim();
-  const senderNickname = String(formData.get('sender_nickname') ?? '').trim().slice(0, 20) || '익명';
-  const file = formData.get('image');
+  const profileId = request.headers.get('x-auth-profile-id')?.trim() ?? '';
   const authError = await requireChatRoomParticipant(env, roomId, profileId);
 
   if (authError) return authError;
-
   if (!(await hasRecentUser(env, profileId))) {
     return Response.json({ error: '프로필 동기화 후 이미지를 보낼 수 있어요.' }, { status: 403 });
   }
-
-  if (!(file instanceof File)) {
-    return Response.json({ error: '이미지 파일이 필요해요.' }, { status: 400 });
+  if (await isBlockedRoom(env, roomId)) {
+    return Response.json({ error: '차단 관계에서는 이미지를 보낼 수 없어요.' }, { status: 403 });
   }
 
-  if (!file.type.startsWith('image/')) {
-    return Response.json({ error: '이미지 파일만 업로드할 수 있어요.' }, { status: 400 });
+  const validated = await validateImageFile(formData.get('image'), 5 * 1024 * 1024);
+  if ('error' in validated) {
+    return Response.json({ error: validated.error }, { status: 400 });
   }
 
-  if (file.size > 5 * 1024 * 1024) {
-    return Response.json({ error: '이미지는 5MB 이하만 업로드할 수 있어요.' }, { status: 400 });
-  }
+  await unhideRoom(env, roomId, profileId);
 
-  await unhideRoomParticipants(env, roomId);
-
-  const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-  const key = `chat/${roomId}/${profileId}/${crypto.randomUUID()}.${extension}`;
+  const nickname = await senderNickname(env, profileId);
+  const key = `chat/${roomId}/${profileId}/${crypto.randomUUID()}.${validated.image.extension}`;
   const imageUrl = `/api/chat-images?key=${encodeURIComponent(key)}`;
 
-  await env.IMAGES.put(key, file.stream(), {
-    httpMetadata: { contentType: file.type },
+  await env.IMAGES.put(key, validated.image.bytes, {
+    httpMetadata: { contentType: validated.image.contentType },
   });
 
   const id = crypto.randomUUID();
-
   await env.DB.prepare(
     'insert into chat_messages (id, room_id, sender_nickname, sender_profile_id, message_type, image_key, image_url) values (?, ?, ?, ?, ?, ?, ?)',
-  ).bind(id, roomId, senderNickname, profileId, 'image', key, imageUrl).run();
+  ).bind(id, roomId, nickname, profileId, 'image', key, imageUrl).run();
 
   await env.DB.prepare(
     'update chat_rooms set last_message = ?, last_message_at = datetime("now"), updated_at = datetime("now") where id = ?',
