@@ -1,13 +1,13 @@
+import { validateProfileInput } from '../../_shared/profile';
+
 type Env = { DB: D1Database };
 
 type ProfileSyncBody = {
-  profile_id?: string;
-  previous_nickname?: string;
-  nickname?: string;
-  age?: number;
-  location?: string;
-  bio?: string;
-  avatar_url?: string;
+  nickname?: unknown;
+  age?: unknown;
+  location?: unknown;
+  bio?: unknown;
+  avatar_url?: unknown;
 };
 
 async function ensureProfileSyncColumns(env: Env) {
@@ -51,21 +51,18 @@ async function ensureProfileSyncColumns(env: Env) {
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   await ensureProfileSyncColumns(env);
 
-  const body = await request.json() as ProfileSyncBody;
-  const profileId = request.headers.get('x-auth-profile-id')?.trim() || '';
-  const nickname = body.nickname?.trim().slice(0, 20) || '익명';
-  const age = Number.isFinite(body.age) ? body.age : 25;
-  const location = body.location?.trim().slice(0, 20) || '내 주변';
-  const bio = body.bio?.trim().slice(0, 80) || '';
-  const avatarUrl = body.avatar_url?.trim() || '';
-
+  const profileId = request.headers.get('x-auth-profile-id')?.trim() ?? '';
   if (!profileId) {
     return Response.json({ error: '로그인이 필요해요.' }, { status: 401 });
   }
 
-  if (!Number.isInteger(age) || age < 20 || age > 80) {
-    return Response.json({ error: '나이는 20세 이상 80세 이하로 입력해주세요.' }, { status: 400 });
+  const body = await request.json() as ProfileSyncBody;
+  const validated = validateProfileInput(body);
+  if ('error' in validated) {
+    return Response.json({ error: validated.error }, { status: 400 });
   }
+
+  const { nickname, age, location, bio, avatarUrl } = validated.profile;
 
   await env.DB.prepare(
     `insert into recent_users (id, nickname, age, location, bio, avatar_url, online, last_seen_at, updated_at)
