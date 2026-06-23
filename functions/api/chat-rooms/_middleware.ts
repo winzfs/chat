@@ -126,13 +126,17 @@ export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
   const peerId = String(body?.peer_id ?? '').trim();
   const referenceId = peerId ? directReference(authenticatedId, peerId) : '';
   const attemptId = crypto.randomUUID();
-  const [previousCharge, balanceBefore, transactionBefore] = referenceId
-    ? await Promise.all([
+  let previousCharge: ChargeRow | null = null;
+  let balanceBefore = 0;
+  let transactionBefore = '';
+
+  if (referenceId) {
+    [previousCharge, balanceBefore, transactionBefore] = await Promise.all([
       latestCharge(env, authenticatedId, referenceId),
       pointBalance(env, authenticatedId),
       latestTransactionId(env, authenticatedId),
-    ])
-    : [null, 0, ''];
+    ]);
+  }
 
   const restoreFailedRequest = async () => {
     if (!referenceId) return;
