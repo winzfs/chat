@@ -8,6 +8,8 @@ Cloudflare Pages의 Production과 Preview 환경에 32자 이상의 `AUTH_SECRET
 
 관리자 기능을 사용할 계정의 서명 세션 `profile_id`는 `ADMIN_PROFILE_IDS`에 쉼표로 구분해 등록합니다.
 
+D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOUDFLARE_ACCOUNT_ID`와 `CLOUDFLARE_API_TOKEN`을 등록해야 합니다.
+
 ## 반영 완료
 
 - HMAC 서명 세션 발급과 Bearer 인증
@@ -57,13 +59,16 @@ Cloudflare Pages의 Production과 Preview 환경에 32자 이상의 `AUTH_SECRET
 - `pnpm verify`에 D1 migration 계약 검사를 추가해 migration 번호·비파괴 SQL·runbook/status 문서 동기화를 자동 확인
 - `pnpm verify`의 클라이언트 안정화 계약에 1:1 채팅 실패 복구 코드·환불 거래 기록·최종 방 상태 확인을 추가
 - 배포된 Cloudflare Pages의 `/api/auth/session`이 `AUTH_SECRET` 누락 없이 세션을 발급하는지 확인하는 수동 실행형 Pages auth smoke workflow 추가
+- 실제 D1의 `sqlite_master`와 `pragma table_info(...)`를 artifact로 남기는 수동 실행형 D1 Schema Inspect workflow 추가
+- D1 Schema Inspect 결과에서 migration 대상 테이블 존재 여부를 확인하는 `check:d1-schema-report` 스크립트 추가
 
 ## 남은 작업
 
 - Cloudflare Production과 Preview 환경변수 적용 후 Pages auth smoke workflow를 실제 배포 URL로 실행하고 실패 로그 수정
 - GitHub Actions push 실행 결과 확인과 실패 로그 수정
 - 신규 D1 migration을 Preview와 Production 데이터베이스에 적용
-- 운영 D1의 `sqlite_master`와 `pragma table_info(...)` 결과 확인 후 기존 핵심 테이블의 추가 migration 작성
+- D1 Schema Inspect workflow를 Preview와 Production 데이터베이스 대상으로 실행하고 artifact 확인
+- D1 schema artifact를 기준으로 기존 핵심 테이블의 추가 migration 작성
 - 신규 마이그레이션 적용 후 API 런타임 DDL 제거
 - 실제 API 통합 테스트 추가
 - Android APK 생성 결과와 실기기 회귀 테스트
