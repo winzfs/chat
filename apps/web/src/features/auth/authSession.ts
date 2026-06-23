@@ -30,13 +30,24 @@ function saveAuthSession(session: AuthSession) {
 }
 
 async function isValidSession(session: AuthSession) {
-  const response = await fetch(apiUrl('/api/auth/session'), {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${session.token}` },
-    cache: 'no-store',
-  }).catch(() => null);
+  let response: Response;
 
-  if (!response?.ok) return false;
+  try {
+    response = await fetch(apiUrl('/api/auth/session'), {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${session.token}` },
+      cache: 'no-store',
+    });
+  } catch {
+    throw new Error('네트워크 연결을 확인해주세요. 기존 로그인 정보는 유지했어요.');
+  }
+
+  if (response.status === 401) return false;
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(data?.error || '로그인 세션을 확인하지 못했어요.');
+  }
 
   const data = await response.json().catch(() => null) as { profile_id?: string } | null;
   return data?.profile_id === session.profile_id;
@@ -67,9 +78,12 @@ export async function ensureAuthSession() {
 
   pendingSession = (async () => {
     const existing = loadAuthSession();
-    if (existing && await isValidSession(existing)) return existing;
+    if (existing) {
+      const valid = await isValidSession(existing);
+      if (valid) return existing;
+      clearAuthSession();
+    }
 
-    clearAuthSession();
     return createAuthSession();
   })();
 
