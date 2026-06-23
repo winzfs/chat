@@ -50,6 +50,9 @@ Cloudflare Pages의 Production과 Preview 환경에 32자 이상의 `AUTH_SECRET
 - 루트와 웹 앱의 `latest` 직접 의존성을 고정 버전으로 변경
 - 웹 CI를 `pnpm install --frozen-lockfile --ignore-scripts` 기반으로 변경
 - Android debug APK 워크플로를 `pnpm install --frozen-lockfile` 기반으로 변경
+- 클라이언트 API 오류 공통 파서에 HTTP status, error code, 환불 후 잔액 표시 추가
+- 토크·최근 접속자 1:1 채팅 실패 시 서버 오류와 복구된 잔액 표시
+- `pnpm verify`에 클라이언트 안정화 계약 검사를 추가해 API 오류 표시, 1:1 채팅 profile_id 검증, Android 뒤로가기 처리, CI lockfile 조건을 자동 확인
 
 ## 남은 작업
 
@@ -58,7 +61,7 @@ Cloudflare Pages의 Production과 Preview 환경에 32자 이상의 `AUTH_SECRET
 - 신규 D1 migration을 Preview와 Production 데이터베이스에 적용
 - 운영 D1의 `sqlite_master`와 `pragma table_info(...)` 결과 확인 후 기존 핵심 테이블의 추가 migration 작성
 - 신규 마이그레이션 적용 후 API 런타임 DDL 제거
-- 자동 API 테스트 추가
+- 실제 API 통합 테스트 추가
 - Android APK 생성 결과와 실기기 회귀 테스트
 
 ## 현재 제한
