@@ -26,6 +26,10 @@ function formatPreviewTime(value: string) {
   });
 }
 
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: () => void }) {
   const [messages, setMessages] = useState<D1ChatMessage[]>([]);
   const [text, setText] = useState('');
@@ -37,7 +41,20 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
   const previewMessages = useMemo(() => messages.slice(-3), [messages]);
 
   useEffect(() => {
-    loadD1ChatMessages(room.id).then(setMessages);
+    let cancelled = false;
+    setErrorText('');
+
+    loadD1ChatMessages(room.id)
+      .then((loadedMessages) => {
+        if (!cancelled) setMessages(loadedMessages);
+      })
+      .catch((error) => {
+        if (!cancelled) setErrorText(errorMessage(error, '메시지를 불러오지 못했어요.'));
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [room.id]);
 
   useMessagePolling(room.id, setMessages);
@@ -50,16 +67,16 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
 
     setIsSending(true);
     setErrorText('');
-    const saved = await sendD1ChatMessage(room.id, body);
-    setIsSending(false);
 
-    if (saved) {
+    try {
+      const saved = await sendD1ChatMessage(room.id, body);
       setMessages((current) => [...current, saved]);
       setText('');
-      return;
+    } catch (error) {
+      setErrorText(errorMessage(error, '메시지를 보내지 못했어요. 잠시 후 다시 시도해주세요.'));
+    } finally {
+      setIsSending(false);
     }
-
-    setErrorText('메시지를 보내지 못했어요. 잠시 후 다시 시도해주세요.');
   };
 
   const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -76,15 +93,9 @@ export function ChatRoomPanel({ room, onClose }: { room: D1ChatRoom; onClose: ()
       const compressedImage = await compressImageToWebp(image);
       setUploadStatus(`압축 완료: ${Math.round(compressedImage.size / 1024)}KB`);
       const saved = await sendD1ChatImage(room.id, compressedImage);
-
-      if (saved) {
-        setMessages((current) => [...current, saved]);
-        return;
-      }
-
-      setErrorText('이미지를 보내지 못했어요. 잠시 후 다시 시도해주세요.');
-    } catch {
-      setErrorText('이미지를 처리하지 못했어요. 다른 사진으로 다시 시도해주세요.');
+      setMessages((current) => [...current, saved]);
+    } catch (error) {
+      setErrorText(errorMessage(error, '이미지를 처리하지 못했어요. 다른 사진으로 다시 시도해주세요.'));
     } finally {
       setIsSending(false);
       setUploadStatus('');
