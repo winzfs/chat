@@ -36,10 +36,15 @@ function getRoomPeerProfile(room: D1ChatRoom): ProfilePreview {
   return { nickname: room.title ?? '상대방', avatar_url: room.peer_avatar_url };
 }
 
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null }) {
   const [rooms, setRooms] = useState<D1ChatRoom[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<D1ChatRoom | null>(initialRoom ?? null);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorText, setErrorText] = useState('');
   const [newRoomIds, setNewRoomIds] = useState<Set<string>>(new Set());
   const [previewProfile, setPreviewProfile] = useState<ProfilePreview | null>(null);
   const [previewRoom, setPreviewRoom] = useState<D1ChatRoom | null>(null);
@@ -72,6 +77,8 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
 
   const loadRooms = (notify = false) => {
     if (!notify) setIsLoading(true);
+    setErrorText('');
+
     loadD1ChatRooms()
       .then((loadedRooms) => {
         updateRooms(loadedRooms, notify);
@@ -82,6 +89,9 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
           return;
         }
         if (hashRoom && !selectedRoom) setSelectedRoom(hashRoom);
+      })
+      .catch((error) => {
+        setErrorText(errorMessage(error, '채팅 목록을 불러오지 못했어요.'));
       })
       .finally(() => {
         if (!notify) setIsLoading(false);
@@ -112,21 +122,33 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
   const closeRoom = () => {
     clearRoomHash();
     setSelectedRoom(null);
-    setIsLoading(true);
-    loadD1ChatRooms().then((loadedRooms) => updateRooms(loadedRooms, false)).finally(() => setIsLoading(false));
+    loadRooms(false);
   };
 
   const leaveRoom = async (room: D1ChatRoom) => {
-    clearRoomHash();
-    if (selectedRoom?.id === room.id) setSelectedRoom(null);
-    setLeaveConfirmRoom(null);
-    setRooms((current) => current.filter((item) => item.id !== room.id));
-    setNewRoomIds((current) => {
-      const next = new Set(current);
-      next.delete(room.id);
-      return next;
-    });
-    await leaveD1ChatRoom(room.id);
+    setErrorText('');
+
+    try {
+      const left = await leaveD1ChatRoom(room.id);
+      if (!left) {
+        setErrorText('채팅방을 나가지 못했어요. 잠시 후 다시 시도해주세요.');
+        setLeaveConfirmRoom(null);
+        return;
+      }
+
+      clearRoomHash();
+      if (selectedRoom?.id === room.id) setSelectedRoom(null);
+      setLeaveConfirmRoom(null);
+      setRooms((current) => current.filter((item) => item.id !== room.id));
+      setNewRoomIds((current) => {
+        const next = new Set(current);
+        next.delete(room.id);
+        return next;
+      });
+    } catch (error) {
+      setErrorText(errorMessage(error, '채팅방을 나가지 못했어요.'));
+      setLeaveConfirmRoom(null);
+    }
   };
 
   const previewRoomProfile = (room: D1ChatRoom) => {
@@ -152,7 +174,8 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
         <strong>내 채팅 목록</strong>
         <p>{rooms.length}개 채팅방 · 안 읽은 메시지 {totalUnread}개</p>
       </Card>
-      {rooms.length === 0 && <Card className="person-card chat-empty-card"><strong>아직 대화가 없어요.</strong><p>토크나 사람 탭에서 마음에 드는 사람에게 먼저 대화를 걸어보세요.</p></Card>}
+      {errorText && <Card className="settings-summary"><strong>{errorText}</strong><p>잠시 후 다시 시도하거나 화면을 새로고침해주세요.</p></Card>}
+      {rooms.length === 0 && !errorText && <Card className="person-card chat-empty-card"><strong>아직 대화가 없어요.</strong><p>토크나 사람 탭에서 마음에 드는 사람에게 먼저 대화를 걸어보세요.</p></Card>}
       {rooms.map((room) => <ChatRoomCard hasNewMessage={newRoomIds.has(room.id)} key={room.id} onLeave={() => setLeaveConfirmRoom(room)} onOpen={() => openRoom(room)} onPreview={() => previewRoomProfile(room)} room={room} />)}
       {previewProfile && <ProfilePreviewModal profile={previewProfile} onClose={() => setPreviewProfile(null)} onStartChat={openPreviewRoom} />}
       {leaveConfirmRoom && <LeaveConfirmDialog room={leaveConfirmRoom} onCancel={() => setLeaveConfirmRoom(null)} onConfirm={() => leaveRoom(leaveConfirmRoom)} />}
