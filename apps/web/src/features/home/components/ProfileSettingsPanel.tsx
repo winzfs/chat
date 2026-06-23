@@ -23,13 +23,10 @@ async function uploadAvatar(image: File) {
   return data.avatar_url;
 }
 
-async function deleteAvatar(avatarUrl?: string) {
-  const params = new URLSearchParams();
-  if (avatarUrl) params.set('avatar_url', avatarUrl);
-
-  const query = params.toString();
-  const response = await fetch(apiUrl(`/api/profile-image${query ? `?${query}` : ''}`), { method: 'DELETE' });
-  await parseApiResponse<{ avatar_url: string }>(response, '프로필 사진을 초기화하지 못했어요.');
+async function deleteAvatar(avatarUrl: string) {
+  const params = new URLSearchParams({ avatar_url: avatarUrl });
+  const response = await fetch(apiUrl(`/api/profile-image?${params.toString()}`), { method: 'DELETE' });
+  await parseApiResponse<{ avatar_url: string }>(response, '임시 프로필 사진을 정리하지 못했어요.');
 }
 
 function errorMessage(error: unknown, fallback: string) {
@@ -117,13 +114,22 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
   const uploadCroppedAvatar = async (file: File) => {
     setIsUploading(true);
     setProfileNotice('');
+    let uploadedAvatarUrl = '';
 
     try {
-      const avatarUrl = await uploadAvatar(file);
-      const next = { ...form, avatar_url: avatarUrl };
-      setForm(next);
-      await persistProfile(next);
+      uploadedAvatarUrl = await uploadAvatar(file);
+      const next = { ...form, avatar_url: uploadedAvatarUrl };
+      const saved = await persistProfile(next);
+
+      if (saved) {
+        setForm(next);
+      } else {
+        await deleteAvatar(uploadedAvatarUrl).catch(() => undefined);
+      }
     } catch (error) {
+      if (uploadedAvatarUrl) {
+        await deleteAvatar(uploadedAvatarUrl).catch(() => undefined);
+      }
       setProfileNotice(errorMessage(error, '프로필 사진을 저장하지 못했어요.'));
     } finally {
       setIsUploading(false);
@@ -136,12 +142,9 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
     setProfileNotice('');
 
     try {
-      await deleteAvatar(form.avatar_url);
       const next = { ...form, avatar_url: '' };
-      setForm(next);
-      await persistProfile(next);
-    } catch (error) {
-      setProfileNotice(errorMessage(error, '프로필 사진을 초기화하지 못했어요.'));
+      const saved = await persistProfile(next);
+      if (saved) setForm(next);
     } finally {
       setIsUploading(false);
     }
