@@ -1,6 +1,6 @@
 # D1 마이그레이션 적용 절차
 
-마지막 갱신: 2026-06-23
+마지막 갱신: 2026-06-24
 
 ## 목적
 
@@ -33,13 +33,27 @@ API 요청마다 실행하던 `create table if not exists`와 호환용 스키�
 
 이 검사는 실제 Preview/Production 데이터베이스에 SQL을 적용하지 않습니다. 배포 전에는 아래 절차대로 Cloudflare D1에 직접 적용하고 회귀 확인을 해야 합니다.
 
+## 운영 스키마 확인 자동화
+
+수동 실행 workflow인 `.github/workflows/d1-schema-inspect.yml`은 실제 D1 데이터베이스에서 아래 결과를 수집해 artifact로 남깁니다.
+
+- `sqlite_master`의 table/index 목록
+- migration 대상 테이블의 `pragma table_info(...)`
+- 기존 핵심 테이블의 `pragma table_info(...)`
+
+실행 전 GitHub repository secrets에 `CLOUDFLARE_ACCOUNT_ID`와 `CLOUDFLARE_API_TOKEN`을 등록합니다. workflow 입력의 `database_name`에는 Cloudflare D1 데이터베이스 이름이나 UUID를 넣고, `target_environment`는 artifact 구분용으로 Preview 또는 Production을 선택합니다.
+
+workflow는 `scripts/check-d1-schema-report.mjs`를 실행해 새 migration 테이블이 실제 DB에 존재하는지 확인합니다. 기존 핵심 테이블은 artifact의 `table-info-*.json`을 보고 추가 migration 작성 여부를 판단합니다.
+
 ## 적용 순서
 
 1. Cloudflare D1 데이터베이스를 백업하거나 내보냅니다.
 2. Preview 데이터베이스에 SQL 파일을 번호 순서대로 적용합니다.
-3. 아래 회귀 항목을 Preview 배포에서 확인합니다.
-4. 같은 파일을 Production 데이터베이스에 같은 순서로 적용합니다.
-5. Production 확인이 끝난 뒤에만 API의 런타임 테이블 생성 코드를 제거합니다.
+3. D1 Schema Inspect workflow를 Preview DB 대상으로 실행하고 artifact를 확인합니다.
+4. 아래 회귀 항목을 Preview 배포에서 확인합니다.
+5. 같은 파일을 Production 데이터베이스에 같은 순서로 적용합니다.
+6. D1 Schema Inspect workflow를 Production DB 대상으로 실행하고 artifact를 보관합니다.
+7. Production 확인이 끝난 뒤에만 API의 런타임 테이블 생성 코드를 제거합니다.
 
 Cloudflare 대시보드의 D1 SQL 실행 화면 또는 프로젝트에서 사용하는 Wrangler 명령으로 각 파일을 적용합니다. 저장소에는 D1 데이터베이스 이름과 Wrangler 설정 파일이 없으므로 실제 데이터베이스 이름은 Cloudflare Pages 프로젝트 설정에서 확인해야 합니다.
 
