@@ -26,6 +26,24 @@ function directReference(first: string, second: string) {
   return [first, second].sort().join(':');
 }
 
+async function directChatReady(env: Env, referenceId: string, profileId: string) {
+  try {
+    const room = await env.DB.prepare(
+      'select id from chat_rooms where direct_key = ? limit 1',
+    ).bind(referenceId).first<{ id?: string | null }>();
+
+    if (!room?.id) return false;
+
+    const exit = await env.DB.prepare(
+      'select is_hidden from chat_room_exits where room_id = ? and profile_id = ? limit 1',
+    ).bind(room.id, profileId).first<{ is_hidden?: number | null }>();
+
+    return !exit || Number(exit.is_hidden ?? 0) === 0;
+  } catch {
+    return false;
+  }
+}
+
 async function latestCharge(env: Env, profileId: string, referenceId: string) {
   try {
     return await env.DB.prepare(
@@ -150,7 +168,8 @@ export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
     }
 
     const restoreFailedRequest = async () => {
-      if (!referenceId) return;
+      if (!referenceId || await directChatReady(env, referenceId, authenticatedId)) return;
+
       const restored = await restoreNewCharge(env, authenticatedId, referenceId, previousCharge?.id);
       if (!restored) {
         await restoreUntrackedDrop(
