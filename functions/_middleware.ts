@@ -23,6 +23,13 @@ export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
     return jsonError(env.AUTH_SECRET ? '로그인이 필요해요.' : '서버 AUTH_SECRET 설정이 필요해요.', env.AUTH_SECRET ? 401 : 503);
   }
 
+  if (pathname === '/api/profile-sync' && request.method === 'POST') {
+    const body = await request.clone().json().catch(() => ({})) as { profile_id?: string };
+    const declaredId = body.profile_id?.trim() ?? '';
+    if (!declaredId) return jsonError('profile_id가 필요해요.', 400);
+    if (declaredId !== profileId) return jsonError('다른 사용자 프로필을 수정할 수 없어요.', 403);
+  }
+
   const headers = new Headers(request.headers);
   headers.set('x-auth-profile-id', profileId);
   headers.set('x-profile-id', profileId);
