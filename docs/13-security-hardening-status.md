@@ -44,15 +44,22 @@ Cloudflare Pages의 Production과 Preview 환경에 32자 이상의 `AUTH_SECRET
 - GitHub Actions 웹 `typecheck`·빌드 워크플로 추가
 - 웹 `typecheck`와 루트 `verify` 명령 추가
 - `.dev.vars.example` 제공 및 실제 `.dev.vars` ignore
+- 포인트·채팅 상태·차단·신고·1:1 요청 잠금 테이블의 버전형 D1 migration 추가
+- D1 migration Preview/Production 적용 runbook 추가
+- `pnpm-lock.yaml` 생성
+- 루트와 웹 앱의 `latest` 직접 의존성을 고정 버전으로 변경
+- 웹 CI를 `pnpm install --frozen-lockfile --ignore-scripts` 기반으로 변경
+- Android debug APK 워크플로를 `pnpm install --frozen-lockfile` 기반으로 변경
 
 ## 남은 작업
 
-- Cloudflare 환경변수 적용 후 실제 배포 API 확인
+- Cloudflare Production과 Preview 환경변수 적용 후 실제 배포 API 확인
 - GitHub Actions push 실행 결과 확인과 실패 로그 수정
-- lockfile 생성과 `latest` 의존성 버전 고정
-- D1 스키마 변경을 요청 시점 `CREATE/ALTER TABLE`에서 버전형 migration으로 이전
-- 신규 마이그레이션 적용 후 런타임 DDL 제거
-- 자동 API 테스트와 Android 실기기 회귀 테스트
+- 신규 D1 migration을 Preview와 Production 데이터베이스에 적용
+- 운영 D1의 `sqlite_master`와 `pragma table_info(...)` 결과 확인 후 기존 핵심 테이블의 추가 migration 작성
+- 신규 마이그레이션 적용 후 API 런타임 DDL 제거
+- 자동 API 테스트 추가
+- Android APK 생성 결과와 실기기 회귀 테스트
 
 ## 현재 제한
 
