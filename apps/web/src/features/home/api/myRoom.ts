@@ -1,4 +1,5 @@
 import { apiUrl } from './apiBase';
+import { parseApiResponse } from './apiResponse';
 import { getProfileId } from './profileId';
 
 export type MyRoomWallpaper = 'peach' | 'mint' | 'lavender' | 'sky' | 'terracotta' | 'olive' | 'butter' | 'ocean' | 'berry' | 'cobalt' | 'noir';
@@ -166,26 +167,18 @@ function normalizeRoom(room?: Partial<MyRoom> | null, profileId = getProfileId()
 export async function loadMyRoom(profileId = getProfileId()): Promise<MyRoom> {
   const params = new URLSearchParams({ profile_id: profileId });
   const response = await fetch(apiUrl(`/api/my-room?${params.toString()}`), { cache: 'no-store' });
-
-  if (!response.ok) {
-    return createDefaultMyRoom(profileId);
-  }
-
-  const data = await response.json() as { room?: MyRoom };
+  const data = await parseApiResponse<{ room?: MyRoom }>(response, '마이룸을 불러오지 못했어요.');
   return normalizeRoom(data.room, profileId);
 }
 
-export async function saveMyRoom(room: MyRoom): Promise<MyRoom | null> {
+export async function saveMyRoom(room: MyRoom): Promise<MyRoom> {
   const response = await fetch(apiUrl('/api/my-room'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(room),
   });
 
-  if (!response.ok) {
-    return null;
-  }
-
-  const data = await response.json() as { room?: MyRoom };
+  const data = await parseApiResponse<{ room?: MyRoom }>(response, '마이룸을 저장하지 못했어요.');
+  if (!data.room) throw new Error('저장된 마이룸을 확인하지 못했어요.');
   return normalizeRoom(data.room, room.profile_id);
 }
