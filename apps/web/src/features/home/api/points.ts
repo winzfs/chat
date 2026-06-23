@@ -52,15 +52,14 @@ export async function loadPointStatus(): Promise<PointStatus> {
   return { ...emptyStatus, ...data, history: data.history ?? [] };
 }
 
-async function claimPoints(action: 'attendance' | 'ad_reward'): Promise<PointClaimResult | null> {
+async function claimPoints(action: 'attendance' | 'ad_reward'): Promise<PointClaimResult> {
   const response = await fetch(apiUrl('/api/points'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ profile_id: getProfileId(), action }),
   });
 
-  if (!response.ok) return null;
-  return response.json() as Promise<PointClaimResult>;
+  return parseApiResponse<PointClaimResult>(response, '포인트 보상을 처리하지 못했어요.');
 }
 
 export function claimAttendancePoints() {
