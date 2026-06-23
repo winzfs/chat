@@ -1,5 +1,5 @@
 import { apiUrl } from './apiBase';
-import { getProfileId } from './profileId';
+import { parseApiResponse } from './apiResponse';
 
 export type D1ChatMessage = {
   id: string;
@@ -13,48 +13,28 @@ export type D1ChatMessage = {
   created_at: string;
 };
 
-function getProfileNickname() {
-  try {
-    const raw = localStorage.getItem('chitchat.myProfile.v1');
-    const profile = raw ? JSON.parse(raw) as { nickname?: string } : null;
-    return profile?.nickname || '익명';
-  } catch {
-    return '익명';
-  }
-}
-
 export async function loadD1ChatMessages(roomId: string): Promise<D1ChatMessage[]> {
-  const params = new URLSearchParams({ room_id: roomId, profile_id: getProfileId() });
+  const params = new URLSearchParams({ room_id: roomId });
   const response = await fetch(apiUrl(`/api/chat-messages?${params.toString()}`), { cache: 'no-store' });
-
-  if (!response.ok) {
-    return [];
-  }
-
-  const data = await response.json() as { messages?: D1ChatMessage[] };
+  const data = await parseApiResponse<{ messages?: D1ChatMessage[] }>(response, '메시지를 불러오지 못했어요.');
   return data.messages ?? [];
 }
 
-export async function sendD1ChatMessage(roomId: string, body: string, senderNickname = getProfileNickname()): Promise<D1ChatMessage | null> {
+export async function sendD1ChatMessage(roomId: string, body: string): Promise<D1ChatMessage> {
   const response = await fetch(apiUrl('/api/chat-messages'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ room_id: roomId, body, sender_nickname: senderNickname, profile_id: getProfileId() }),
+    body: JSON.stringify({ room_id: roomId, body }),
   });
 
-  if (!response.ok) {
-    return null;
-  }
-
-  const data = await response.json() as { message?: D1ChatMessage };
-  return data.message ?? null;
+  const data = await parseApiResponse<{ message?: D1ChatMessage }>(response, '메시지를 보내지 못했어요.');
+  if (!data.message) throw new Error('저장된 메시지를 확인하지 못했어요.');
+  return data.message;
 }
 
-export async function sendD1ChatImage(roomId: string, image: File): Promise<D1ChatMessage | null> {
+export async function sendD1ChatImage(roomId: string, image: File): Promise<D1ChatMessage> {
   const formData = new FormData();
   formData.append('room_id', roomId);
-  formData.append('profile_id', getProfileId());
-  formData.append('sender_nickname', getProfileNickname());
   formData.append('image', image);
 
   const response = await fetch(apiUrl('/api/chat-images'), {
@@ -62,10 +42,7 @@ export async function sendD1ChatImage(roomId: string, image: File): Promise<D1Ch
     body: formData,
   });
 
-  if (!response.ok) {
-    return null;
-  }
-
-  const data = await response.json() as { message?: D1ChatMessage };
-  return data.message ?? null;
+  const data = await parseApiResponse<{ message?: D1ChatMessage }>(response, '이미지를 보내지 못했어요.');
+  if (!data.message) throw new Error('저장된 이미지를 확인하지 못했어요.');
+  return data.message;
 }
