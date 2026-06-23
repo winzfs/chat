@@ -13,7 +13,7 @@ export const defaultProfile: MyProfile = {
   nickname: '민지',
   gender: 'female',
   age: 25,
-  location: '서울',
+  location: '서울특별시',
   bio: '가볍게 대화하면서 친해지고 싶어요.',
   avatar_url: '',
 };
