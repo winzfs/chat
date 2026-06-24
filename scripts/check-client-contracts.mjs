@@ -52,7 +52,7 @@ requireMatch('functions/api/chat-rooms/index.ts', chatRoomsFunction, /catch \{[\
 
 const talkPanel = read('apps/web/src/features/home/components/TalkPanel2.tsx');
 requireText('apps/web/src/features/home/components/TalkPanel2.tsx', talkPanel, 'formatApiError', 'talk direct chat errors must use the shared formatter');
-requireText('apps/web/src/features/home/components/TalkPanel2.tsx', talkPanel, 'openingProfileId', 'talk direct chat button needs a duplicate-click lock');
+requireText('apps/web/src/features/home/components/TalkPanel2.tsx', talkPanel, 'openingProfileIdRef', 'talk direct chat button needs a synchronous ref-backed duplicate-click lock');
 
 const recentUsersPanel = read('apps/web/src/features/home/components/RecentUsersPanel.tsx');
 requireText('apps/web/src/features/home/components/RecentUsersPanel.tsx', recentUsersPanel, 'formatApiError', 'recent-user direct chat errors must use the shared formatter');
