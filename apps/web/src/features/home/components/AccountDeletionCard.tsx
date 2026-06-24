@@ -7,7 +7,14 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : '회원 탈퇴를 처리하지 못했어요.';
 }
 
-export function AccountDeletionCard({ onDeleted }: { onDeleted: () => void }) {
+function resetLocalAccount() {
+  const keys = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index))
+    .filter((key): key is string => Boolean(key?.startsWith('chitchat.')));
+  for (const key of keys) localStorage.removeItem(key);
+  window.location.replace('/');
+}
+
+export function AccountDeletionCard() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [notice, setNotice] = useState('');
@@ -19,7 +26,7 @@ export function AccountDeletionCard({ onDeleted }: { onDeleted: () => void }) {
     setNotice('');
     try {
       await deleteAccount();
-      onDeleted();
+      resetLocalAccount();
     } catch (error) {
       setNotice(errorMessage(error));
     } finally {
