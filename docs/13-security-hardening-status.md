@@ -74,16 +74,21 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - `pnpm verify`의 클라이언트 안정화 계약에 Pages auth/API smoke workflow 안전 조건을 추가
 - D1 Schema Inspect workflow에 중복 실행 취소, 명시적 timeout, D1 대상 이름 사전 검증, schema report artifact 누락 실패 처리를 추가
 - `pnpm verify`의 클라이언트 안정화 계약에 D1 Schema Inspect workflow 안전 조건을 추가
+- Playwright 기반 Web E2E workflow 추가
+- Web E2E를 프로덕션 빌드와 preview 서버 기준으로 실행
+- Web E2E 실패 시 HTML report, trace, 스크린샷, 영상을 artifact로 보관
+- 가입·토크·모달·직접대화·메시지 실패·채팅방 나가기의 9개 핵심 흐름 자동 검증
+- 모달 이전 포커스 복원과 ref 기반 1:1 채팅 중복 요청 잠금을 E2E로 검증
 
 ## 남은 작업
 
 - Cloudflare Production과 Preview 환경변수 적용 후 Pages auth smoke workflow를 실제 배포 URL로 실행하고 실패 로그 수정
 - Pages API smoke workflow를 실제 배포 URL로 실행하고 채팅방 목록 권한·CORS 실패 로그 수정
-- GitHub Actions push 실행 결과 확인과 실패 로그 수정
 - 신규 D1 migration을 Preview와 Production 데이터베이스에 적용
 - D1 Schema Inspect workflow를 Preview와 Production 데이터베이스 대상으로 실행하고 artifact 확인
 - 운영 D1의 `sqlite_master`와 `pragma table_info(...)` 결과 확인 후 기존 핵심 테이블의 추가 migration 작성
 - 신규 마이그레이션 적용 후 API 런타임 DDL 제거
+- 프로필 사진 실패, 마이룸 저장 차단, 포인트 보상 실패 흐름의 Web E2E 확장
 - Android debug APK workflow 실행 결과와 artifact를 확인하고, APK 설치 후 실기기 회귀 테스트
 
 ## 현재 제한
