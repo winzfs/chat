@@ -83,6 +83,7 @@ jobs:
             user_blocks \
             reports \
             direct_chat_request_locks \
+            revoked_profiles \
             recent_users \
             talk_posts \
             chat_rooms \
