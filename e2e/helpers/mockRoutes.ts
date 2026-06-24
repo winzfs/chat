@@ -2,6 +2,7 @@ import type { Page, Route } from '@playwright/test';
 import { E2E_PROFILE_ID } from './sessionSeed';
 
 type MockRouteOptions = {
+  accountDeleteStatus?: number;
   chatMessageStatus?: number;
   directChatDelayMs?: number;
   leaveRoomStatus?: number;
@@ -58,6 +59,12 @@ export async function installMockRoutes(page: Page, options: MockRouteOptions = 
       await reply(route, method === 'POST'
         ? { profile_id: E2E_PROFILE_ID, token: 'e2e-session' }
         : { profile_id: E2E_PROFILE_ID });
+      return;
+    }
+
+    if (path === '/api/account' && method === 'DELETE') {
+      const status = options.accountDeleteStatus ?? 200;
+      await reply(route, status === 200 ? { ok: true } : { error: '회원 탈퇴 처리 실패' }, status);
       return;
     }
 
