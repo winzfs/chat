@@ -3,7 +3,7 @@ import { Card } from '../../../shared/components/Card';
 import { Modal } from '../../../shared/components/Modal';
 import { leaveD1ChatRoom, loadD1ChatRooms, type D1ChatRoom } from '../api/d1ChatRooms';
 import { getProfileId } from '../api/profileId';
-import { POLLING_INTERVALS } from '../api/pollingIntervals';
+import { useChatRoomsPolling } from '../hooks/useChatRoomsPolling';
 import { ChatRoomPanel } from './ChatRoomPanel';
 import { ProfilePreviewModal, type ProfilePreview } from './ProfilePreviewModal';
 import { UserAvatar } from './UserAvatar';
@@ -85,15 +85,7 @@ export function ChatRoomsList({ initialRoom }: { initialRoom?: D1ChatRoom | null
     void loadRooms(true);
   }, [loadRooms]);
 
-  useEffect(() => {
-    if (selectedRoom) return;
-
-    const timer = window.setInterval(() => {
-      if (!document.hidden) void loadRooms(false);
-    }, POLLING_INTERVALS.chatRooms);
-
-    return () => window.clearInterval(timer);
-  }, [loadRooms, selectedRoom]);
+  useChatRoomsPolling(!selectedRoom, () => loadRooms(false));
 
   const openRoom = (room: D1ChatRoom) => {
     writeRoomIdToHash(room.id);
