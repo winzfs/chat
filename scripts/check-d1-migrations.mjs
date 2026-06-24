@@ -20,6 +20,7 @@ const expectedMigrations = [
   '0003_safety.sql',
   '0004_request_gates.sql',
   '0005_revoked_profiles.sql',
+  '0006_moderation.sql',
 ];
 
 function read(path) {
@@ -83,6 +84,7 @@ const requiredStatusTexts = [
   '신규 D1 migration을 Preview와 Production 데이터베이스에 적용',
   '운영 D1의 `sqlite_master`와 `pragma table_info(...)` 결과 확인 후 기존 핵심 테이블의 추가 migration 작성',
   '탈퇴 계정의 기존 서명 세션을 차단하는 `revoked_profiles` migration 추가',
+  '신고 관리자 메모와 사용자 정지를 위한 `0006_moderation.sql` migration 추가',
 ];
 
 for (const text of requiredStatusTexts) {
