@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Card } from '../../shared/components/Card';
-import { loadD1ChatRooms, type D1ChatRoom } from './api/d1ChatRooms';
+import { type D1ChatRoom } from './api/d1ChatRooms';
 import { createD1TalkPost, deleteD1TalkPost, loadD1TalkPosts, type D1TalkPost } from './api/d1TalkPosts';
 import { getProfileId } from './api/profileId';
-import { POLLING_INTERVALS } from './api/pollingIntervals';
 import { defaultProfile, loadMyProfile, saveMyProfile, type MyProfile } from './api/profileStorage';
 import { syncProfile } from './api/profileSync';
 import { touchRecentUser } from './api/recentUsers';
@@ -13,6 +12,7 @@ import { RecentUsersPanel } from './components/RecentUsersPanel';
 import { ProfileSettingsPanel } from './components/ProfileSettingsPanel';
 import { TalkComposeModal, type TalkComposeValues } from './components/TalkComposeModal';
 import { TalkPanel2 } from './components/TalkPanel2';
+import { HomeScreenPollingBridge } from './HomeScreenPollingBridge';
 import './HomePage.css';
 import './HomeExtra.css';
 import './ProfileAvatar.css';
@@ -122,35 +122,6 @@ export function HomeScreenNext() {
     return () => window.clearTimeout(timer);
   }, [notice]);
 
-  useEffect(() => {
-    if (activeTab !== 'talk') return;
-
-    const timer = window.setInterval(() => {
-      if (document.hidden || isComposeOpen) return;
-      void refreshTalkPosts(false);
-    }, POLLING_INTERVALS.talkPosts);
-
-    return () => window.clearInterval(timer);
-  }, [activeTab, isComposeOpen, refreshTalkPosts]);
-
-  useEffect(() => {
-    const checkRooms = async () => {
-      const rooms = await loadD1ChatRooms();
-      const hasUnread = rooms.some((room) => Number(room.unread_count ?? 0) > 0);
-
-      if (hasUnread && activeTab !== 'chats') {
-        setHasNewChat(true);
-      }
-    };
-
-    checkRooms().catch(() => undefined);
-    const timer = window.setInterval(() => {
-      checkRooms().catch(() => undefined);
-    }, POLLING_INTERVALS.chatRooms);
-
-    return () => window.clearInterval(timer);
-  }, [activeTab]);
-
   const submitTalk = async (values: TalkComposeValues) => {
     try {
       touchRecentUser(profile).catch(() => undefined);
@@ -198,6 +169,12 @@ export function HomeScreenNext() {
 
   return (
     <main className="app-shell">
+      <HomeScreenPollingBridge
+        activeTab={activeTab}
+        isComposeOpen={isComposeOpen}
+        markUnread={() => setHasNewChat(true)}
+        refreshTalk={() => refreshTalkPosts(false)}
+      />
       <section className="home-screen" aria-labelledby="home-title">
         <header className="home-header"><div><p className="home-kicker">플러팅</p><h1 id="home-title">{titles[activeTab]}</h1></div></header>
         {notice && <Card className="settings-summary"><strong aria-live="polite">{notice}</strong></Card>}
