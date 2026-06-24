@@ -5,15 +5,16 @@ const reportDir = resolve(process.env.D1_SCHEMA_REPORT_DIR ?? 'd1-schema-report'
 const failures = [];
 
 const requiredTables = [
-  'point_balances',
+  'user_points',
   'point_transactions',
   'daily_point_claims',
-  'chat_reads',
-  'chat_room_states',
+  'chat_room_reads',
+  'chat_room_exits',
   'user_blocks',
   'reports',
-  'direct_chat_request_locks',
+  'request_gates',
   'revoked_profiles',
+  'user_suspensions',
 ];
 
 const legacyTablesToInspect = [
@@ -21,8 +22,7 @@ const legacyTablesToInspect = [
   'talk_posts',
   'chat_rooms',
   'chat_messages',
-  'my_room_items',
-  'my_room_layouts',
+  'my_rooms',
 ];
 
 function fail(message) {
@@ -61,9 +61,7 @@ if (!existsSync(reportDir)) {
   const files = readdirSync(reportDir).sort();
   const masterPath = resolve(reportDir, 'sqlite-master.json');
 
-  if (!files.includes('sqlite-master.json')) {
-    fail('sqlite-master.json is missing from D1 schema report');
-  }
+  if (!files.includes('sqlite-master.json')) fail('sqlite-master.json is missing from D1 schema report');
 
   const masterRows = collectRows(readJson(masterPath));
   const tableNames = new Set(masterRows.filter((row) => row?.type === 'table' && typeof row.name === 'string').map((row) => row.name));
