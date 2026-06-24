@@ -143,6 +143,15 @@ requireText('e2e/account-deletion.spec.ts', accountDeletionE2E, '회원 탈퇴 �
 requireText('e2e/account-deletion.spec.ts', accountDeletionE2E, 'remainingKeys', 'account deletion success must assert local account state cleanup');
 requireText('e2e/account-deletion.spec.ts', accountDeletionE2E, 'Bearer ${E2E_SESSION_VALUE}', 'account deletion E2E must assert the authenticated DELETE request');
 
+const settingsResilienceE2E = read('e2e/settings-resilience.spec.ts');
+requireText('e2e/settings-resilience.spec.ts', settingsResilienceE2E, 'profileSyncStatus: 500', 'profile save failure must stay covered by E2E');
+requireText('e2e/settings-resilience.spec.ts', settingsResilienceE2E, '프로필 저장 실패', 'profile save failure must surface the server error');
+requireText('e2e/settings-resilience.spec.ts', settingsResilienceE2E, 'pointClaimStatus: 500', 'point reward failure must stay covered by E2E');
+requireText('e2e/settings-resilience.spec.ts', settingsResilienceE2E, '포인트 보상 실패', 'point reward failure must surface the server error');
+requireText('e2e/settings-resilience.spec.ts', settingsResilienceE2E, 'myRoomLoadStatus: 500', 'my-room load failure must stay covered by E2E');
+requireText('e2e/settings-resilience.spec.ts', settingsResilienceE2E, '마이룸을 불러오지 못해 저장할 수 없어요.', 'my-room load failure must block editing and saving');
+requireText('e2e/settings-resilience.spec.ts', settingsResilienceE2E, 'Bearer ${E2E_SESSION_VALUE}', 'settings resilience E2E must assert authenticated API requests');
+
 const androidWorkflow = read('.github/workflows/android-debug-apk.yml');
 requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'workflow_dispatch:', 'Android workflow must support manual reruns');
 requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'push:', 'Android workflow must run automatically on relevant main pushes');
