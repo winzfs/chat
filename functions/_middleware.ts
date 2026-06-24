@@ -32,7 +32,7 @@ async function activeSuspension(env: Env, profileId: string) {
       `select reason, suspended_until
        from user_suspensions
        where profile_id = ?
-         and (suspended_until is null or suspended_until > datetime('now'))
+         and (suspended_until is null or datetime(suspended_until) > datetime('now'))
        limit 1`,
     ).bind(profileId).first<{ reason?: string | null; suspended_until?: string | null }>();
   } catch {
