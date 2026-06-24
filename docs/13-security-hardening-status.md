@@ -72,6 +72,8 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - `pnpm verify`의 클라이언트 안정화 계약에 Android workflow 자동 실행·고정 런타임·timeout·중복 취소·APK artifact 검증 조건을 추가
 - Pages auth/API smoke workflow에 중복 실행 취소, 명시적 timeout, 배포 URL HTTPS/Cloudflare host 사전 검증을 추가
 - `pnpm verify`의 클라이언트 안정화 계약에 Pages auth/API smoke workflow 안전 조건을 추가
+- D1 Schema Inspect workflow에 중복 실행 취소, 명시적 timeout, D1 대상 이름 사전 검증, schema report artifact 누락 실패 처리를 추가
+- `pnpm verify`의 클라이언트 안정화 계약에 D1 Schema Inspect workflow 안전 조건을 추가
 
 ## 남은 작업
 
