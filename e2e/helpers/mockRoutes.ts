@@ -15,6 +15,20 @@ function reply(route: Route, body: unknown, status = 200) {
 }
 
 export async function installMockRoutes(page: Page, options: MockRouteOptions = {}) {
+  page.on('pageerror', (error) => {
+    console.error(`[browser pageerror] ${error.stack || error.message}`);
+  });
+
+  page.on('console', (message) => {
+    if (message.type() === 'error' || message.type() === 'warning') {
+      console.error(`[browser ${message.type()}] ${message.text()}`);
+    }
+  });
+
+  page.on('requestfailed', (request) => {
+    console.error(`[browser requestfailed] ${request.method()} ${request.url()} ${request.failure()?.errorText || ''}`);
+  });
+
   await page.route('**/api/**', async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
