@@ -22,8 +22,21 @@ async function isRevokedProfile(env: Env, profileId: string) {
     ).bind(profileId).first();
     return Boolean(row);
   } catch {
-    // The migration may not be applied in local/legacy environments yet.
     return false;
+  }
+}
+
+async function activeSuspension(env: Env, profileId: string) {
+  try {
+    return await env.DB.prepare(
+      `select reason, suspended_until
+       from user_suspensions
+       where profile_id = ?
+         and (suspended_until is null or suspended_until > datetime('now'))
+       limit 1`,
+    ).bind(profileId).first<{ reason?: string | null; suspended_until?: string | null }>();
+  } catch {
+    return null;
   }
 }
 
@@ -43,6 +56,12 @@ export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
 
   if (await isRevokedProfile(env, profileId)) {
     return jsonError('탈퇴 처리된 계정이에요. 앱을 다시 시작해주세요.', 401);
+  }
+
+  const suspension = await activeSuspension(env, profileId);
+  if (suspension) {
+    const until = suspension.suspended_until ? ` 정지 종료: ${suspension.suspended_until}` : ' 무기한 정지 상태입니다.';
+    return jsonError(`운영 정책 위반으로 이용이 제한됐어요.${until}`, 403);
   }
 
   if (pathname === '/api/profile-sync' && request.method === 'POST') {
