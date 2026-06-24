@@ -2,14 +2,42 @@ name: Android Debug APK
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/android-debug-apk.yml
+      - android/**
+      - apps/web/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - capacitor.config.*
+      - resources/**
+      - scripts/check-client-contracts.mjs
+  pull_request:
+    paths:
+      - .github/workflows/android-debug-apk.yml
+      - android/**
+      - apps/web/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - capacitor.config.*
+      - resources/**
+      - scripts/check-client-contracts.mjs
 
 permissions:
   contents: read
+
+concurrency:
+  group: android-debug-apk-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-debug-apk:
     name: Build debug APK
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -37,10 +65,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check Android stability contracts
+        run: pnpm check:client-contracts
+
       - name: Copy splash artwork
         run: |
           mkdir -p apps/web/public
           cp resources/splash.png apps/web/public/splash.png
+          test -s apps/web/public/splash.png
 
       - name: Build web app
         run: pnpm build
@@ -59,9 +91,11 @@ jobs:
           chmod +x android/gradlew
           cd android
           ./gradlew assembleDebug
+          test -s app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: flirting-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
