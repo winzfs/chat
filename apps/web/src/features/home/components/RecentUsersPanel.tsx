@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Card } from '../../../shared/components/Card';
 import { formatApiError } from '../api/apiResponse';
 import { openDirectD1ChatRoom, type D1ChatRoom } from '../api/d1ChatRooms';
 import { getProfileId } from '../api/profileId';
 import { POLLING_INTERVALS } from '../api/pollingIntervals';
 import { loadRecentUsers, type RecentUser } from '../api/recentUsers';
+import { usePollingTask } from '../hooks/usePollingTask';
 import { ProfilePreviewModal, type ProfilePreview } from './ProfilePreviewModal';
 import { UserAvatar } from './UserAvatar';
 
@@ -17,28 +18,25 @@ export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRo
   const [notice, setNotice] = useState('');
   const [previewProfile, setPreviewProfile] = useState<ProfilePreview | null>(null);
   const currentProfileId = getProfileId();
+  const hasLoadedRef = useRef(false);
 
-  const refreshUsers = (showError = false) => {
-    loadRecentUsers()
-      .then((loadedUsers) => {
-        setUsers(loadedUsers.filter((user) => user.id !== currentProfileId));
-        if (showError) setNotice('');
-      })
-      .catch((error) => {
-        if (showError) setNotice(formatApiError(error, '최근 접속자를 불러오지 못했어요.'));
-      });
-  };
-
-  useEffect(() => {
-    refreshUsers(true);
-
-    const timer = window.setInterval(() => {
-      if (document.hidden) return;
-      refreshUsers(false);
-    }, POLLING_INTERVALS.recentUsers);
-
-    return () => window.clearInterval(timer);
-  }, [currentProfileId]);
+  usePollingTask(
+    async () => {
+      const loadedUsers = await loadRecentUsers();
+      setUsers(loadedUsers.filter((user) => user.id !== currentProfileId));
+      setNotice('');
+      hasLoadedRef.current = true;
+    },
+    {
+      immediate: true,
+      intervalMs: POLLING_INTERVALS.recentUsers,
+      onError: (error) => {
+        if (!hasLoadedRef.current) {
+          setNotice(formatApiError(error, '최근 접속자를 불러오지 못했어요.'));
+        }
+      },
+    },
+  );
 
   const openChat = async (user: RecentUser) => {
     if (user.id === currentProfileId) {
@@ -83,7 +81,7 @@ export function RecentUsersPanel({ onOpenRoom }: { myNickname?: string; onOpenRo
       {users.map((user) => (
         <Card className="person-card" key={user.id}>
           <div className="talk-card-header">
-            <button className="profile-icon-button" type="button" onClick={() => previewUser(user)}><UserAvatar imageUrl={user.avatar_url} name={user.nickname} /><span className={user.online ? 'status-dot is-online' : 'status-dot'} /></button>
+            <button aria-label={`${user.nickname} 프로필 보기`} className="profile-icon-button" type="button" onClick={() => previewUser(user)}><UserAvatar imageUrl={user.avatar_url} name={user.nickname} /><span className={user.online ? 'status-dot is-online' : 'status-dot'} /></button>
             <div><strong>{user.nickname}</strong><p>{user.age ?? '-'} · {user.location || '지역 없음'} · 최근 접속</p></div>
           </div>
           <div className="talk-actions"><span>{user.bio || '대화 가능한 사용자'}</span><button type="button" onClick={() => openChat(user)}>쪽지 100P</button></div>
