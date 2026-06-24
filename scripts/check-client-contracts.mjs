@@ -64,6 +64,15 @@ for (const path of listSourceFiles('apps/web/src')) {
 }
 
 const webWorkflow = read('.github/workflows/web-verify.yml');
+requireText('.github/workflows/web-verify.yml', webWorkflow, 'push:', 'web CI must run automatically on push');
+requireText('.github/workflows/web-verify.yml', webWorkflow, 'branches: [main]', 'web CI must protect main branch pushes');
+requireText('.github/workflows/web-verify.yml', webWorkflow, 'pull_request:', 'web CI must run on pull requests');
+requireText('.github/workflows/web-verify.yml', webWorkflow, 'workflow_dispatch:', 'web CI must support manual reruns');
+requireText('.github/workflows/web-verify.yml', webWorkflow, 'concurrency:', 'web CI must cancel stale duplicate runs');
+requireText('.github/workflows/web-verify.yml', webWorkflow, 'cancel-in-progress: true', 'web CI must cancel in-progress stale runs');
+requireText('.github/workflows/web-verify.yml', webWorkflow, 'timeout-minutes:', 'web CI must have an explicit timeout');
+requireText('.github/workflows/web-verify.yml', webWorkflow, 'node-version: 22', 'web CI must pin the Node major version');
+requireText('.github/workflows/web-verify.yml', webWorkflow, 'version: 9.15.0', 'web CI must pin pnpm version');
 requireText('.github/workflows/web-verify.yml', webWorkflow, 'pnpm install --frozen-lockfile --ignore-scripts', 'web CI must keep frozen lockfile and ignore install scripts');
 requireText('.github/workflows/web-verify.yml', webWorkflow, 'pnpm verify', 'web CI must run root verify');
 
