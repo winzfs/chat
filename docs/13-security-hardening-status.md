@@ -63,6 +63,8 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - 실제 D1의 `sqlite_master`와 `pragma table_info(...)`를 artifact로 남기는 수동 실행형 D1 Schema Inspect workflow 추가
 - D1 Schema Inspect 결과에서 migration 대상 테이블 존재 여부를 확인하는 `check:d1-schema-report` 스크립트 추가
 - 배포된 Cloudflare Pages API의 CORS, 세션 발급, 채팅방 목록 권한, profile_id 불일치 거부를 확인하는 수동 실행형 Pages API smoke workflow 추가
+- Web Verify workflow에 수동 재실행, 중복 실행 취소, 명시적 timeout을 추가
+- `pnpm verify`의 클라이언트 안정화 계약에 Web Verify 자동 실행·수동 재실행·고정 Node/pnpm·timeout·중복 취소 조건을 추가
 
 ## 남은 작업
 
