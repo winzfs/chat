@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { resolve, relative } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const failures = [];
@@ -14,6 +14,17 @@ function requireText(path, content, needle, description) {
 
 function requireMatch(path, content, pattern, description) {
   if (!pattern.test(content)) failures.push(`${path}: ${description}`);
+}
+
+function listSourceFiles(directory) {
+  const absoluteDirectory = resolve(root, directory);
+  return readdirSync(absoluteDirectory).flatMap((entry) => {
+    const absolutePath = resolve(absoluteDirectory, entry);
+    if (statSync(absolutePath).isDirectory()) {
+      return listSourceFiles(relative(root, absolutePath));
+    }
+    return /\.(ts|tsx)$/.test(entry) ? [relative(root, absolutePath)] : [];
+  });
 }
 
 const apiResponse = read('apps/web/src/features/home/api/apiResponse.ts');
@@ -43,6 +54,14 @@ requireText('apps/web/src/features/home/components/RecentUsersPanel.tsx', recent
 
 const homeScreen = read('apps/web/src/features/home/HomeScreenNext.tsx');
 requireMatch('apps/web/src/features/home/HomeScreenNext.tsx', homeScreen, /useAndroidBackButton\([\s\S]*isComposeOpen[\s\S]*activeTab === 'chats'[\s\S]*activeTab !== 'talk'/, 'Android back handling order must remain modal, chat, tab');
+
+const pollingHookPath = 'apps/web/src/features/home/hooks/usePollingTask.ts';
+for (const path of listSourceFiles('apps/web/src')) {
+  if (path === pollingHookPath) continue;
+  if (read(path).includes('setInterval(')) {
+    failures.push(`${path}: direct setInterval polling is forbidden; use usePollingTask`);
+  }
+}
 
 const webWorkflow = read('.github/workflows/web-verify.yml');
 requireText('.github/workflows/web-verify.yml', webWorkflow, 'pnpm install --frozen-lockfile --ignore-scripts', 'web CI must keep frozen lockfile and ignore install scripts');
