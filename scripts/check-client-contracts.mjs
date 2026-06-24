@@ -109,6 +109,12 @@ requireText('.github/workflows/web-e2e.yml', webE2EWorkflow, 'pnpm exec playwrig
 requireText('.github/workflows/web-e2e.yml', webE2EWorkflow, 'pnpm e2e', 'Web E2E must run the Playwright test script');
 requireText('.github/workflows/web-e2e.yml', webE2EWorkflow, 'if-no-files-found: error', 'Web E2E must fail artifact upload when Playwright reports are missing');
 
+const accountDeletionE2E = read('e2e/account-deletion.spec.ts');
+requireText('e2e/account-deletion.spec.ts', accountDeletionE2E, 'accountDeleteStatus: 500', 'account deletion failure must stay covered by E2E');
+requireText('e2e/account-deletion.spec.ts', accountDeletionE2E, '회원 탈퇴 처리 실패', 'account deletion failure must surface the server error');
+requireText('e2e/account-deletion.spec.ts', accountDeletionE2E, 'remainingKeys', 'account deletion success must assert local account state cleanup');
+requireText('e2e/account-deletion.spec.ts', accountDeletionE2E, 'Bearer ${E2E_SESSION_VALUE}', 'account deletion E2E must assert the authenticated DELETE request');
+
 const androidWorkflow = read('.github/workflows/android-debug-apk.yml');
 requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'workflow_dispatch:', 'Android workflow must support manual reruns');
 requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'push:', 'Android workflow must run automatically on relevant main pushes');
