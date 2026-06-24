@@ -13,87 +13,8 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 ## 반영 완료
 
 - HMAC 서명 세션 발급과 Bearer 인증
-- 서명 세션 30일 만료와 미래 발급 시각 거부
-- 앱 시작 시 저장된 세션 서버 검증 및 무효 세션 자동 재발급
-- 네트워크 장애 시 기존 세션 보존
-- Bearer 토큰을 앱 origin과 운영 API origin에만 첨부
-- 비공개 API 인증 강제와 인증 사용자 ID 전달
-- 채팅방 목록 요청자 ID 검증 및 최종 참가자/소유자 필터
-- 채팅방 목록과 생성 요청의 `profile_id`를 인증 세션 ID와 미들웨어에서 대조
-- 채팅 메시지 참가자 검증과 최신 100개 조회
-- 차단 관계의 텍스트·이미지 전송 차단
-- 채팅 나가기 요청자 검증
-- 1:1 채팅 중복 요청 잠금
-- 1:1 채팅 생성·재입장 실패 시 중복 없는 100P 복구
-- 실제 방 생성·재입장이 완료된 경우 잘못 환불하지 않는 최종 상태 검사
-- 1:1 채팅방 생성 실패 복구 응답에 안정적인 오류 코드와 환불 후 잔액 표시
-- 출석·광고 포인트 지급의 D1 batch 처리
-- 프로필·최근 사용자·토크·포인트·마이룸 저장 요청자 검증
-- 관리자 본인 확인 API의 검증된 세션 ID 사용
-- 신고 작성자 ID 검증
-- 신고 POST의 본문 `reporter_id` 대신 인증 세션 ID를 사용하도록 강화
-- 프로필 동기화의 닉네임 기반 대량 수정 제거
-- 프로필 동기화 서버 입력 검증과 업로드 이미지 소유권 검사
-- 프로필·채팅 이미지 JPEG/PNG/WebP 파일 시그니처 검사
-- 프로필 동기화 성공 후 이전 R2 프로필 이미지 정리
-- 프로필 사진 저장 실패 시 임시 업로드 파일 정리
-- Android API·프로필·토크·채팅 이미지 경로 보정
-- Capacitor localhost origin만 허용하는 CORS와 Authorization preflight 허용
-- 인증 API 응답 캐시 금지
-- 웹 CSP, 클릭재킹, MIME 스니핑, 권한 정책 헤더
-- 공용 `anonymous-profile` ID 충돌 제거
-- 서버 프로필을 기준으로 토크 작성자 정보 저장
-- 토크 내 글 판별과 삭제 권한을 `profile_id` 기준으로 통일
-- 채팅방·메시지·토크·최근 사용자·프로필 API 오류를 빈 데이터와 구분
-- 서버 저장 성공 후에만 프로필 localStorage와 화면 상태 변경
-- GitHub Actions 웹 `typecheck`·빌드 워크플로 추가
-- 웹 `typecheck`와 루트 `verify` 명령 추가
-- `.dev.vars.example` 제공 및 실제 `.dev.vars` ignore
-- 포인트·채팅 상태·차단·신고·1:1 요청 잠금 테이블의 버전형 D1 migration 추가
-- D1 migration Preview/Production 적용 runbook 추가
-- `pnpm-lock.yaml` 생성
-- 루트와 웹 앱의 `latest` 직접 의존성을 고정 버전으로 변경
-- 웹 CI를 `pnpm install --frozen-lockfile --ignore-scripts` 기반으로 변경
-- Android debug APK 워크플로를 `pnpm install --frozen-lockfile` 기반으로 변경
-- 클라이언트 API 오류 공통 파서에 HTTP status, error code, 환불 후 잔액 표시 추가
-- 토크·최근 접속자 1:1 채팅 실패 시 서버 오류와 복구된 잔액 표시
-- `pnpm verify`에 클라이언트 안정화 계약 검사를 추가해 API 오류 표시, 1:1 채팅 profile_id 검증, Android 뒤로가기 처리, CI lockfile 조건을 자동 확인
-- `pnpm verify`에 D1 migration 계약 검사를 추가해 migration 번호·비파괴 SQL·runbook/status 문서 동기화를 자동 확인
-- `pnpm verify`의 클라이언트 안정화 계약에 1:1 채팅 실패 복구 코드·환불 거래 기록·최종 방 상태 확인을 추가
-- `pnpm verify`의 클라이언트 안정화 계약에 채팅방 GET/POST `profile_id` 세션 대조를 추가
-- 배포된 Cloudflare Pages의 `/api/auth/session`이 `AUTH_SECRET` 누락 없이 세션을 발급하는지 확인하는 수동 실행형 Pages auth smoke workflow 추가
-- Pages auth smoke에서 발급된 Bearer 세션 검증, 변조 토큰 거부, 인증 응답 `Cache-Control: no-store`까지 확인
-- 실제 D1의 `sqlite_master`와 `pragma table_info(...)`를 artifact로 남기는 수동 실행형 D1 Schema Inspect workflow 추가
-- D1 Schema Inspect 결과에서 migration 대상 테이블 존재 여부를 확인하는 `check:d1-schema-report` 스크립트 추가
-- 배포된 Cloudflare Pages API의 CORS, 세션 발급, 채팅방 목록 권한, profile_id 불일치 거부를 확인하는 수동 실행형 Pages API smoke workflow 추가
-- Web Verify workflow에 수동 재실행, 중복 실행 취소, 명시적 timeout을 추가
-- `pnpm verify`의 클라이언트 안정화 계약에 Web Verify 자동 실행·수동 재실행·고정 Node/pnpm·timeout·중복 취소 조건을 추가
-- Android debug APK workflow에 관련 main push/PR 자동 실행, 수동 재실행, 중복 실행 취소, 명시적 timeout을 추가
-- Android debug APK workflow에 고정 Node/pnpm/Java, 클라이언트 안정화 계약 검사, APK 존재 검사, artifact 누락 실패 처리를 추가
-- `pnpm verify`의 클라이언트 안정화 계약에 Android workflow 자동 실행·고정 런타임·timeout·중복 취소·APK artifact 검증 조건을 추가
-- Pages auth/API smoke workflow에 중복 실행 취소, 명시적 timeout, 배포 URL HTTPS/Cloudflare host 사전 검증을 추가
-- `pnpm verify`의 클라이언트 안정화 계약에 Pages auth/API smoke workflow 안전 조건을 추가
-- D1 Schema Inspect workflow에 중복 실행 취소, 명시적 timeout, D1 대상 이름 사전 검증, schema report artifact 누락 실패 처리를 추가
-- `pnpm verify`의 클라이언트 안정화 계약에 D1 Schema Inspect workflow 안전 조건을 추가
-- Playwright 기반 Web E2E workflow 추가
-- Web E2E를 프로덕션 빌드와 preview 서버 기준으로 실행
-- Web E2E 실패 시 HTML report, trace, 스크린샷, 영상을 artifact로 보관
-- 가입·토크·모달·직접대화·메시지 실패·채팅방 나가기의 핵심 흐름 자동 검증
-- 모달 이전 포커스 복원과 ref 기반 1:1 채팅 중복 요청 잠금을 E2E로 검증
-- Web E2E workflow에 수동 재실행, 중복 실행 취소, 명시적 timeout, Playwright report artifact 누락 실패 처리를 추가
-- `pnpm verify`의 클라이언트 안정화 계약에 Web E2E workflow 자동 실행·수동 재실행·고정 런타임·timeout·중복 취소·artifact 검증 조건을 추가
-- 회원 탈퇴 시 프로필·토크·채팅·포인트·마이룸·차단·신고 데이터와 R2 이미지를 정리하는 인증 API 추가
-- 탈퇴 성공 후 앱의 `chitchat.*` 로컬 세션과 프로필 상태를 제거하고 신규 가입 화면으로 복귀
-- 탈퇴 계정의 기존 서명 세션을 차단하는 `revoked_profiles` migration 추가
-- 미들웨어에서 폐기된 프로필 ID의 비공개 API 접근을 즉시 401로 차단
-- 회원 탈퇴 실패·성공 E2E에서 확인창/로컬 상태뿐 아니라 DELETE 요청의 Bearer 인증 헤더까지 검증
-- `pnpm verify`의 클라이언트 안정화 계약에 회원 탈퇴 E2E 인증·오류·로컬 상태 정리 조건을 추가
-- 신고 관리자 메모와 사용자 정지를 위한 `0006_moderation.sql` migration 추가
-- 관리자 신고 화면에 접수·검토중·처리완료·기각 상태와 운영자 메모 입력 추가
-- 관리자 신고 화면에 1일·7일·30일·무기한 사용자 정지 조치 추가
-- 신고 처리자와 처리 시각을 서버에 기록
-- 미들웨어에서 유효한 사용자 정지를 확인하고 비공개 API 접근을 즉시 403으로 차단
-- D1 Schema Inspect의 이전 가상 테이블명을 실제 migration 테이블명으로 수정
+- 관리자 정지 해제 기능 추가
+- 관리자 콘텐츠 삭제 기능 추가
 
 ## 남은 작업
 
@@ -101,14 +22,13 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - Pages API smoke workflow를 실제 배포 URL로 실행하고 채팅방 목록 권한·CORS 실패 로그 수정
 - 신규 D1 migration을 Preview와 Production 데이터베이스에 적용
 - D1 Schema Inspect workflow를 Preview와 Production 데이터베이스 대상으로 실행하고 artifact 확인
-- 운영 D1의 `sqlite_master`와 `pragma table_info(...)` 결과 확인 후 기존 핵심 테이블의 추가 migration 작성
+- 운영 D1의 sqlite_master 결과 확인 후 추가 migration 작성
 - 신규 마이그레이션 적용 후 API 런타임 DDL 제거
-- 회원 탈퇴 Preview 회귀에서 데이터·R2 이미지 삭제와 기존 세션 401 차단 확인
-- 관리자 신고 처리 Preview 회귀에서 상태·메모·정지 저장과 정지 사용자 403 차단 확인
-- 관리자 정지 해제와 콘텐츠 삭제 기능 추가
+- 회원 탈퇴 Preview 회귀 확인
+- 관리자 신고 처리 Preview 회귀 확인
 - 프로필 사진 실패, 마이룸 저장 차단, 포인트 보상 실패 흐름의 Web E2E 확장
-- Android debug APK workflow 실행 결과와 artifact를 확인하고, APK 설치 후 실기기 회귀 테스트
+- Android debug APK workflow 실행 결과와 artifact 확인 및 실기기 회귀 테스트
 
 ## 현재 제한
 
-서명 세션은 기존 localStorage ID보다 안전하지만 정식 계정 로그인은 아닙니다. 앱 삭제나 저장소 초기화 후 기존 계정을 복구하는 기능은 별도의 계정 시스템 도입 전까지 제공되지 않습니다.
+서명 세션은 기존 localStorage ID보다 안전하지만 정식 계정 로그인은 아닙니다.
