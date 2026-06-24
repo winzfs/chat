@@ -4,8 +4,10 @@ import { E2E_PROFILE_ID } from './sessionSeed';
 type MockRouteOptions = {
   chatMessageStatus?: number;
   directChatDelayMs?: number;
+  leaveRoomStatus?: number;
   profileSyncStatus?: number;
   talkCreateStatus?: number;
+  withChatRoom?: boolean;
   withPeerTalk?: boolean;
 };
 
@@ -17,7 +19,22 @@ function reply(route: Route, body: unknown, status = 200) {
   });
 }
 
+const chatRoom = {
+  id: 'direct-room',
+  title: '상대유저님과의 대화',
+  last_message: '마지막 메시지',
+  last_message_at: '2026-06-24T00:00:00.000Z',
+  created_at: '2026-06-24T00:00:00.000Z',
+  unread_count: 0,
+  participant_a_id: E2E_PROFILE_ID,
+  participant_a_nickname: '테스트유저',
+  participant_b_id: 'peer-profile',
+  participant_b_nickname: '상대유저',
+};
+
 export async function installMockRoutes(page: Page, options: MockRouteOptions = {}) {
+  let roomVisible = Boolean(options.withChatRoom);
+
   page.on('pageerror', (error) => {
     console.error(`[browser pageerror] ${error.stack || error.message}`);
   });
@@ -95,23 +112,20 @@ export async function installMockRoutes(page: Page, options: MockRouteOptions = 
       if (options.directChatDelayMs) {
         await new Promise((resolve) => setTimeout(resolve, options.directChatDelayMs));
       }
-      await reply(route, {
-        id: 'direct-room',
-        title: '상대유저님과의 대화',
-        last_message: null,
-        last_message_at: null,
-        created_at: '2026-06-24T00:00:00.000Z',
-        unread_count: 0,
-        participant_a_id: E2E_PROFILE_ID,
-        participant_a_nickname: '테스트유저',
-        participant_b_id: 'peer-profile',
-        participant_b_nickname: '상대유저',
-      });
+      roomVisible = true;
+      await reply(route, chatRoom);
       return;
     }
 
     if (path === '/api/chat-rooms' && method === 'GET') {
-      await reply(route, { rooms: [] });
+      await reply(route, { rooms: roomVisible ? [chatRoom] : [] });
+      return;
+    }
+
+    if (path === '/api/chat-room-leave' && method === 'POST') {
+      const status = options.leaveRoomStatus ?? 200;
+      if (status === 200) roomVisible = false;
+      await reply(route, status === 200 ? { ok: true } : { error: '채팅방 나가기 실패' }, status);
       return;
     }
 
