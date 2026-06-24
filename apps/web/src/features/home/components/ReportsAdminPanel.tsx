@@ -2,15 +2,42 @@ import { useEffect, useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
 import { loadUserReview } from '../api/admin';
-import { loadReports, updateReportStatus, type AdminReport, type ReportStatus } from '../api/reportsAdmin';
+import {
+  loadReports,
+  updateReportAction,
+  type AdminReport,
+  type ReportStatus,
+  type SuspensionDays,
+} from '../api/reportsAdmin';
 
 const statusLabels: Record<ReportStatus, string> = {
   open: '접수',
   reviewing: '검토중',
-  closed: '종료',
+  resolved: '처리완료',
+  dismissed: '기각',
+  closed: '종료(이전)',
 };
 
+const statusOptions: Array<{ value: ReportStatus; label: string }> = [
+  { value: 'open', label: '접수' },
+  { value: 'reviewing', label: '검토중' },
+  { value: 'resolved', label: '처리완료' },
+  { value: 'dismissed', label: '기각' },
+];
+
+const suspensionOptions: Array<{ value: SuspensionDays; label: string }> = [
+  { value: 0, label: '정지하지 않음' },
+  { value: 1, label: '1일 정지' },
+  { value: 7, label: '7일 정지' },
+  { value: 30, label: '30일 정지' },
+  { value: -1, label: '무기한 정지' },
+];
+
 type ReviewData = Awaited<ReturnType<typeof loadUserReview>>;
+
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
 
 export function ReportsAdminPanel({ onClose }: { onClose: () => void }) {
   const [reports, setReports] = useState<AdminReport[]>([]);
@@ -18,34 +45,50 @@ export function ReportsAdminPanel({ onClose }: { onClose: () => void }) {
   const [notice, setNotice] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [reviewData, setReviewData] = useState<ReviewData>(null);
+  const [processingId, setProcessingId] = useState('');
 
-  const refreshReports = () => {
+  const refreshReports = async () => {
     setIsLoading(true);
-    loadReports(statusFilter === 'all' ? undefined : statusFilter)
-      .then(setReports)
-      .finally(() => setIsLoading(false));
+    setNotice('');
+    try {
+      setReports(await loadReports(statusFilter === 'all' ? undefined : statusFilter));
+    } catch (error) {
+      setReports([]);
+      setNotice(errorMessage(error, '신고 목록을 불러오지 못했어요.'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
-    refreshReports();
+    void refreshReports();
   }, [statusFilter]);
 
-  const changeStatus = async (report: AdminReport, status: ReportStatus) => {
-    const ok = await updateReportStatus(report.id, status);
-    if (!ok) {
-      setNotice('상태를 변경하지 못했어요.');
-      return;
-    }
+  const processReport = async (report: AdminReport, input: { status: ReportStatus; adminNote: string; suspendDays: SuspensionDays }) => {
+    if (processingId) return;
 
-    setNotice('신고 상태를 변경했어요.');
-    refreshReports();
+    setProcessingId(report.id);
+    setNotice('');
+    try {
+      const result = await updateReportAction({ id: report.id, ...input });
+      setNotice(result.suspended ? '신고 처리와 사용자 정지를 완료했어요.' : '신고 처리를 저장했어요.');
+      await refreshReports();
+    } catch (error) {
+      setNotice(errorMessage(error, '신고를 처리하지 못했어요.'));
+    } finally {
+      setProcessingId('');
+    }
   };
 
   const openReview = async (report: AdminReport) => {
     setNotice('대상 정보를 불러오는 중...');
-    const loaded = await loadUserReview(report.reported_id);
-    setReviewData(loaded);
-    setNotice(loaded ? '대상 정보를 불러왔어요.' : '대상 정보를 불러오지 못했어요.');
+    try {
+      const loaded = await loadUserReview(report.reported_id);
+      setReviewData(loaded);
+      setNotice(loaded ? '대상 정보를 불러왔어요.' : '대상 정보를 불러오지 못했어요.');
+    } catch (error) {
+      setNotice(errorMessage(error, '대상 정보를 불러오지 못했어요.'));
+    }
   };
 
   return (
@@ -53,48 +96,73 @@ export function ReportsAdminPanel({ onClose }: { onClose: () => void }) {
       <Card className="settings-summary">
         <button type="button" onClick={onClose}>← 설정</button>
         <strong>신고 관리</strong>
-        <p>최근 신고를 확인하고 처리 상태를 바꿀 수 있어요.</p>
+        <p>신고 상태, 운영자 메모와 사용자 이용 정지를 처리할 수 있어요.</p>
       </Card>
 
       <Card className="person-card">
         <label>
           상태 필터
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as ReportStatus | 'all')}>
-            <option value="open">접수</option>
-            <option value="reviewing">검토중</option>
-            <option value="closed">종료</option>
+            {statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            <option value="closed">종료(이전)</option>
             <option value="all">전체</option>
           </select>
         </label>
       </Card>
 
-      {notice && <Card className="settings-summary"><strong>{notice}</strong></Card>}
+      {notice && <Card className="settings-summary"><strong aria-live="polite">{notice}</strong></Card>}
       {reviewData && <ReviewSummary data={reviewData} onClose={() => setReviewData(null)} />}
       {isLoading && <Card className="person-card"><strong>신고 목록을 불러오는 중...</strong></Card>}
-      {!isLoading && reports.length === 0 && <Card className="person-card"><strong>표시할 신고가 없어요.</strong><p>새 신고가 접수되면 이곳에 표시돼요.</p></Card>}
+      {!isLoading && reports.length === 0 && !notice && <Card className="person-card"><strong>표시할 신고가 없어요.</strong><p>새 신고가 접수되면 이곳에 표시돼요.</p></Card>}
 
       {reports.map((report) => (
-        <Card className="person-card" key={report.id}>
-          <div className="talk-card-header">
-            <div>
-              <strong>{report.reported_nickname || '상대방'} 신고</strong>
-              <p>{statusLabels[report.status] ?? report.status} · {new Date(report.created_at).toLocaleString()}</p>
-            </div>
-          </div>
-          <p>사유: {report.reason}</p>
-          {report.detail && <p>상세: {report.detail}</p>}
-          <p>신고자: {report.reporter_id.slice(0, 8)}... · 대상: {report.reported_id.slice(0, 8)}...</p>
-          {report.room_id && <p>방 ID: {report.room_id.slice(0, 8)}...</p>}
-          <div className="talk-actions">
-            <span>처리 상태 변경</span>
-            <Button onClick={() => openReview(report)} type="button">대상 보기</Button>
-            <Button disabled={report.status === 'open'} onClick={() => changeStatus(report, 'open')} type="button">접수</Button>
-            <Button disabled={report.status === 'reviewing'} onClick={() => changeStatus(report, 'reviewing')} type="button">검토중</Button>
-            <Button disabled={report.status === 'closed'} onClick={() => changeStatus(report, 'closed')} type="button">종료</Button>
-          </div>
-        </Card>
+        <ReportModerationCard
+          isProcessing={processingId === report.id}
+          key={report.id}
+          onOpenReview={() => void openReview(report)}
+          onProcess={(input) => void processReport(report, input)}
+          report={report}
+        />
       ))}
     </section>
+  );
+}
+
+function ReportModerationCard({ isProcessing, onOpenReview, onProcess, report }: {
+  isProcessing: boolean;
+  onOpenReview: () => void;
+  onProcess: (input: { status: ReportStatus; adminNote: string; suspendDays: SuspensionDays }) => void;
+  report: AdminReport;
+}) {
+  const [status, setStatus] = useState<ReportStatus>(report.status === 'closed' ? 'resolved' : report.status);
+  const [adminNote, setAdminNote] = useState(report.admin_note ?? '');
+  const [suspendDays, setSuspendDays] = useState<SuspensionDays>(0);
+
+  return (
+    <Card className="person-card">
+      <div className="talk-card-header">
+        <div>
+          <strong>{report.reported_nickname || '상대방'} 신고</strong>
+          <p>{statusLabels[report.status]} · {new Date(report.created_at).toLocaleString()}</p>
+        </div>
+      </div>
+      <p>사유: {report.reason}</p>
+      {report.detail && <p>상세: {report.detail}</p>}
+      <p>신고자: {report.reporter_id.slice(0, 8)}... · 대상: {report.reported_id.slice(0, 8)}...</p>
+      {report.room_id && <p>방 ID: {report.room_id.slice(0, 8)}...</p>}
+      {report.handled_at && <p>최근 처리: {new Date(report.handled_at).toLocaleString()}</p>}
+
+      <div className="profile-form">
+        <label>처리 상태<select disabled={isProcessing} value={status} onChange={(event) => setStatus(event.target.value as ReportStatus)}>{statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+        <label>운영자 메모<textarea disabled={isProcessing} maxLength={1000} placeholder="판단 근거와 조치 내용을 기록하세요." value={adminNote} onChange={(event) => setAdminNote(event.target.value)} /></label>
+        <label>사용자 정지<select disabled={isProcessing} value={suspendDays} onChange={(event) => setSuspendDays(Number(event.target.value) as SuspensionDays)}>{suspensionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+      </div>
+
+      <div className="talk-actions">
+        <Button disabled={isProcessing} onClick={onOpenReview} type="button">대상 보기</Button>
+        <Button disabled={isProcessing} onClick={() => onProcess({ status, adminNote, suspendDays })} type="button">{isProcessing ? '저장 중...' : '처리 저장'}</Button>
+      </div>
+    </Card>
   );
 }
 
@@ -102,7 +170,6 @@ function ReviewSummary({ data, onClose }: { data: NonNullable<ReviewData>; onClo
   const user = data.user ?? {};
   const nickname = String(user.nickname ?? '알 수 없음');
   const avatarUrl = String(user.avatar_url ?? '');
-  const bio = String(user.bio ?? '소개 없음');
   const talks = data.talk_posts ?? [];
   const rooms = data.rooms ?? [];
   const sentMessages = data.sent_messages ?? [];
@@ -111,39 +178,19 @@ function ReviewSummary({ data, onClose }: { data: NonNullable<ReviewData>; onClo
     <Card className="person-card">
       <div className="talk-card-header">
         <div className="avatar-wrap">{avatarUrl ? <img alt="프로필" className="avatar" src={avatarUrl} /> : <span className="avatar">{nickname.slice(0, 1)}</span>}</div>
-        <div>
-          <strong>{nickname}</strong>
-          <p>{String(user.age ?? '-')}세 · {String(user.location ?? '지역 없음')}</p>
-        </div>
+        <div><strong>{nickname}</strong><p>{String(user.age ?? '-')}세 · {String(user.location ?? '지역 없음')}</p></div>
       </div>
-      <p>소개: {bio}</p>
+      <p>소개: {String(user.bio ?? '소개 없음')}</p>
       <p>토크 {talks.length}개 · 채팅방 {rooms.length}개 · 작성 메시지 {sentMessages.length}개</p>
       <ReviewList title="최근 토크" items={talks} textKey="text" />
       <ReviewList title="최근 작성 메시지" items={sentMessages} textKey="body" />
       <ReviewList title="관련 채팅방" items={rooms} textKey="last_message" />
-      <div className="talk-actions">
-        <span>운영자 검토 자료</span>
-        <button type="button" onClick={onClose}>닫기</button>
-      </div>
+      <button type="button" onClick={onClose}>닫기</button>
     </Card>
   );
 }
 
 function ReviewList({ items, textKey, title }: { items: Array<Record<string, unknown>>; textKey: string; title: string }) {
   if (items.length === 0) return null;
-
-  return (
-    <div className="talk-list">
-      <strong>{title}</strong>
-      {items.slice(0, 5).map((item, index) => {
-        const createdAt = item.created_at ? String(item.created_at) : '';
-        return (
-          <Card className="settings-summary" key={`${title}-${index}`}>
-            <p>{String(item[textKey] ?? '내용 없음')}</p>
-            {createdAt ? <p>{new Date(createdAt).toLocaleString()}</p> : null}
-          </Card>
-        );
-      })}
-    </div>
-  );
+  return <div className="talk-list"><strong>{title}</strong>{items.slice(0, 5).map((item, index) => <Card className="settings-summary" key={`${title}-${index}`}><p>{String(item[textKey] ?? '내용 없음')}</p>{item.created_at ? <p>{new Date(String(item.created_at)).toLocaleString()}</p> : null}</Card>)}</div>;
 }
