@@ -77,8 +77,21 @@ requireText('.github/workflows/web-verify.yml', webWorkflow, 'pnpm install --fro
 requireText('.github/workflows/web-verify.yml', webWorkflow, 'pnpm verify', 'web CI must run root verify');
 
 const androidWorkflow = read('.github/workflows/android-debug-apk.yml');
+requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'workflow_dispatch:', 'Android workflow must support manual reruns');
+requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'push:', 'Android workflow must run automatically on relevant main pushes');
+requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'branches: [main]', 'Android workflow must protect main branch pushes');
+requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'pull_request:', 'Android workflow must run on relevant pull requests');
+requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'concurrency:', 'Android workflow must cancel stale duplicate runs');
+requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'cancel-in-progress: true', 'Android workflow must cancel in-progress stale runs');
+requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'timeout-minutes:', 'Android workflow must have an explicit timeout');
+requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'node-version: 22', 'Android workflow must pin the Node major version');
+requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'version: 9.15.0', 'Android workflow must pin pnpm version');
+requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'java-version: 21', 'Android workflow must pin Java version');
 requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'pnpm install --frozen-lockfile', 'Android workflow must keep frozen lockfile install');
+requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'pnpm check:client-contracts', 'Android workflow must run client stability contracts before APK build');
 requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'npx cap sync android', 'Android workflow must keep Capacitor sync');
+requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'test -s app/build/outputs/apk/debug/app-debug.apk', 'Android workflow must fail when debug APK is missing or empty');
+requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'if-no-files-found: error', 'Android workflow must fail artifact upload when APK is missing');
 requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'android/app/build/outputs/apk/debug/app-debug.apk', 'Android workflow must keep debug APK artifact path');
 
 if (failures.length) {
