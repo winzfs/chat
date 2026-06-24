@@ -115,6 +115,19 @@ requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'android
 requireManualSmokeWorkflow('.github/workflows/pages-auth-smoke.yml', read('.github/workflows/pages-auth-smoke.yml'), 'smoke-pages-auth.mjs', 'Pages auth smoke workflow');
 requireManualSmokeWorkflow('.github/workflows/pages-api-smoke.yml', read('.github/workflows/pages-api-smoke.yml'), 'smoke-pages-api.mjs', 'Pages API smoke workflow');
 
+const d1SchemaInspectWorkflow = read('.github/workflows/d1-schema-inspect.yml');
+requireText('.github/workflows/d1-schema-inspect.yml', d1SchemaInspectWorkflow, 'workflow_dispatch:', 'D1 schema inspect workflow must remain manually runnable');
+requireText('.github/workflows/d1-schema-inspect.yml', d1SchemaInspectWorkflow, 'concurrency:', 'D1 schema inspect workflow must cancel stale duplicate runs');
+requireText('.github/workflows/d1-schema-inspect.yml', d1SchemaInspectWorkflow, 'cancel-in-progress: true', 'D1 schema inspect workflow must cancel in-progress stale runs');
+requireText('.github/workflows/d1-schema-inspect.yml', d1SchemaInspectWorkflow, 'timeout-minutes:', 'D1 schema inspect workflow must have an explicit timeout');
+requireText('.github/workflows/d1-schema-inspect.yml', d1SchemaInspectWorkflow, 'node-version: 22', 'D1 schema inspect workflow must pin the Node major version');
+requireText('.github/workflows/d1-schema-inspect.yml', d1SchemaInspectWorkflow, 'version: 9.15.0', 'D1 schema inspect workflow must pin pnpm version');
+requireText('.github/workflows/d1-schema-inspect.yml', d1SchemaInspectWorkflow, 'pnpm install --frozen-lockfile --ignore-scripts', 'D1 schema inspect workflow must keep frozen lockfile and ignore install scripts');
+requireText('.github/workflows/d1-schema-inspect.yml', d1SchemaInspectWorkflow, 'Validate D1 inspect target', 'D1 schema inspect workflow must validate the database name before passing it to wrangler');
+requireText('.github/workflows/d1-schema-inspect.yml', d1SchemaInspectWorkflow, '/^[a-zA-Z0-9_-]{1,128}$/', 'D1 schema inspect workflow must reject unsafe database names');
+requireText('.github/workflows/d1-schema-inspect.yml', d1SchemaInspectWorkflow, 'pnpm check:d1-schema-report', 'D1 schema inspect workflow must validate captured schema reports before upload');
+requireText('.github/workflows/d1-schema-inspect.yml', d1SchemaInspectWorkflow, 'if-no-files-found: error', 'D1 schema inspect workflow must fail artifact upload when the schema report is missing');
+
 if (failures.length) {
   console.error('Client stability contract checks failed:');
   for (const failure of failures) console.error(`- ${failure}`);
