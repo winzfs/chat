@@ -4,9 +4,14 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: web-e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   playwright:
@@ -35,5 +40,5 @@ jobs:
           path: |
             playwright-report
             test-results
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 7
