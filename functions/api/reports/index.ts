@@ -18,6 +18,10 @@ type ReportActionBody = {
   suspend_days?: number | string | null;
 };
 
+type ClearSuspensionBody = {
+  profile_id?: string;
+};
+
 const allowedStatuses = new Set(['open', 'reviewing', 'resolved', 'dismissed', 'closed']);
 const allowedSuspendDays = new Set([0, 1, 7, 30, -1]);
 
@@ -196,4 +200,24 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, request }) => {
 
   await env.DB.batch(statements);
   return Response.json({ ok: true, status, suspended: suspendDays !== 0 });
+};
+
+export const onRequestDelete: PagesFunction<Env> = async ({ env, request }) => {
+  await ensureModerationSchema(env);
+
+  const adminId = authenticatedProfileId(request);
+  if (!isAdmin(env, adminId)) {
+    return Response.json({ error: '운영자만 정지를 해제할 수 있어요.' }, { status: 403 });
+  }
+
+  const body = await request.json().catch(() => ({})) as ClearSuspensionBody;
+  const profileId = body.profile_id?.trim() ?? '';
+  if (!profileId) return Response.json({ error: '정지 해제할 profile_id가 필요해요.' }, { status: 400 });
+  if (profileId === adminId) {
+    return Response.json({ error: '운영자 본인 계정은 이 화면에서 변경할 수 없어요.' }, { status: 400 });
+  }
+
+  await env.DB.prepare('delete from user_suspensions where profile_id = ?').bind(profileId).run();
+
+  return Response.json({ ok: true, unsuspended: true, profile_id: profileId });
 };
