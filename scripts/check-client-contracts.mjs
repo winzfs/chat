@@ -94,6 +94,21 @@ requireText('.github/workflows/web-verify.yml', webWorkflow, 'version: 9.15.0', 
 requireText('.github/workflows/web-verify.yml', webWorkflow, 'pnpm install --frozen-lockfile --ignore-scripts', 'web CI must keep frozen lockfile and ignore install scripts');
 requireText('.github/workflows/web-verify.yml', webWorkflow, 'pnpm verify', 'web CI must run root verify');
 
+const webE2EWorkflow = read('.github/workflows/web-e2e.yml');
+requireText('.github/workflows/web-e2e.yml', webE2EWorkflow, 'push:', 'Web E2E must run automatically on push');
+requireText('.github/workflows/web-e2e.yml', webE2EWorkflow, 'branches: [main]', 'Web E2E must protect main branch pushes');
+requireText('.github/workflows/web-e2e.yml', webE2EWorkflow, 'pull_request:', 'Web E2E must run on pull requests');
+requireText('.github/workflows/web-e2e.yml', webE2EWorkflow, 'workflow_dispatch:', 'Web E2E must support manual reruns');
+requireText('.github/workflows/web-e2e.yml', webE2EWorkflow, 'concurrency:', 'Web E2E must cancel stale duplicate runs');
+requireText('.github/workflows/web-e2e.yml', webE2EWorkflow, 'cancel-in-progress: true', 'Web E2E must cancel in-progress stale runs');
+requireText('.github/workflows/web-e2e.yml', webE2EWorkflow, 'timeout-minutes:', 'Web E2E must have an explicit timeout');
+requireText('.github/workflows/web-e2e.yml', webE2EWorkflow, 'node-version: 22', 'Web E2E must pin the Node major version');
+requireText('.github/workflows/web-e2e.yml', webE2EWorkflow, 'version: 9.15.0', 'Web E2E must pin pnpm version');
+requireText('.github/workflows/web-e2e.yml', webE2EWorkflow, 'pnpm install --frozen-lockfile --ignore-scripts', 'Web E2E must keep frozen lockfile and ignore install scripts');
+requireText('.github/workflows/web-e2e.yml', webE2EWorkflow, 'pnpm exec playwright install --with-deps chromium', 'Web E2E must install Chromium with OS dependencies');
+requireText('.github/workflows/web-e2e.yml', webE2EWorkflow, 'pnpm e2e', 'Web E2E must run the Playwright test script');
+requireText('.github/workflows/web-e2e.yml', webE2EWorkflow, 'if-no-files-found: error', 'Web E2E must fail artifact upload when Playwright reports are missing');
+
 const androidWorkflow = read('.github/workflows/android-debug-apk.yml');
 requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'workflow_dispatch:', 'Android workflow must support manual reruns');
 requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'push:', 'Android workflow must run automatically on relevant main pushes');
