@@ -70,6 +70,17 @@ requireText('apps/web/src/features/home/components/TalkPanel2.tsx', talkPanel, '
 const recentUsersPanel = read('apps/web/src/features/home/components/RecentUsersPanel.tsx');
 requireText('apps/web/src/features/home/components/RecentUsersPanel.tsx', recentUsersPanel, 'formatApiError', 'recent-user direct chat errors must use the shared formatter');
 
+const reportsFunction = read('functions/api/reports/index.ts');
+requireText('functions/api/reports/index.ts', reportsFunction, 'onRequestDelete', 'admin reports API must expose a suspension release endpoint');
+requireText('functions/api/reports/index.ts', reportsFunction, 'delete from user_suspensions where profile_id = ?', 'suspension release must remove the moderation suspension record');
+requireText('functions/api/reports/index.ts', reportsFunction, '운영자만 정지를 해제할 수 있어요.', 'suspension release must stay admin-only with a stable error');
+requireText('functions/api/reports/index.ts', reportsFunction, 'profileId === adminId', 'suspension release must not allow admins to change their own account');
+
+const reportsAdminApi = read('apps/web/src/features/home/api/reportsAdmin.ts');
+requireText('apps/web/src/features/home/api/reportsAdmin.ts', reportsAdminApi, 'clearUserSuspension', 'admin client API must expose a suspension release helper');
+requireText('apps/web/src/features/home/api/reportsAdmin.ts', reportsAdminApi, "method: 'DELETE'", 'admin suspension release helper must call DELETE /api/reports');
+requireText('apps/web/src/features/home/api/reportsAdmin.ts', reportsAdminApi, '사용자 정지를 해제하지 못했어요.', 'admin suspension release helper must surface API errors');
+
 const homeScreen = read('apps/web/src/features/home/HomeScreenNext.tsx');
 requireMatch('apps/web/src/features/home/HomeScreenNext.tsx', homeScreen, /useAndroidBackButton\([\s\S]*isComposeOpen[\s\S]*activeTab === 'chats'[\s\S]*activeTab !== 'talk'/, 'Android back handling order must remain modal, chat, tab');
 
