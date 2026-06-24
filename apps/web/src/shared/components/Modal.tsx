@@ -31,12 +31,16 @@ export function Modal({
   const panelRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
   const preventCloseRef = useRef(preventClose);
+  const returnFocusRef = useRef<HTMLElement | null>(
+    typeof document !== 'undefined' && document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null,
+  );
 
   onCloseRef.current = onClose;
   preventCloseRef.current = preventClose;
 
   useEffect(() => {
-    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
@@ -55,7 +59,11 @@ export function Modal({
       cancelAnimationFrame(frame);
       window.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = previousOverflow;
-      previousFocus?.focus();
+
+      const target = returnFocusRef.current;
+      if (target?.isConnected) {
+        requestAnimationFrame(() => target.focus());
+      }
     };
   }, []);
 
