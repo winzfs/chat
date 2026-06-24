@@ -20,6 +20,9 @@ API 요청마다 실행하던 `create table if not exists`와 호환용 스키�
    - 신고 기록
 4. `migrations/0004_request_gates.sql`
    - 중복 1:1 채팅 요청 잠금
+5. `migrations/0005_revoked_profiles.sql`
+   - 회원 탈퇴한 프로필 ID 폐기 기록
+   - 기존 HMAC 서명 세션의 즉시 재사용 차단
 
 ## 자동 검증
 
@@ -27,7 +30,7 @@ API 요청마다 실행하던 `create table if not exists`와 호환용 스키�
 
 - migration 파일명이 `0000_snake_case.sql` 형식인지
 - migration 번호가 중복되지 않는지
-- 현재 배포 대상 migration 4개가 모두 존재하는지
+- 현재 배포 대상 migration 5개가 모두 존재하는지
 - checked migration에 `drop table`, `delete from`, `truncate`, `alter table ... drop` 같은 파괴적 SQL이 없는지
 - 이 runbook과 `docs/13-security-hardening-status.md`가 D1 적용 상태를 계속 언급하는지
 
@@ -67,6 +70,8 @@ Cloudflare 대시보드의 D1 SQL 실행 화면 또는 프로젝트에서 사용
 - 다시 쪽지를 시작했을 때 채팅방이 정상 재개되는지
 - 차단한 사용자가 최근 사용자 목록에서 제외되는지
 - 신고 작성과 관리자 신고 목록 조회가 정상 동작하는지
+- 회원 탈퇴 후 기존 세션으로 비공개 API를 호출하면 401이 반환되는지
+- 탈퇴 후 새 세션으로 다시 가입할 수 있는지
 
 ## 아직 migration으로 옮기지 않은 항목
 
