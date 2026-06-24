@@ -27,6 +27,19 @@ function listSourceFiles(directory) {
   });
 }
 
+function requireManualSmokeWorkflow(path, workflow, scriptName, description) {
+  requireText(path, workflow, 'workflow_dispatch:', `${description} must support manual reruns`);
+  requireText(path, workflow, 'concurrency:', `${description} must cancel stale duplicate runs`);
+  requireText(path, workflow, 'cancel-in-progress: true', `${description} must cancel in-progress stale runs`);
+  requireText(path, workflow, 'timeout-minutes:', `${description} must have an explicit timeout`);
+  requireText(path, workflow, 'node-version: 22', `${description} must pin the Node major version`);
+  requireText(path, workflow, 'Validate smoke URL', `${description} must reject unsafe or accidental smoke targets before calling the API`);
+  requireText(path, workflow, "url.protocol !== 'https:'", `${description} must require https deployment URLs`);
+  requireText(path, workflow, ".pages.dev')", `${description} must allow Cloudflare Pages deployment hosts`);
+  requireText(path, workflow, ".workers.dev')", `${description} must allow Cloudflare Workers deployment hosts`);
+  requireText(path, workflow, `node scripts/${scriptName}`, `${description} must run its smoke script`);
+}
+
 const middleware = read('functions/_middleware.ts');
 requireText('functions/_middleware.ts', middleware, "pathname === '/api/chat-rooms'", 'chat room API must verify declared profile_id in middleware');
 requireMatch('functions/_middleware.ts', middleware, /pathname === '\/api\/chat-rooms'[\s\S]*request\.method === 'GET'[\s\S]*url\.searchParams\.get\('profile_id'\)[\s\S]*request\.method === 'POST'[\s\S]*bodyProfileId/, 'chat room middleware must validate both GET query and POST body profile_id');
@@ -98,6 +111,9 @@ requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'npx cap
 requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'test -s app/build/outputs/apk/debug/app-debug.apk', 'Android workflow must fail when debug APK is missing or empty');
 requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'if-no-files-found: error', 'Android workflow must fail artifact upload when APK is missing');
 requireText('.github/workflows/android-debug-apk.yml', androidWorkflow, 'android/app/build/outputs/apk/debug/app-debug.apk', 'Android workflow must keep debug APK artifact path');
+
+requireManualSmokeWorkflow('.github/workflows/pages-auth-smoke.yml', read('.github/workflows/pages-auth-smoke.yml'), 'smoke-pages-auth.mjs', 'Pages auth smoke workflow');
+requireManualSmokeWorkflow('.github/workflows/pages-api-smoke.yml', read('.github/workflows/pages-api-smoke.yml'), 'smoke-pages-api.mjs', 'Pages API smoke workflow');
 
 if (failures.length) {
   console.error('Client stability contract checks failed:');
