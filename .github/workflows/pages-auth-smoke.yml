@@ -11,10 +11,15 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: pages-auth-smoke-${{ github.workflow }}-${{ inputs.pages_url }}
+  cancel-in-progress: true
+
 jobs:
   auth-smoke:
     name: Check auth session endpoint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,6 +27,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Validate smoke URL
+        env:
+          PAGES_SMOKE_URL: ${{ inputs.pages_url }}
+        run: |
+          node -e "const url = new URL(process.env.PAGES_SMOKE_URL); if (url.protocol !== 'https:') throw new Error('pages_url must use https'); if (!url.hostname.endsWith('.pages.dev') && !url.hostname.endsWith('.workers.dev')) throw new Error('pages_url must target a Cloudflare deployment host');"
       - name: Run Pages auth smoke check
         env:
           PAGES_SMOKE_URL: ${{ inputs.pages_url }}
