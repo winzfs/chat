@@ -81,6 +81,23 @@ requireText('apps/web/src/features/home/api/reportsAdmin.ts', reportsAdminApi, '
 requireText('apps/web/src/features/home/api/reportsAdmin.ts', reportsAdminApi, "method: 'DELETE'", 'admin suspension release helper must call DELETE /api/reports');
 requireText('apps/web/src/features/home/api/reportsAdmin.ts', reportsAdminApi, '사용자 정지를 해제하지 못했어요.', 'admin suspension release helper must surface API errors');
 
+const adminContentFunction = read('functions/api/admin/content/index.ts');
+requireText('functions/api/admin/content/index.ts', adminContentFunction, 'requireAdminProfile', 'admin content deletion API must require a signed admin session');
+requireText('functions/api/admin/content/index.ts', adminContentFunction, "allowedContentTypes = new Set(['talk_post', 'chat_message'])", 'admin content deletion API must restrict supported content types');
+requireText('functions/api/admin/content/index.ts', adminContentFunction, 'delete from talk_posts where id = ?', 'admin content deletion API must remove reported talk posts');
+requireText('functions/api/admin/content/index.ts', adminContentFunction, '운영자에 의해 삭제된 메시지입니다.', 'admin content deletion API must redact chat messages with a stable body');
+requireText('functions/api/admin/content/index.ts', adminContentFunction, 'image_key = null, image_url = null', 'admin content deletion API must remove message image references');
+
+const adminApi = read('apps/web/src/features/home/api/admin.ts');
+requireText('apps/web/src/features/home/api/admin.ts', adminApi, 'deleteModeratedContent', 'admin client API must expose a moderated content deletion helper');
+requireText('apps/web/src/features/home/api/admin.ts', adminApi, "/api/admin/content", 'admin content deletion helper must call the admin content endpoint');
+requireText('apps/web/src/features/home/api/admin.ts', adminApi, '콘텐츠를 삭제하지 못했어요.', 'admin content deletion helper must surface API errors');
+
+const reportsAdminPanel = read('apps/web/src/features/home/components/ReportsAdminPanel.tsx');
+requireText('apps/web/src/features/home/components/ReportsAdminPanel.tsx', reportsAdminPanel, 'deleteModeratedContent', 'admin reports panel must expose content deletion actions from review data');
+requireText('apps/web/src/features/home/components/ReportsAdminPanel.tsx', reportsAdminPanel, '콘텐츠 삭제', 'admin reports panel must render a deletion control for reviewed content');
+requireText('apps/web/src/features/home/components/ReportsAdminPanel.tsx', reportsAdminPanel, '채팅 메시지를 삭제 처리했어요.', 'admin reports panel must show successful chat message deletion');
+
 const homeScreen = read('apps/web/src/features/home/HomeScreenNext.tsx');
 requireMatch('apps/web/src/features/home/HomeScreenNext.tsx', homeScreen, /useAndroidBackButton\([\s\S]*isComposeOpen[\s\S]*activeTab === 'chats'[\s\S]*activeTab !== 'talk'/, 'Android back handling order must remain modal, chat, tab');
 
