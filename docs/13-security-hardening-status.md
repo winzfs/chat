@@ -79,6 +79,10 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - Web E2E 실패 시 HTML report, trace, 스크린샷, 영상을 artifact로 보관
 - 가입·토크·모달·직접대화·메시지 실패·채팅방 나가기의 9개 핵심 흐름 자동 검증
 - 모달 이전 포커스 복원과 ref 기반 1:1 채팅 중복 요청 잠금을 E2E로 검증
+- 회원 탈퇴 시 프로필·토크·채팅·포인트·마이룸·차단·신고 데이터와 R2 이미지를 정리하는 인증 API 추가
+- 탈퇴 성공 후 앱의 `chitchat.*` 로컬 세션과 프로필 상태를 제거하고 신규 가입 화면으로 복귀
+- 탈퇴 계정의 기존 서명 세션을 차단하는 `revoked_profiles` migration 추가
+- 미들웨어에서 폐기된 프로필 ID의 비공개 API 접근을 즉시 401로 차단
 
 ## 남은 작업
 
@@ -88,6 +92,7 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - D1 Schema Inspect workflow를 Preview와 Production 데이터베이스 대상으로 실행하고 artifact 확인
 - 운영 D1의 `sqlite_master`와 `pragma table_info(...)` 결과 확인 후 기존 핵심 테이블의 추가 migration 작성
 - 신규 마이그레이션 적용 후 API 런타임 DDL 제거
+- 회원 탈퇴 Preview 회귀에서 데이터·R2 이미지 삭제와 기존 세션 401 차단 확인
 - 프로필 사진 실패, 마이룸 저장 차단, 포인트 보상 실패 흐름의 Web E2E 확장
 - Android debug APK workflow 실행 결과와 artifact를 확인하고, APK 설치 후 실기기 회귀 테스트
 
