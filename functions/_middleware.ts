@@ -9,6 +9,12 @@ const publicGetPaths = new Set([
   '/api/chat-images',
 ]);
 
+function bodyProfileId(body: unknown) {
+  return typeof body === 'object' && body !== null && 'profile_id' in body
+    ? String((body as { profile_id?: unknown }).profile_id ?? '').trim()
+    : '';
+}
+
 export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
   const url = new URL(request.url);
   const pathname = url.pathname.replace(/\/$/, '') || '/';
@@ -24,8 +30,7 @@ export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
   }
 
   if (pathname === '/api/profile-sync' && request.method === 'POST') {
-    const body = await request.clone().json().catch(() => ({})) as { profile_id?: string };
-    const declaredId = body.profile_id?.trim() ?? '';
+    const declaredId = bodyProfileId(await request.clone().json().catch(() => ({})));
     if (!declaredId) return jsonError('profile_id가 필요해요.', 400);
     if (declaredId !== profileId) return jsonError('다른 사용자 프로필을 수정할 수 없어요.', 403);
   }
@@ -33,14 +38,24 @@ export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
   if (pathname === '/api/recent-users') {
     const declaredId = request.method === 'GET'
       ? url.searchParams.get('profile_id')?.trim() ?? ''
-      : ((await request.clone().json().catch(() => ({}))) as { profile_id?: string }).profile_id?.trim() ?? '';
+      : bodyProfileId(await request.clone().json().catch(() => ({})));
     if (!declaredId) return jsonError('profile_id가 필요해요.', 400);
     if (declaredId !== profileId) return jsonError('다른 사용자로 접속 상태를 갱신할 수 없어요.', 403);
   }
 
+  if (pathname === '/api/chat-rooms') {
+    const declaredId = request.method === 'GET'
+      ? url.searchParams.get('profile_id')?.trim() ?? ''
+      : request.method === 'POST'
+        ? bodyProfileId(await request.clone().json().catch(() => ({})))
+        : profileId;
+    if (!declaredId) return jsonError('profile_id가 필요해요.', 400);
+    if (declaredId !== profileId) return jsonError('다른 사용자 채팅방에 접근할 수 없어요.', 403);
+  }
+
   if (pathname === '/api/talk-posts' && request.method !== 'GET') {
     const bodyId = request.method === 'POST'
-      ? ((await request.clone().json().catch(() => ({}))) as { profile_id?: string }).profile_id?.trim() ?? ''
+      ? bodyProfileId(await request.clone().json().catch(() => ({})))
       : url.searchParams.get('profile_id')?.trim() ?? '';
     if (!bodyId) return jsonError('profile_id가 필요해요.', 400);
     if (bodyId !== profileId) return jsonError('다른 사용자 이름으로 토크를 변경할 수 없어요.', 403);
