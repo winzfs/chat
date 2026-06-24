@@ -85,6 +85,8 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - 탈퇴 성공 후 앱의 `chitchat.*` 로컬 세션과 프로필 상태를 제거하고 신규 가입 화면으로 복귀
 - 탈퇴 계정의 기존 서명 세션을 차단하는 `revoked_profiles` migration 추가
 - 미들웨어에서 폐기된 프로필 ID의 비공개 API 접근을 즉시 401로 차단
+- 회원 탈퇴 실패·성공 E2E에서 확인창/로컬 상태뿐 아니라 DELETE 요청의 Bearer 인증 헤더까지 검증
+- `pnpm verify`의 클라이언트 안정화 계약에 회원 탈퇴 E2E 인증·오류·로컬 상태 정리 조건을 추가
 
 ## 남은 작업
 
