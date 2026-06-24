@@ -71,7 +71,7 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - GitHub Actions push 실행 결과 확인과 실패 로그 수정
 - 신규 D1 migration을 Preview와 Production 데이터베이스에 적용
 - D1 Schema Inspect workflow를 Preview와 Production 데이터베이스 대상으로 실행하고 artifact 확인
-- D1 schema artifact를 기준으로 기존 핵심 테이블의 추가 migration 작성
+- 운영 D1의 `sqlite_master`와 `pragma table_info(...)` 결과 확인 후 기존 핵심 테이블의 추가 migration 작성
 - 신규 마이그레이션 적용 후 API 런타임 DDL 제거
 - Android APK 생성 결과와 실기기 회귀 테스트
 
