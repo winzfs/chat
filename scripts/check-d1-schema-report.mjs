@@ -13,6 +13,7 @@ const requiredTables = [
   'user_blocks',
   'reports',
   'direct_chat_request_locks',
+  'revoked_profiles',
 ];
 
 const legacyTablesToInspect = [
