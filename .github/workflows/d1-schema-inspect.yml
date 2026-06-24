@@ -75,21 +75,21 @@ jobs:
         run: |
           set -euo pipefail
           for table in \
-            point_balances \
+            user_points \
             point_transactions \
             daily_point_claims \
-            chat_reads \
-            chat_room_states \
+            chat_room_reads \
+            chat_room_exits \
             user_blocks \
             reports \
-            direct_chat_request_locks \
+            request_gates \
             revoked_profiles \
+            user_suspensions \
             recent_users \
             talk_posts \
             chat_rooms \
             chat_messages \
-            my_room_items \
-            my_room_layouts
+            my_rooms
           do
             pnpm dlx wrangler@4.20.5 d1 execute "${{ inputs.database_name }}" --remote --json --command "pragma table_info($table);" > "$D1_SCHEMA_REPORT_DIR/table-info-$table.json"
           done
