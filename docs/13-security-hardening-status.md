@@ -65,6 +65,9 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - 배포된 Cloudflare Pages API의 CORS, 세션 발급, 채팅방 목록 권한, profile_id 불일치 거부를 확인하는 수동 실행형 Pages API smoke workflow 추가
 - Web Verify workflow에 수동 재실행, 중복 실행 취소, 명시적 timeout을 추가
 - `pnpm verify`의 클라이언트 안정화 계약에 Web Verify 자동 실행·수동 재실행·고정 Node/pnpm·timeout·중복 취소 조건을 추가
+- Android debug APK workflow에 관련 main push/PR 자동 실행, 수동 재실행, 중복 실행 취소, 명시적 timeout을 추가
+- Android debug APK workflow에 고정 Node/pnpm/Java, 클라이언트 안정화 계약 검사, APK 존재 검사, artifact 누락 실패 처리를 추가
+- `pnpm verify`의 클라이언트 안정화 계약에 Android workflow 자동 실행·고정 런타임·timeout·중복 취소·APK artifact 검증 조건을 추가
 
 ## 남은 작업
 
@@ -75,7 +78,7 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - D1 Schema Inspect workflow를 Preview와 Production 데이터베이스 대상으로 실행하고 artifact 확인
 - 운영 D1의 `sqlite_master`와 `pragma table_info(...)` 결과 확인 후 기존 핵심 테이블의 추가 migration 작성
 - 신규 마이그레이션 적용 후 API 런타임 DDL 제거
-- Android APK 생성 결과와 실기기 회귀 테스트
+- Android debug APK workflow 실행 결과와 artifact를 확인하고, APK 설치 후 실기기 회귀 테스트
 
 ## 현재 제한
 
