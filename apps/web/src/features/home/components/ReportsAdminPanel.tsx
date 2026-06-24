@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
-import { loadUserReview } from '../api/admin';
+import { deleteModeratedContent, loadUserReview, type ModeratedContentType } from '../api/admin';
 import {
   loadReports,
   updateReportAction,
@@ -45,7 +45,9 @@ export function ReportsAdminPanel({ onClose }: { onClose: () => void }) {
   const [notice, setNotice] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [reviewData, setReviewData] = useState<ReviewData>(null);
+  const [reviewTargetId, setReviewTargetId] = useState('');
   const [processingId, setProcessingId] = useState('');
+  const [deletingContentId, setDeletingContentId] = useState('');
 
   const refreshReports = async () => {
     setIsLoading(true);
@@ -81,6 +83,7 @@ export function ReportsAdminPanel({ onClose }: { onClose: () => void }) {
   };
 
   const openReview = async (report: AdminReport) => {
+    setReviewTargetId(report.reported_id);
     setNotice('대상 정보를 불러오는 중...');
     try {
       const loaded = await loadUserReview(report.reported_id);
@@ -88,6 +91,22 @@ export function ReportsAdminPanel({ onClose }: { onClose: () => void }) {
       setNotice(loaded ? '대상 정보를 불러왔어요.' : '대상 정보를 불러오지 못했어요.');
     } catch (error) {
       setNotice(errorMessage(error, '대상 정보를 불러오지 못했어요.'));
+    }
+  };
+
+  const deleteContent = async (contentType: ModeratedContentType, id: string) => {
+    if (deletingContentId) return;
+
+    setDeletingContentId(id);
+    setNotice('콘텐츠를 삭제하는 중...');
+    try {
+      await deleteModeratedContent(contentType, id);
+      setNotice(contentType === 'talk_post' ? '토크를 삭제했어요.' : '채팅 메시지를 삭제 처리했어요.');
+      if (reviewTargetId) setReviewData(await loadUserReview(reviewTargetId));
+    } catch (error) {
+      setNotice(errorMessage(error, '콘텐츠를 삭제하지 못했어요.'));
+    } finally {
+      setDeletingContentId('');
     }
   };
 
@@ -111,7 +130,17 @@ export function ReportsAdminPanel({ onClose }: { onClose: () => void }) {
       </Card>
 
       {notice && <Card className="settings-summary"><strong aria-live="polite">{notice}</strong></Card>}
-      {reviewData && <ReviewSummary data={reviewData} onClose={() => setReviewData(null)} />}
+      {reviewData && (
+        <ReviewSummary
+          data={reviewData}
+          deletingContentId={deletingContentId}
+          onClose={() => {
+            setReviewData(null);
+            setReviewTargetId('');
+          }}
+          onDeleteContent={(contentType, id) => void deleteContent(contentType, id)}
+        />
+      )}
       {isLoading && <Card className="person-card"><strong>신고 목록을 불러오는 중...</strong></Card>}
       {!isLoading && reports.length === 0 && !notice && <Card className="person-card"><strong>표시할 신고가 없어요.</strong><p>새 신고가 접수되면 이곳에 표시돼요.</p></Card>}
 
@@ -166,7 +195,12 @@ function ReportModerationCard({ isProcessing, onOpenReview, onProcess, report }:
   );
 }
 
-function ReviewSummary({ data, onClose }: { data: NonNullable<ReviewData>; onClose: () => void }) {
+function ReviewSummary({ data, deletingContentId, onClose, onDeleteContent }: {
+  data: NonNullable<ReviewData>;
+  deletingContentId: string;
+  onClose: () => void;
+  onDeleteContent: (contentType: ModeratedContentType, id: string) => void;
+}) {
   const user = data.user ?? {};
   const nickname = String(user.nickname ?? '알 수 없음');
   const avatarUrl = String(user.avatar_url ?? '');
@@ -182,15 +216,53 @@ function ReviewSummary({ data, onClose }: { data: NonNullable<ReviewData>; onClo
       </div>
       <p>소개: {String(user.bio ?? '소개 없음')}</p>
       <p>토크 {talks.length}개 · 채팅방 {rooms.length}개 · 작성 메시지 {sentMessages.length}개</p>
-      <ReviewList title="최근 토크" items={talks} textKey="text" />
-      <ReviewList title="최근 작성 메시지" items={sentMessages} textKey="body" />
+      <ReviewList
+        deletingContentId={deletingContentId}
+        items={talks}
+        onDelete={(id) => onDeleteContent('talk_post', id)}
+        textKey="text"
+        title="최근 토크"
+      />
+      <ReviewList
+        deletingContentId={deletingContentId}
+        items={sentMessages}
+        onDelete={(id) => onDeleteContent('chat_message', id)}
+        textKey="body"
+        title="최근 작성 메시지"
+      />
       <ReviewList title="관련 채팅방" items={rooms} textKey="last_message" />
       <button type="button" onClick={onClose}>닫기</button>
     </Card>
   );
 }
 
-function ReviewList({ items, textKey, title }: { items: Array<Record<string, unknown>>; textKey: string; title: string }) {
+function ReviewList({ deletingContentId = '', items, onDelete, textKey, title }: {
+  deletingContentId?: string;
+  items: Array<Record<string, unknown>>;
+  onDelete?: (id: string) => void;
+  textKey: string;
+  title: string;
+}) {
   if (items.length === 0) return null;
-  return <div className="talk-list"><strong>{title}</strong>{items.slice(0, 5).map((item, index) => <Card className="settings-summary" key={`${title}-${index}`}><p>{String(item[textKey] ?? '내용 없음')}</p>{item.created_at ? <p>{new Date(String(item.created_at)).toLocaleString()}</p> : null}</Card>)}</div>;
+
+  return (
+    <div className="talk-list">
+      <strong>{title}</strong>
+      {items.slice(0, 5).map((item, index) => {
+        const id = String(item.id ?? '');
+        const createdAt = item.created_at ? String(item.created_at) : '';
+        return (
+          <Card className="settings-summary" key={`${title}-${id || index}`}>
+            <p>{String(item[textKey] ?? '내용 없음')}</p>
+            {createdAt ? <p>{new Date(createdAt).toLocaleString()}</p> : null}
+            {onDelete && id ? (
+              <button disabled={deletingContentId === id} onClick={() => onDelete(id)} type="button">
+                {deletingContentId === id ? '삭제 중...' : '콘텐츠 삭제'}
+              </button>
+            ) : null}
+          </Card>
+        );
+      })}
+    </div>
+  );
 }
