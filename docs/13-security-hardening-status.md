@@ -19,6 +19,7 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - Bearer 토큰을 앱 origin과 운영 API origin에만 첨부
 - 비공개 API 인증 강제와 인증 사용자 ID 전달
 - 채팅방 목록 요청자 ID 검증 및 최종 참가자/소유자 필터
+- 채팅방 목록과 생성 요청의 `profile_id`를 인증 세션 ID와 미들웨어에서 대조
 - 채팅 메시지 참가자 검증과 최신 100개 조회
 - 차단 관계의 텍스트·이미지 전송 차단
 - 채팅 나가기 요청자 검증
@@ -58,6 +59,7 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - `pnpm verify`에 클라이언트 안정화 계약 검사를 추가해 API 오류 표시, 1:1 채팅 profile_id 검증, Android 뒤로가기 처리, CI lockfile 조건을 자동 확인
 - `pnpm verify`에 D1 migration 계약 검사를 추가해 migration 번호·비파괴 SQL·runbook/status 문서 동기화를 자동 확인
 - `pnpm verify`의 클라이언트 안정화 계약에 1:1 채팅 실패 복구 코드·환불 거래 기록·최종 방 상태 확인을 추가
+- `pnpm verify`의 클라이언트 안정화 계약에 채팅방 GET/POST `profile_id` 세션 대조를 추가
 - 배포된 Cloudflare Pages의 `/api/auth/session`이 `AUTH_SECRET` 누락 없이 세션을 발급하는지 확인하는 수동 실행형 Pages auth smoke workflow 추가
 - Pages auth smoke에서 발급된 Bearer 세션 검증, 변조 토큰 거부, 인증 응답 `Cache-Control: no-store`까지 확인
 - 실제 D1의 `sqlite_master`와 `pragma table_info(...)`를 artifact로 남기는 수동 실행형 D1 Schema Inspect workflow 추가
