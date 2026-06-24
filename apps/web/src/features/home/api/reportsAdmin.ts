@@ -48,3 +48,13 @@ export async function updateReportAction(input: {
 
   return parseApiResponse<{ ok?: boolean; suspended?: boolean }>(response, '신고를 처리하지 못했어요.');
 }
+
+export async function clearUserSuspension(profileId: string) {
+  const response = await fetch(apiUrl('/api/reports'), {
+    method: 'DELETE',
+    headers: { ...getAdminRequestHeaders(), 'content-type': 'application/json' },
+    body: JSON.stringify({ profile_id: profileId }),
+  });
+
+  return parseApiResponse<{ ok?: boolean; unsuspended?: boolean; profile_id?: string }>(response, '사용자 정지를 해제하지 못했어요.');
+}
