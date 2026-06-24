@@ -42,7 +42,7 @@ pnpm e2e:report
 
 ## CI
 
-`.github/workflows/web-e2e.yml`이 `main` push와 pull request에서 Chromium 테스트를 실행합니다. 실패 시 다음 파일을 7일 동안 artifact로 보관합니다.
+`.github/workflows/web-e2e.yml`이 `main` push와 pull request에서 Chromium 테스트를 실행합니다. 수동 재실행도 가능하며, 같은 ref의 오래된 중복 실행은 자동 취소됩니다. 실패 시 다음 파일을 7일 동안 artifact로 보관하고, Playwright report가 생성되지 않으면 workflow를 실패 처리합니다.
 
 - Playwright HTML report
 - trace
