@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
 import { assetUrl } from '../api/apiBase';
@@ -17,6 +17,7 @@ export function TalkPanel2({ myProfileId, onDeletePost, onOpenCompose, onOpenRoo
   const [previewProfile, setPreviewProfile] = useState<ProfilePreview | null>(null);
   const [notice, setNotice] = useState('');
   const [openingProfileId, setOpeningProfileId] = useState('');
+  const openingProfileIdRef = useRef('');
   const previewIsMine = Boolean(previewProfile?.profile_id && previewProfile.profile_id === myProfileId);
 
   const openChat = async (profileId: string | null | undefined, nickname: string) => {
@@ -24,8 +25,9 @@ export function TalkPanel2({ myProfileId, onDeletePost, onOpenCompose, onOpenRoo
       setNotice('상대 사용자 정보를 찾지 못했어요. 목록을 새로고침해주세요.');
       return;
     }
-    if (openingProfileId || !confirmPointSpend()) return;
+    if (openingProfileIdRef.current || !confirmPointSpend()) return;
 
+    openingProfileIdRef.current = profileId;
     setOpeningProfileId(profileId);
     setNotice('');
     try {
@@ -35,6 +37,7 @@ export function TalkPanel2({ myProfileId, onDeletePost, onOpenCompose, onOpenRoo
     } catch (error) {
       setNotice(formatApiError(error, '채팅방을 열지 못했어요.'));
     } finally {
+      openingProfileIdRef.current = '';
       setOpeningProfileId('');
     }
   };
