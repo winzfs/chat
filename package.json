@@ -25,7 +25,8 @@
   },
   "devDependencies": {
     "@capacitor/assets": "3.0.5",
-    "@capacitor/cli": "8.4.1"
+    "@capacitor/cli": "8.4.1",
+    "@playwright/test": "1.61.1"
   },
   "packageManager": "pnpm@9.15.0",
   "engines": {
