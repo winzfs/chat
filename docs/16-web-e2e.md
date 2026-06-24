@@ -1,0 +1,52 @@
+# 웹 E2E 자동 회귀 테스트
+
+## 실행 방법
+
+최초 한 번 Chromium을 설치합니다.
+
+```bash
+pnpm exec playwright install chromium
+```
+
+헤드리스 테스트:
+
+```bash
+pnpm e2e
+```
+
+브라우저 화면을 보면서 실행:
+
+```bash
+pnpm e2e:headed
+```
+
+실패 리포트 확인:
+
+```bash
+pnpm e2e:report
+```
+
+## 현재 자동화된 흐름
+
+- 가입 서버 저장 실패 시 가입 화면 유지
+- 가입 서버 저장 성공 후 홈 화면 진입
+- 토크 등록 실패 시 작성 초안 유지
+- ESC로 모달을 닫은 뒤 이전 버튼으로 포커스 복원
+
+테스트는 실제 브라우저에서 앱을 실행하지만 API 응답은 `e2e/helpers/mockRoutes.ts`에서 고정합니다. 따라서 외부 Cloudflare 환경과 무관하게 화면 상태와 사용자 흐름을 재현할 수 있습니다.
+
+## CI
+
+`.github/workflows/web-e2e.yml`이 `main` push와 pull request에서 Chromium 테스트를 실행합니다. 실패 시 다음 파일을 7일 동안 artifact로 보관합니다.
+
+- Playwright HTML report
+- trace
+- 실패 스크린샷
+- 실패 영상
+
+## 테스트 작성 원칙
+
+- CSS 클래스보다 role, label, button name 등 사용자에게 보이는 선택자를 우선합니다.
+- 실패 테스트에서는 입력값이 유지되는지도 확인합니다.
+- 네트워크 응답은 시나리오별로 명시적으로 성공 또는 실패 처리합니다.
+- 하나의 테스트는 하나의 핵심 사용자 결과만 검증합니다.
