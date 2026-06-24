@@ -79,6 +79,8 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - Web E2E 실패 시 HTML report, trace, 스크린샷, 영상을 artifact로 보관
 - 가입·토크·모달·직접대화·메시지 실패·채팅방 나가기의 9개 핵심 흐름 자동 검증
 - 모달 이전 포커스 복원과 ref 기반 1:1 채팅 중복 요청 잠금을 E2E로 검증
+- Web E2E workflow에 수동 재실행, 중복 실행 취소, 명시적 timeout, Playwright report artifact 누락 실패 처리를 추가
+- `pnpm verify`의 클라이언트 안정화 계약에 Web E2E workflow 자동 실행·수동 재실행·고정 런타임·timeout·중복 취소·artifact 검증 조건을 추가
 - 회원 탈퇴 시 프로필·토크·채팅·포인트·마이룸·차단·신고 데이터와 R2 이미지를 정리하는 인증 API 추가
 - 탈퇴 성공 후 앱의 `chitchat.*` 로컬 세션과 프로필 상태를 제거하고 신규 가입 화면으로 복귀
 - 탈퇴 계정의 기존 서명 세션을 차단하는 `revoked_profiles` migration 추가
