@@ -6,6 +6,11 @@ type MockRouteOptions = {
   chatMessageStatus?: number;
   directChatDelayMs?: number;
   leaveRoomStatus?: number;
+  myRoomLoadStatus?: number;
+  myRoomSaveStatus?: number;
+  pointClaimStatus?: number;
+  pointStatusStatus?: number;
+  profileImageStatus?: number;
   profileSyncStatus?: number;
   talkCreateStatus?: number;
   withChatRoom?: boolean;
@@ -31,6 +36,23 @@ const chatRoom = {
   participant_a_nickname: '테스트유저',
   participant_b_id: 'peer-profile',
   participant_b_nickname: '상대유저',
+};
+
+const myRoom = {
+  profile_id: E2E_PROFILE_ID,
+  wallpaper: 'peach',
+  floor: 'cream',
+  items: [],
+  updated_at: '2026-06-24T00:00:00.000Z',
+};
+
+const pointStatus = {
+  balance: 0,
+  today: '2026-06-25',
+  attendance_claimed: false,
+  talk_reward_claimed: false,
+  ad_reward_claimed: false,
+  history: [],
 };
 
 export async function installMockRoutes(page: Page, options: MockRouteOptions = {}) {
@@ -74,6 +96,47 @@ export async function installMockRoutes(page: Page, options: MockRouteOptions = 
       return;
     }
 
+    if (path === '/api/profile-image' && method === 'POST') {
+      const status = options.profileImageStatus ?? 200;
+      await reply(route, status === 200 ? { avatar_url: '/avatars/e2e-avatar.jpg' } : { error: '프로필 사진 업로드 실패' }, status);
+      return;
+    }
+
+    if (path === '/api/profile-image' && method === 'DELETE') {
+      await reply(route, { ok: true });
+      return;
+    }
+
+    if (path === '/api/points' && method === 'GET') {
+      const status = options.pointStatusStatus ?? 200;
+      await reply(route, status === 200 ? pointStatus : { error: '포인트 정보를 불러오지 못했어요.' }, status);
+      return;
+    }
+
+    if (path === '/api/points' && method === 'POST') {
+      const status = options.pointClaimStatus ?? 200;
+      await reply(route, status === 200 ? {
+        awarded: true,
+        amount: 100,
+        balance: 100,
+        today: '2026-06-25',
+        message: '100P를 받았어요.',
+      } : { error: '포인트 보상 실패' }, status);
+      return;
+    }
+
+    if (path === '/api/my-room' && method === 'GET') {
+      const status = options.myRoomLoadStatus ?? 200;
+      await reply(route, status === 200 ? { room: myRoom } : { error: '마이룸을 불러오지 못했어요.' }, status);
+      return;
+    }
+
+    if (path === '/api/my-room' && method === 'POST') {
+      const status = options.myRoomSaveStatus ?? 200;
+      await reply(route, status === 200 ? { room: myRoom } : { error: '마이룸 저장 실패' }, status);
+      return;
+    }
+
     if (path === '/api/talk-posts' && method === 'GET') {
       await reply(route, {
         posts: options.withPeerTalk ? [{
@@ -111,6 +174,7 @@ export async function installMockRoutes(page: Page, options: MockRouteOptions = 
           online: true,
           created_at: '2026-06-24T00:00:00.000Z',
         },
+        point_reward: { awarded: false, amount: 0, balance: 0 },
       } : { error: '토크 등록 실패' }, status);
       return;
     }
