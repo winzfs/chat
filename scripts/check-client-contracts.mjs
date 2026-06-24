@@ -27,6 +27,11 @@ function listSourceFiles(directory) {
   });
 }
 
+const middleware = read('functions/_middleware.ts');
+requireText('functions/_middleware.ts', middleware, "pathname === '/api/chat-rooms'", 'chat room API must verify declared profile_id in middleware');
+requireMatch('functions/_middleware.ts', middleware, /pathname === '\/api\/chat-rooms'[\s\S]*request\.method === 'GET'[\s\S]*url\.searchParams\.get\('profile_id'\)[\s\S]*request\.method === 'POST'[\s\S]*bodyProfileId/, 'chat room middleware must validate both GET query and POST body profile_id');
+requireText('functions/_middleware.ts', middleware, '다른 사용자 채팅방에 접근할 수 없어요.', 'chat room profile mismatch must return a stable user-facing error');
+
 const apiResponse = read('apps/web/src/features/home/api/apiResponse.ts');
 requireText('apps/web/src/features/home/api/apiResponse.ts', apiResponse, 'class ApiResponseError', 'missing shared API error type');
 requireText('apps/web/src/features/home/api/apiResponse.ts', apiResponse, 'formatApiError', 'missing user-facing API error formatter');
