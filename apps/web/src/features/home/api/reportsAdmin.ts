@@ -1,7 +1,9 @@
 import { apiUrl } from './apiBase';
+import { parseApiResponse } from './apiResponse';
 import { getAdminRequestHeaders } from './admin';
 
-export type ReportStatus = 'open' | 'reviewing' | 'closed';
+export type ReportStatus = 'open' | 'reviewing' | 'resolved' | 'dismissed' | 'closed';
+export type SuspensionDays = 0 | 1 | 7 | 30 | -1;
 
 export type AdminReport = {
   id: string;
@@ -12,6 +14,9 @@ export type AdminReport = {
   reason: string;
   detail?: string | null;
   status: ReportStatus;
+  admin_note?: string | null;
+  handled_by?: string | null;
+  handled_at?: string | null;
   created_at: string;
 };
 
@@ -20,18 +25,26 @@ export async function loadReports(status?: ReportStatus) {
   if (status) params.set('status', status);
 
   const response = await fetch(apiUrl(`/api/reports?${params.toString()}`), { headers: getAdminRequestHeaders() });
-  if (!response.ok) return [];
-
-  const data = await response.json() as { reports?: AdminReport[] };
+  const data = await parseApiResponse<{ reports?: AdminReport[] }>(response, '신고 목록을 불러오지 못했어요.');
   return data.reports ?? [];
 }
 
-export async function updateReportStatus(id: string, status: ReportStatus) {
+export async function updateReportAction(input: {
+  id: string;
+  status: ReportStatus;
+  adminNote: string;
+  suspendDays: SuspensionDays;
+}) {
   const response = await fetch(apiUrl('/api/reports'), {
     method: 'PATCH',
     headers: { ...getAdminRequestHeaders(), 'content-type': 'application/json' },
-    body: JSON.stringify({ id, status }),
+    body: JSON.stringify({
+      id: input.id,
+      status: input.status,
+      admin_note: input.adminNote,
+      suspend_days: input.suspendDays,
+    }),
   });
 
-  return response.ok;
+  return parseApiResponse<{ ok?: boolean; suspended?: boolean }>(response, '신고를 처리하지 못했어요.');
 }
