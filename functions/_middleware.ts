@@ -1,6 +1,6 @@
 import { authenticatedProfileId, jsonError } from './_shared/auth';
 
-type Env = { AUTH_SECRET?: string };
+type Env = { AUTH_SECRET?: string; DB: D1Database };
 
 const publicGetPaths = new Set([
   '/api/talk-posts',
@@ -15,6 +15,18 @@ function bodyProfileId(body: unknown) {
     : '';
 }
 
+async function isRevokedProfile(env: Env, profileId: string) {
+  try {
+    const row = await env.DB.prepare(
+      'select profile_id from revoked_profiles where profile_id = ? limit 1',
+    ).bind(profileId).first();
+    return Boolean(row);
+  } catch {
+    // The migration may not be applied in local/legacy environments yet.
+    return false;
+  }
+}
+
 export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
   const url = new URL(request.url);
   const pathname = url.pathname.replace(/\/$/, '') || '/';
@@ -27,6 +39,10 @@ export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
   const profileId = await authenticatedProfileId(env, request);
   if (!profileId) {
     return jsonError(env.AUTH_SECRET ? '로그인이 필요해요.' : '서버 AUTH_SECRET 설정이 필요해요.', env.AUTH_SECRET ? 401 : 503);
+  }
+
+  if (await isRevokedProfile(env, profileId)) {
+    return jsonError('탈퇴 처리된 계정이에요. 앱을 다시 시작해주세요.', 401);
   }
 
   if (pathname === '/api/profile-sync' && request.method === 'POST') {
