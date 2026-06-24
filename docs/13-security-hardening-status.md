@@ -1,6 +1,6 @@
 # 보안 및 안정화 작업 현황
 
-마지막 갱신: 2026-06-24
+마지막 갱신: 2026-06-25
 
 ## 배포 전 필수 설정
 
@@ -31,6 +31,7 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - 프로필·최근 사용자·토크·포인트·마이룸 저장 요청자 검증
 - 관리자 본인 확인 API의 검증된 세션 ID 사용
 - 신고 작성자 ID 검증
+- 신고 POST의 본문 `reporter_id` 대신 인증 세션 ID를 사용하도록 강화
 - 프로필 동기화의 닉네임 기반 대량 수정 제거
 - 프로필 동기화 서버 입력 검증과 업로드 이미지 소유권 검사
 - 프로필·채팅 이미지 JPEG/PNG/WebP 파일 시그니처 검사
@@ -77,7 +78,7 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - Playwright 기반 Web E2E workflow 추가
 - Web E2E를 프로덕션 빌드와 preview 서버 기준으로 실행
 - Web E2E 실패 시 HTML report, trace, 스크린샷, 영상을 artifact로 보관
-- 가입·토크·모달·직접대화·메시지 실패·채팅방 나가기의 9개 핵심 흐름 자동 검증
+- 가입·토크·모달·직접대화·메시지 실패·채팅방 나가기의 핵심 흐름 자동 검증
 - 모달 이전 포커스 복원과 ref 기반 1:1 채팅 중복 요청 잠금을 E2E로 검증
 - Web E2E workflow에 수동 재실행, 중복 실행 취소, 명시적 timeout, Playwright report artifact 누락 실패 처리를 추가
 - `pnpm verify`의 클라이언트 안정화 계약에 Web E2E workflow 자동 실행·수동 재실행·고정 런타임·timeout·중복 취소·artifact 검증 조건을 추가
@@ -87,6 +88,12 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - 미들웨어에서 폐기된 프로필 ID의 비공개 API 접근을 즉시 401로 차단
 - 회원 탈퇴 실패·성공 E2E에서 확인창/로컬 상태뿐 아니라 DELETE 요청의 Bearer 인증 헤더까지 검증
 - `pnpm verify`의 클라이언트 안정화 계약에 회원 탈퇴 E2E 인증·오류·로컬 상태 정리 조건을 추가
+- 신고 관리자 메모와 사용자 정지를 위한 `0006_moderation.sql` migration 추가
+- 관리자 신고 화면에 접수·검토중·처리완료·기각 상태와 운영자 메모 입력 추가
+- 관리자 신고 화면에 1일·7일·30일·무기한 사용자 정지 조치 추가
+- 신고 처리자와 처리 시각을 서버에 기록
+- 미들웨어에서 유효한 사용자 정지를 확인하고 비공개 API 접근을 즉시 403으로 차단
+- D1 Schema Inspect의 이전 가상 테이블명을 실제 migration 테이블명으로 수정
 
 ## 남은 작업
 
@@ -97,6 +104,8 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - 운영 D1의 `sqlite_master`와 `pragma table_info(...)` 결과 확인 후 기존 핵심 테이블의 추가 migration 작성
 - 신규 마이그레이션 적용 후 API 런타임 DDL 제거
 - 회원 탈퇴 Preview 회귀에서 데이터·R2 이미지 삭제와 기존 세션 401 차단 확인
+- 관리자 신고 처리 Preview 회귀에서 상태·메모·정지 저장과 정지 사용자 403 차단 확인
+- 관리자 정지 해제와 콘텐츠 삭제 기능 추가
 - 프로필 사진 실패, 마이룸 저장 차단, 포인트 보상 실패 흐름의 Web E2E 확장
 - Android debug APK workflow 실행 결과와 artifact를 확인하고, APK 설치 후 실기기 회귀 테스트
 
