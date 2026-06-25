@@ -7,6 +7,7 @@ import { defaultProfile, loadMyProfile, saveMyProfile, type MyProfile } from './
 import { syncProfile } from './api/profileSync';
 import { touchRecentUser } from './api/recentUsers';
 import { useAndroidBackButton } from './api/useAndroidBackButton';
+import { AccountDeletionCard } from './components/AccountDeletionCard';
 import { ChatRoomsList } from './components/ChatRoomsList';
 import { RecentUsersPanel } from './components/RecentUsersPanel';
 import { ProfileSettingsPanel } from './components/ProfileSettingsPanel';
@@ -181,7 +182,12 @@ export function HomeScreenNext() {
         {activeTab === 'talk' && <TalkPanel2 posts={posts} myProfileId={getProfileId()} onDeletePost={removeTalk} onOpenCompose={() => setIsComposeOpen(true)} onOpenRoom={openDirectRoom} />}
         {activeTab === 'people' && <RecentUsersPanel onOpenRoom={openDirectRoom} />}
         {activeTab === 'chats' && <ChatRoomsList key={chatListKey} initialRoom={openRoom} />}
-        {activeTab === 'settings' && <ProfileSettingsPanel myProfile={profile} onSave={saveProfile} />}
+        {activeTab === 'settings' && (
+          <>
+            <ProfileSettingsPanel myProfile={profile} onSave={saveProfile} />
+            <AccountDeletionCard />
+          </>
+        )}
       </section>
       <nav className="bottom-nav" aria-label="주요 메뉴">{tabs.map((tab) => <button aria-current={activeTab === tab.id ? 'page' : undefined} className={activeTab === tab.id ? 'nav-item is-active' : 'nav-item'} key={tab.id} onClick={() => changeTab(tab.id)} type="button"><span aria-hidden="true">{tab.icon}</span>{tab.label}{tab.id === 'chats' && hasNewChat ? <em className="nav-dot" aria-label="새 채팅 알림" /> : null}</button>)}</nav>
       <TalkComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} onSubmit={submitTalk} />
