@@ -22,6 +22,7 @@ D1 Schema Inspect workflow를 사용하려면 GitHub repository secrets에 `CLOU
 - 자동 Web Verify, Web E2E, Android debug APK, Pages Auth/API Smoke, D1 Schema Inspect workflow의 수동 재실행·timeout·artifact 실패 조건 보강
 - 회원 탈퇴 실패/성공 E2E와 DELETE 인증 요청 검증 추가
 - 프로필 저장 실패, 프로필 사진 업로드 실패, 마이룸 로드 실패 저장 차단, 포인트 보상 실패 흐름의 Web E2E 확장
+- `pnpm verify`에 lockfile, package manager, Node, workflow install, exact dependency pin 계약 검사 추가
 
 ## 남은 작업
 
