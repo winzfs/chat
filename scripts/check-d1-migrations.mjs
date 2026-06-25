@@ -24,6 +24,14 @@ const expectedMigrations = [
   '0006_moderation.sql',
 ];
 
+const legacyTablesToInspect = [
+  'recent_users',
+  'talk_posts',
+  'chat_rooms',
+  'chat_messages',
+  'my_rooms',
+];
+
 function read(path) {
   return readFileSync(path, 'utf8');
 }
@@ -104,10 +112,17 @@ for (const text of requiredApplyWorkflowTexts) {
   if (!applyWorkflow.includes(text)) fail(`.github/workflows/d1-migrations-apply.yml missing required safety text: ${text}`);
 }
 
+for (const table of legacyTablesToInspect) {
+  if (!applyWorkflow.includes(table)) {
+    fail(`.github/workflows/d1-migrations-apply.yml must capture schema report for legacy table: ${table}`);
+  }
+}
+
 const requiredStatusTexts = [
   '포인트·채팅 상태·차단·신고·1:1 요청 잠금 테이블의 버전형 D1 migration 추가',
   'D1 migration Preview/Production 적용 runbook 추가',
   'D1 migration apply workflow 추가',
+  'D1 migration apply workflow schema artifact가 기존 핵심 테이블 table_info까지 캡처하도록 보강',
   '신규 D1 migration을 Preview와 Production 데이터베이스에 적용',
   '운영 D1의 `sqlite_master`와 `pragma table_info(...)` 결과 확인 후 기존 핵심 테이블의 추가 migration 작성',
   '탈퇴 계정의 기존 서명 세션을 차단하는 `revoked_profiles` migration 추가',
