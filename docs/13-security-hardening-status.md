@@ -22,6 +22,7 @@ D1 Schema Inspect와 D1 Migrations Apply workflow를 사용하려면 GitHub repo
 - 탈퇴 계정의 기존 서명 세션을 차단하는 `revoked_profiles` migration 추가
 - 신고 관리자 메모와 사용자 정지를 위한 `0006_moderation.sql` migration 추가
 - 자동 Web Verify, Web E2E, Android debug APK, Pages Auth/API Smoke, D1 Schema Inspect workflow의 수동 재실행·timeout·artifact 실패 조건 보강
+- Pages API smoke가 채팅방 목록뿐 아니라 `POST /api/chat-rooms`의 세션/profile_id 불일치 차단까지 검증하도록 보강
 - 회원 탈퇴 실패/성공 E2E와 DELETE 인증 요청 검증 추가
 - 프로필 저장 실패, 프로필 사진 업로드 실패, 마이룸 로드 실패 저장 차단, 포인트 보상 실패 흐름의 Web E2E 확장
 - `pnpm verify`에 lockfile, package manager, Node, workflow install, exact dependency pin 계약 검사 추가
@@ -29,7 +30,7 @@ D1 Schema Inspect와 D1 Migrations Apply workflow를 사용하려면 GitHub repo
 ## 남은 작업
 
 - Cloudflare Production과 Preview 환경변수 적용 후 Pages auth smoke workflow를 실제 배포 URL로 실행하고 실패 로그 수정
-- Pages API smoke workflow를 실제 배포 URL로 실행하고 채팅방 목록 권한·CORS 실패 로그 수정
+- Pages API smoke workflow를 실제 배포 URL로 실행하고 채팅방 목록·생성 권한/CORS 실패 로그 수정
 - 신규 D1 migration을 Preview와 Production 데이터베이스에 적용하고 schema artifact 확인
 - D1 Schema Inspect workflow를 Preview와 Production 데이터베이스 대상으로 실행하고 artifact 확인
 - 운영 D1의 `sqlite_master`와 `pragma table_info(...)` 결과 확인 후 기존 핵심 테이블의 추가 migration 작성
