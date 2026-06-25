@@ -46,12 +46,12 @@ export function ReportsAdminPanel({ onClose }: { onClose: () => void }) {
   const [isLoading, setIsLoading] = useState(true);
   const [reviewData, setReviewData] = useState<ReviewData>(null);
   const [reviewTargetId, setReviewTargetId] = useState('');
-  const [processingId, setProcessingId] = useState('');
+  const [processingIds, setProcessingIds] = useState<Set<string>>(() => new Set());
   const [deletingContentId, setDeletingContentId] = useState('');
 
-  const refreshReports = async () => {
+  const refreshReports = async (clearNotice = true) => {
     setIsLoading(true);
-    setNotice('');
+    if (clearNotice) setNotice('');
     try {
       setReports(await loadReports(statusFilter === 'all' ? undefined : statusFilter));
     } catch (error) {
@@ -67,18 +67,22 @@ export function ReportsAdminPanel({ onClose }: { onClose: () => void }) {
   }, [statusFilter]);
 
   const processReport = async (report: AdminReport, input: { status: ReportStatus; adminNote: string; suspendDays: SuspensionDays }) => {
-    if (processingId) return;
+    if (processingIds.has(report.id)) return;
 
-    setProcessingId(report.id);
+    setProcessingIds((current) => new Set(current).add(report.id));
     setNotice('');
     try {
       const result = await updateReportAction({ id: report.id, ...input });
+      await refreshReports(false);
       setNotice(result.suspended ? '신고 처리와 사용자 정지를 완료했어요.' : '신고 처리를 저장했어요.');
-      await refreshReports();
     } catch (error) {
       setNotice(errorMessage(error, '신고를 처리하지 못했어요.'));
     } finally {
-      setProcessingId('');
+      setProcessingIds((current) => {
+        const next = new Set(current);
+        next.delete(report.id);
+        return next;
+      });
     }
   };
 
@@ -101,8 +105,8 @@ export function ReportsAdminPanel({ onClose }: { onClose: () => void }) {
     setNotice('콘텐츠를 삭제하는 중...');
     try {
       await deleteModeratedContent(contentType, id);
-      setNotice(contentType === 'talk_post' ? '토크를 삭제했어요.' : '채팅 메시지를 삭제 처리했어요.');
       if (reviewTargetId) setReviewData(await loadUserReview(reviewTargetId));
+      setNotice(contentType === 'talk_post' ? '토크를 삭제했어요.' : '채팅 메시지를 삭제 처리했어요.');
     } catch (error) {
       setNotice(errorMessage(error, '콘텐츠를 삭제하지 못했어요.'));
     } finally {
@@ -146,7 +150,7 @@ export function ReportsAdminPanel({ onClose }: { onClose: () => void }) {
 
       {reports.map((report) => (
         <ReportModerationCard
-          isProcessing={processingId === report.id}
+          isProcessing={processingIds.has(report.id)}
           key={report.id}
           onOpenReview={() => void openReview(report)}
           onProcess={(input) => void processReport(report, input)}
@@ -163,9 +167,16 @@ function ReportModerationCard({ isProcessing, onOpenReview, onProcess, report }:
   onProcess: (input: { status: ReportStatus; adminNote: string; suspendDays: SuspensionDays }) => void;
   report: AdminReport;
 }) {
-  const [status, setStatus] = useState<ReportStatus>(report.status === 'closed' ? 'resolved' : report.status);
+  const normalizedStatus = report.status === 'closed' ? 'resolved' : report.status;
+  const [status, setStatus] = useState<ReportStatus>(normalizedStatus);
   const [adminNote, setAdminNote] = useState(report.admin_note ?? '');
   const [suspendDays, setSuspendDays] = useState<SuspensionDays>(0);
+
+  useEffect(() => {
+    setStatus(normalizedStatus);
+    setAdminNote(report.admin_note ?? '');
+    setSuspendDays(0);
+  }, [normalizedStatus, report.admin_note, report.id]);
 
   return (
     <Card className="person-card">
@@ -216,20 +227,8 @@ function ReviewSummary({ data, deletingContentId, onClose, onDeleteContent }: {
       </div>
       <p>소개: {String(user.bio ?? '소개 없음')}</p>
       <p>토크 {talks.length}개 · 채팅방 {rooms.length}개 · 작성 메시지 {sentMessages.length}개</p>
-      <ReviewList
-        deletingContentId={deletingContentId}
-        items={talks}
-        onDelete={(id) => onDeleteContent('talk_post', id)}
-        textKey="text"
-        title="최근 토크"
-      />
-      <ReviewList
-        deletingContentId={deletingContentId}
-        items={sentMessages}
-        onDelete={(id) => onDeleteContent('chat_message', id)}
-        textKey="body"
-        title="최근 작성 메시지"
-      />
+      <ReviewList deletingContentId={deletingContentId} items={talks} onDelete={(id) => onDeleteContent('talk_post', id)} textKey="text" title="최근 토크" />
+      <ReviewList deletingContentId={deletingContentId} items={sentMessages} onDelete={(id) => onDeleteContent('chat_message', id)} textKey="body" title="최근 작성 메시지" />
       <ReviewList title="관련 채팅방" items={rooms} textKey="last_message" />
       <button type="button" onClick={onClose}>닫기</button>
     </Card>
@@ -256,7 +255,7 @@ function ReviewList({ deletingContentId = '', items, onDelete, textKey, title }:
             <p>{String(item[textKey] ?? '내용 없음')}</p>
             {createdAt ? <p>{new Date(createdAt).toLocaleString()}</p> : null}
             {onDelete && id ? (
-              <button disabled={deletingContentId === id} onClick={() => onDelete(id)} type="button">
+              <button disabled={Boolean(deletingContentId)} onClick={() => onDelete(id)} type="button">
                 {deletingContentId === id ? '삭제 중...' : '콘텐츠 삭제'}
               </button>
             ) : null}
