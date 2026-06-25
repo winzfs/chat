@@ -29,7 +29,7 @@ D1 Schema Inspect와 D1 Migrations Apply workflow를 사용하려면 GitHub repo
 
 - Cloudflare Production과 Preview 환경변수 적용 후 Pages auth smoke workflow를 실제 배포 URL로 실행하고 실패 로그 수정
 - Pages API smoke workflow를 실제 배포 URL로 실행하고 채팅방 목록 권한·CORS 실패 로그 수정
-- D1 Migrations Apply workflow를 Preview와 Production 데이터베이스 대상으로 실행하고 schema artifact 확인
+- 신규 D1 migration을 Preview와 Production 데이터베이스에 적용하고 schema artifact 확인
 - D1 Schema Inspect workflow를 Preview와 Production 데이터베이스 대상으로 실행하고 artifact 확인
 - 운영 D1의 `sqlite_master`와 `pragma table_info(...)` 결과 확인 후 기존 핵심 테이블의 추가 migration 작성
 - 신규 마이그레이션 적용 후 API 런타임 DDL 제거
