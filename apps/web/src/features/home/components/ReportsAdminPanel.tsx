@@ -3,6 +3,7 @@ import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
 import { deleteModeratedContent, loadUserReview, type ModeratedContentType } from '../api/admin';
 import {
+  clearUserSuspension,
   loadReports,
   updateReportAction,
   type AdminReport,
@@ -47,6 +48,7 @@ export function ReportsAdminPanel({ onClose }: { onClose: () => void }) {
   const [reviewData, setReviewData] = useState<ReviewData>(null);
   const [reviewTargetId, setReviewTargetId] = useState('');
   const [processingIds, setProcessingIds] = useState<Set<string>>(() => new Set());
+  const [clearingSuspensionIds, setClearingSuspensionIds] = useState<Set<string>>(() => new Set());
   const [deletingContentId, setDeletingContentId] = useState('');
 
   const refreshReports = async (clearNotice = true) => {
@@ -79,6 +81,25 @@ export function ReportsAdminPanel({ onClose }: { onClose: () => void }) {
       setNotice(errorMessage(error, '신고를 처리하지 못했어요.'));
     } finally {
       setProcessingIds((current) => {
+        const next = new Set(current);
+        next.delete(report.id);
+        return next;
+      });
+    }
+  };
+
+  const clearSuspension = async (report: AdminReport) => {
+    if (clearingSuspensionIds.has(report.id)) return;
+
+    setClearingSuspensionIds((current) => new Set(current).add(report.id));
+    setNotice('');
+    try {
+      await clearUserSuspension(report.reported_id);
+      setNotice('사용자 정지를 해제했어요.');
+    } catch (error) {
+      setNotice(errorMessage(error, '사용자 정지를 해제하지 못했어요.'));
+    } finally {
+      setClearingSuspensionIds((current) => {
         const next = new Set(current);
         next.delete(report.id);
         return next;
@@ -150,8 +171,10 @@ export function ReportsAdminPanel({ onClose }: { onClose: () => void }) {
 
       {reports.map((report) => (
         <ReportModerationCard
+          isClearingSuspension={clearingSuspensionIds.has(report.id)}
           isProcessing={processingIds.has(report.id)}
           key={report.id}
+          onClearSuspension={() => void clearSuspension(report)}
           onOpenReview={() => void openReview(report)}
           onProcess={(input) => void processReport(report, input)}
           report={report}
@@ -161,8 +184,10 @@ export function ReportsAdminPanel({ onClose }: { onClose: () => void }) {
   );
 }
 
-function ReportModerationCard({ isProcessing, onOpenReview, onProcess, report }: {
+function ReportModerationCard({ isClearingSuspension, isProcessing, onClearSuspension, onOpenReview, onProcess, report }: {
+  isClearingSuspension: boolean;
   isProcessing: boolean;
+  onClearSuspension: () => void;
   onOpenReview: () => void;
   onProcess: (input: { status: ReportStatus; adminNote: string; suspendDays: SuspensionDays }) => void;
   report: AdminReport;
@@ -171,6 +196,7 @@ function ReportModerationCard({ isProcessing, onOpenReview, onProcess, report }:
   const [status, setStatus] = useState<ReportStatus>(normalizedStatus);
   const [adminNote, setAdminNote] = useState(report.admin_note ?? '');
   const [suspendDays, setSuspendDays] = useState<SuspensionDays>(0);
+  const isBusy = isProcessing || isClearingSuspension;
 
   useEffect(() => {
     setStatus(normalizedStatus);
@@ -193,14 +219,15 @@ function ReportModerationCard({ isProcessing, onOpenReview, onProcess, report }:
       {report.handled_at && <p>최근 처리: {new Date(report.handled_at).toLocaleString()}</p>}
 
       <div className="profile-form">
-        <label>처리 상태<select disabled={isProcessing} value={status} onChange={(event) => setStatus(event.target.value as ReportStatus)}>{statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-        <label>운영자 메모<textarea disabled={isProcessing} maxLength={1000} placeholder="판단 근거와 조치 내용을 기록하세요." value={adminNote} onChange={(event) => setAdminNote(event.target.value)} /></label>
-        <label>사용자 정지<select disabled={isProcessing} value={suspendDays} onChange={(event) => setSuspendDays(Number(event.target.value) as SuspensionDays)}>{suspensionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+        <label>처리 상태<select disabled={isBusy} value={status} onChange={(event) => setStatus(event.target.value as ReportStatus)}>{statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+        <label>운영자 메모<textarea disabled={isBusy} maxLength={1000} placeholder="판단 근거와 조치 내용을 기록하세요." value={adminNote} onChange={(event) => setAdminNote(event.target.value)} /></label>
+        <label>사용자 정지<select disabled={isBusy} value={suspendDays} onChange={(event) => setSuspendDays(Number(event.target.value) as SuspensionDays)}>{suspensionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
       </div>
 
       <div className="talk-actions">
-        <Button disabled={isProcessing} onClick={onOpenReview} type="button">대상 보기</Button>
-        <Button disabled={isProcessing} onClick={() => onProcess({ status, adminNote, suspendDays })} type="button">{isProcessing ? '저장 중...' : '처리 저장'}</Button>
+        <Button disabled={isBusy} onClick={onOpenReview} type="button">대상 보기</Button>
+        <Button disabled={isBusy} onClick={onClearSuspension} type="button">{isClearingSuspension ? '해제 중...' : '정지 해제'}</Button>
+        <Button disabled={isBusy} onClick={() => onProcess({ status, adminNote, suspendDays })} type="button">{isProcessing ? '저장 중...' : '처리 저장'}</Button>
       </div>
     </Card>
   );
