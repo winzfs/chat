@@ -146,6 +146,9 @@ requireText('e2e/account-deletion.spec.ts', accountDeletionE2E, 'Bearer ${E2E_SE
 const settingsResilienceE2E = read('e2e/settings-resilience.spec.ts');
 requireText('e2e/settings-resilience.spec.ts', settingsResilienceE2E, 'profileSyncStatus: 500', 'profile save failure must stay covered by E2E');
 requireText('e2e/settings-resilience.spec.ts', settingsResilienceE2E, '프로필 저장 실패', 'profile save failure must surface the server error');
+requireText('e2e/settings-resilience.spec.ts', settingsResilienceE2E, 'profileImageStatus: 500', 'profile image upload failure must stay covered by E2E');
+requireText('e2e/settings-resilience.spec.ts', settingsResilienceE2E, '프로필 사진 업로드 실패', 'profile image upload failure must surface the server error');
+requireText('e2e/settings-resilience.spec.ts', settingsResilienceE2E, "'/api/profile-sync', 'POST'", 'profile image upload failure must assert profile save is not attempted');
 requireText('e2e/settings-resilience.spec.ts', settingsResilienceE2E, 'pointClaimStatus: 500', 'point reward failure must stay covered by E2E');
 requireText('e2e/settings-resilience.spec.ts', settingsResilienceE2E, '포인트 보상 실패', 'point reward failure must surface the server error');
 requireText('e2e/settings-resilience.spec.ts', settingsResilienceE2E, 'myRoomLoadStatus: 500', 'my-room load failure must stay covered by E2E');
