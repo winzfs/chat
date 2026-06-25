@@ -35,6 +35,7 @@ API 요청마다 실행하던 `create table if not exists`와 호환용 스키�
 - migration 번호가 중복되지 않는지
 - 현재 배포 대상 migration 6개가 모두 존재하는지
 - checked migration에 `drop table`, `delete from`, `truncate`, `alter table ... drop` 같은 파괴적 SQL이 없는지
+- D1 migration apply workflow가 수동 실행, 명시적 적용 확인, 대상 이름 검증, 고정 Wrangler 버전, 적용 후 schema artifact 검사를 유지하는지
 - 이 runbook과 `docs/13-security-hardening-status.md`가 D1 적용 상태를 계속 언급하는지
 
 이 검사는 실제 Preview/Production 데이터베이스에 SQL을 적용하지 않습니다. 배포 전에는 아래 절차대로 Cloudflare D1에 직접 적용하고 회귀 확인을 해야 합니다.
@@ -51,17 +52,31 @@ API 요청마다 실행하던 `create table if not exists`와 호환용 스키�
 
 workflow는 `scripts/check-d1-schema-report.mjs`를 실행해 새 migration 테이블이 실제 DB에 존재하는지 확인합니다. 기존 핵심 테이블은 artifact의 `table-info-*.json`을 보고 추가 migration 작성 여부를 판단합니다.
 
+## D1 migration apply workflow
+
+수동 실행 workflow인 `.github/workflows/d1-migrations-apply.yml`은 번호 순서대로 repository의 D1 migration을 실제 D1 데이터베이스에 적용합니다.
+
+실행 전 아래 조건을 확인합니다.
+
+- 대상 Preview 또는 Production D1 데이터베이스를 백업하거나 내보냅니다.
+- GitHub repository secrets에 `CLOUDFLARE_ACCOUNT_ID`와 `CLOUDFLARE_API_TOKEN`이 등록되어 있어야 합니다.
+- workflow 입력의 `database_name`은 Cloudflare D1 데이터베이스 이름이나 UUID만 사용합니다.
+- `target_environment`를 Preview 또는 Production 중 하나로 선택합니다.
+- 백업과 대상 확인이 끝난 경우에만 `confirm_apply`를 true로 지정합니다.
+
+workflow는 적용 전 `pnpm check:d1-migrations`를 실행하고, 적용 후 `sqlite_master`와 migration 대상 테이블의 `pragma table_info(...)`를 `d1-migrations-<environment>` artifact로 업로드합니다. artifact가 없거나 schema report 검사가 실패하면 workflow가 실패합니다.
+
 ## 적용 순서
 
 1. Cloudflare D1 데이터베이스를 백업하거나 내보냅니다.
-2. Preview 데이터베이스에 SQL 파일을 번호 순서대로 적용합니다.
+2. Preview 데이터베이스에 SQL 파일을 번호 순서대로 적용합니다. 가능하면 D1 Migrations Apply workflow를 `target_environment=preview`, `confirm_apply=true`로 실행합니다.
 3. D1 Schema Inspect workflow를 Preview DB 대상으로 실행하고 artifact를 확인합니다.
 4. 아래 회귀 항목을 Preview 배포에서 확인합니다.
-5. 같은 파일을 Production 데이터베이스에 같은 순서로 적용합니다.
+5. 같은 파일을 Production 데이터베이스에 같은 순서로 적용합니다. 가능하면 D1 Migrations Apply workflow를 `target_environment=production`, `confirm_apply=true`로 실행합니다.
 6. D1 Schema Inspect workflow를 Production DB 대상으로 실행하고 artifact를 보관합니다.
 7. Production 확인이 끝난 뒤에만 API의 런타임 테이블 생성 코드를 제거합니다.
 
-Cloudflare 대시보드의 D1 SQL 실행 화면 또는 프로젝트에서 사용하는 Wrangler 명령으로 각 파일을 적용합니다. 저장소에는 D1 데이터베이스 이름과 Wrangler 설정 파일이 없으므로 실제 데이터베이스 이름은 Cloudflare Pages 프로젝트 설정에서 확인해야 합니다.
+Cloudflare 대시보드의 D1 SQL 실행 화면 또는 프로젝트에서 사용하는 Wrangler 명령으로 각 파일을 적용할 수도 있습니다. 저장소에는 D1 데이터베이스 이름과 Wrangler 설정 파일이 없으므로 실제 데이터베이스 이름은 Cloudflare Pages 프로젝트 설정에서 확인해야 합니다.
 
 ## Preview 회귀 확인
 
