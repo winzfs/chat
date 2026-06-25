@@ -12,6 +12,7 @@ const requiredTables = [
   'chat_room_exits',
   'user_blocks',
   'reports',
+  'report_moderation',
   'request_gates',
   'revoked_profiles',
   'user_suspensions',
