@@ -104,6 +104,18 @@ export const onRequestDelete: PagesFunction<Env> = async ({ env, request }) => {
   if (tables.has('user_blocks')) {
     statements.push(env.DB.prepare('delete from user_blocks where blocker_id = ? or blocked_id = ?').bind(profileId, profileId));
   }
+
+  if (tables.has('reports') && tables.has('report_moderation')) {
+    statements.push(
+      env.DB.prepare(
+        `delete from report_moderation
+         where report_id in (
+           select id from reports where reporter_id = ? or reported_id = ?
+         )`,
+      ).bind(profileId, profileId),
+    );
+  }
+
   if (tables.has('reports')) {
     statements.push(env.DB.prepare('delete from reports where reporter_id = ? or reported_id = ?').bind(profileId, profileId));
   }
