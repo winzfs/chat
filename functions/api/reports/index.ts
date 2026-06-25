@@ -48,24 +48,19 @@ async function ensureModerationSchema(env: Env) {
       reason text not null,
       detail text,
       status text not null default 'open',
-      admin_note text,
-      handled_by text,
-      handled_at text,
       created_at text not null default (datetime('now'))
     )`,
   ).run();
 
-  for (const query of [
-    'alter table reports add column admin_note text',
-    'alter table reports add column handled_by text',
-    'alter table reports add column handled_at text',
-  ]) {
-    try {
-      await env.DB.prepare(query).run();
-    } catch {
-      // Existing environments may already have the column.
-    }
-  }
+  await env.DB.prepare(
+    `create table if not exists report_moderation (
+      report_id text primary key,
+      admin_note text,
+      handled_by text,
+      handled_at text,
+      updated_at text not null default (datetime('now'))
+    )`,
+  ).run();
 
   await env.DB.prepare(
     `create table if not exists user_suspensions (
@@ -80,6 +75,7 @@ async function ensureModerationSchema(env: Env) {
 
   await env.DB.prepare('create index if not exists reports_status_created_idx on reports(status, created_at desc)').run();
   await env.DB.prepare('create index if not exists reports_reported_idx on reports(reported_id, created_at desc)').run();
+  await env.DB.prepare('create index if not exists report_moderation_handled_at_idx on report_moderation(handled_at)').run();
   await env.DB.prepare('create index if not exists user_suspensions_until_idx on user_suspensions(suspended_until)').run();
 }
 
@@ -94,12 +90,14 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const url = new URL(request.url);
   const status = url.searchParams.get('status')?.trim() ?? '';
   const limit = Math.min(Number(url.searchParams.get('limit') ?? 50) || 50, 100);
-  const select = `select id, reporter_id, reported_id, reported_nickname, room_id, reason, detail,
-                         status, admin_note, handled_by, handled_at, created_at
-                  from reports`;
+  const select = `select r.id, r.reporter_id, r.reported_id, r.reported_nickname, r.room_id,
+                         r.reason, r.detail, r.status, r.created_at,
+                         m.admin_note, m.handled_by, m.handled_at
+                  from reports r
+                  left join report_moderation m on m.report_id = r.id`;
   const query = status && allowedStatuses.has(status)
-    ? env.DB.prepare(`${select} where status = ? order by created_at desc limit ?`).bind(status, limit)
-    : env.DB.prepare(`${select} order by created_at desc limit ?`).bind(limit);
+    ? env.DB.prepare(`${select} where r.status = ? order by r.created_at desc limit ?`).bind(status, limit)
+    : env.DB.prepare(`${select} order by r.created_at desc limit ?`).bind(limit);
 
   const { results } = await query.all();
   return Response.json({ reports: results ?? [] });
@@ -174,11 +172,16 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, request }) => {
 
   const handled = status === 'resolved' || status === 'dismissed' || status === 'closed';
   const statements: D1PreparedStatement[] = [
+    env.DB.prepare('update reports set status = ? where id = ?').bind(status, id),
     env.DB.prepare(
-      `update reports
-       set status = ?, admin_note = ?, handled_by = ?, handled_at = ?
-       where id = ?`,
-    ).bind(status, adminNote, adminId, handled ? new Date().toISOString() : null, id),
+      `insert into report_moderation (report_id, admin_note, handled_by, handled_at, updated_at)
+       values (?, ?, ?, ?, datetime('now'))
+       on conflict(report_id) do update set
+         admin_note = excluded.admin_note,
+         handled_by = excluded.handled_by,
+         handled_at = excluded.handled_at,
+         updated_at = datetime('now')`,
+    ).bind(id, adminNote, adminId, handled ? new Date().toISOString() : null),
   ];
 
   if (suspendDays !== 0) {
