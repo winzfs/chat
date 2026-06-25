@@ -24,8 +24,9 @@ API 요청마다 실행하던 `create table if not exists`와 호환용 스키�
    - 회원 탈퇴한 프로필 ID 폐기 기록
    - 기존 HMAC 서명 세션의 즉시 재사용 차단
 6. `migrations/0006_moderation.sql`
-   - 신고 관리자 메모·처리자·처리 시각
-   - 사용자 기간·무기한 정지 기록
+   - 신고 관리자 메모·처리자·처리 시각을 저장하는 `report_moderation`
+   - 사용자 기간·무기한 정지를 저장하는 `user_suspensions`
+   - 기존 `reports` 테이블을 `ALTER TABLE`하지 않아 재실행 가능
 
 ## 자동 검증
 
@@ -36,7 +37,7 @@ API 요청마다 실행하던 `create table if not exists`와 호환용 스키�
 - 현재 배포 대상 migration 6개가 모두 존재하는지
 - checked migration에 `drop table`, `delete from`, `truncate`, `alter table ... drop` 같은 파괴적 SQL이 없는지
 - D1 migration apply workflow가 수동 실행, 명시적 적용 확인, 대상 이름 검증, 고정 Wrangler 버전, 적용 후 schema artifact 검사를 유지하는지
-- D1 migration apply workflow가 새 migration 테이블과 기존 핵심 테이블의 `pragma table_info(...)`를 모두 artifact에 포함하는지
+- D1 migration apply workflow가 신규 migration 테이블과 기존 핵심 테이블의 `pragma table_info(...)`를 모두 artifact에 포함하는지
 - 이 runbook과 `docs/13-security-hardening-status.md`가 D1 적용 상태를 계속 언급하는지
 
 이 검사는 실제 Preview/Production 데이터베이스에 SQL을 적용하지 않습니다. 배포 전에는 아래 절차대로 Cloudflare D1에 직접 적용하고 회귀 확인을 해야 합니다.
@@ -51,7 +52,21 @@ API 요청마다 실행하던 `create table if not exists`와 호환용 스키�
 
 실행 전 GitHub repository secrets에 `CLOUDFLARE_ACCOUNT_ID`와 `CLOUDFLARE_API_TOKEN`을 등록합니다. workflow 입력의 `database_name`에는 Cloudflare D1 데이터베이스 이름이나 UUID를 넣고, `target_environment`는 artifact 구분용으로 Preview 또는 Production을 선택합니다.
 
-workflow는 `scripts/check-d1-schema-report.mjs`를 실행해 새 migration 테이블이 실제 DB에 존재하는지 확인합니다. 기존 핵심 테이블은 artifact의 `table-info-*.json`을 보고 추가 migration 작성 여부를 판단합니다.
+workflow는 `scripts/check-d1-schema-report.mjs`를 실행해 다음 신규 테이블을 포함한 migration 결과를 확인합니다.
+
+- `user_points`
+- `point_transactions`
+- `daily_point_claims`
+- `chat_room_reads`
+- `chat_room_exits`
+- `user_blocks`
+- `reports`
+- `report_moderation`
+- `request_gates`
+- `revoked_profiles`
+- `user_suspensions`
+
+기존 핵심 테이블은 artifact의 `table-info-*.json`을 보고 추가 migration 작성 여부를 판단합니다.
 
 ## D1 migration apply workflow
 
@@ -89,15 +104,17 @@ Cloudflare 대시보드의 D1 SQL 실행 화면 또는 프로젝트에서 사용
 - 다시 쪽지를 시작했을 때 채팅방이 정상 재개되는지
 - 차단한 사용자가 최근 사용자 목록에서 제외되는지
 - 신고 작성과 관리자 신고 목록 조회가 정상 동작하는지
-- 신고 상태·관리자 메모·처리 시각이 저장되는지
+- 신고 상태·관리자 메모·처리 시각이 `reports + report_moderation` 조합으로 저장되는지
 - 1일·7일·30일·무기한 정지가 적용되는지
+- 정지 해제 후 비공개 API 접근이 복구되는지
 - 정지된 사용자가 비공개 API 호출 시 403을 받는지
+- 관리자 이미지 메시지 삭제 후 R2 원본 객체가 제거되는지
 - 회원 탈퇴 후 기존 세션으로 비공개 API를 호출하면 401이 반환되는지
 - 탈퇴 후 새 세션으로 다시 가입할 수 있는지
 
 ## 아직 migration으로 옮기지 않은 항목
 
-기존 운영 DB의 정확한 초기 스키마를 확인해야 하는 핵심 테이블과 `alter table` 작업은 이번 migration에 포함하지 않았습니다.
+기존 운영 DB의 정확한 초기 스키마를 확인해야 하는 핵심 테이블은 이번 migration에 포함하지 않았습니다.
 
 - `recent_users`
 - `talk_posts`
@@ -105,4 +122,4 @@ Cloudflare 대시보드의 D1 SQL 실행 화면 또는 프로젝트에서 사용
 - `chat_messages`
 - `my_rooms`
 
-이 테이블들은 Production의 `sqlite_master`와 `pragma table_info(...)` 결과를 확인한 뒤 별도 migration으로 작성해야 합니다. 확인 전에는 기존 호환용 `alter table` 코드를 제거하지 않습니다.
+이 테이블들은 Production의 `sqlite_master`와 `pragma table_info(...)` 결과를 확인한 뒤 별도 migration으로 작성해야 합니다. 확인 전에는 기존 호환용 런타임 DDL 코드를 제거하지 않습니다.
