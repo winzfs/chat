@@ -112,7 +112,12 @@ jobs:
             reports \
             request_gates \
             revoked_profiles \
-            user_suspensions
+            user_suspensions \
+            recent_users \
+            talk_posts \
+            chat_rooms \
+            chat_messages \
+            my_rooms
           do
             pnpm dlx wrangler@4.20.5 d1 execute "${{ inputs.database_name }}" --remote --json --command "pragma table_info($table);" > "$D1_SCHEMA_REPORT_DIR/table-info-$table.json"
           done
