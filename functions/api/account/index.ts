@@ -94,6 +94,7 @@ export const onRequestDelete: PagesFunction<Env> = async ({ env, request }) => {
     ['chat_room_reads', 'profile_id = ?'],
     ['chat_room_exits', 'profile_id = ?'],
     ['request_gates', 'owner_id = ?'],
+    ['user_suspensions', 'profile_id = ?'],
   ];
 
   for (const [table, where] of ownRows) {
