@@ -5,6 +5,7 @@ const root = resolve(import.meta.dirname, '..');
 const migrationsDir = resolve(root, 'migrations');
 const statusDocPath = resolve(root, 'docs/13-security-hardening-status.md');
 const runbookPath = resolve(root, 'docs/14-d1-migration-runbook.md');
+const applyWorkflowPath = resolve(root, '.github/workflows/d1-migrations-apply.yml');
 const failures = [];
 
 const destructivePatterns = [
@@ -71,6 +72,7 @@ if (!existsSync(migrationsDir)) {
 
 const statusDoc = read(statusDocPath);
 const runbook = read(runbookPath);
+const applyWorkflow = read(applyWorkflowPath);
 
 for (const expected of expectedMigrations) {
   if (!runbook.includes(`migrations/${expected}`)) {
@@ -78,9 +80,34 @@ for (const expected of expectedMigrations) {
   }
 }
 
+const requiredApplyWorkflowTexts = [
+  'workflow_dispatch:',
+  'database_name:',
+  'target_environment:',
+  'confirm_apply:',
+  'concurrency:',
+  'cancel-in-progress: false',
+  'timeout-minutes:',
+  'node-version: 22',
+  'version: 9.15.0',
+  'pnpm install --frozen-lockfile --ignore-scripts',
+  'pnpm check:d1-migrations',
+  'Validate D1 migration target',
+  '/^[a-zA-Z0-9_-]{1,128}$/',
+  "confirmApply !== 'true'",
+  'wrangler@4.20.5 d1 migrations apply',
+  'pnpm check:d1-schema-report',
+  'if-no-files-found: error',
+];
+
+for (const text of requiredApplyWorkflowTexts) {
+  if (!applyWorkflow.includes(text)) fail(`.github/workflows/d1-migrations-apply.yml missing required safety text: ${text}`);
+}
+
 const requiredStatusTexts = [
   '포인트·채팅 상태·차단·신고·1:1 요청 잠금 테이블의 버전형 D1 migration 추가',
   'D1 migration Preview/Production 적용 runbook 추가',
+  'D1 migration apply workflow 추가',
   '신규 D1 migration을 Preview와 Production 데이터베이스에 적용',
   '운영 D1의 `sqlite_master`와 `pragma table_info(...)` 결과 확인 후 기존 핵심 테이블의 추가 migration 작성',
   '탈퇴 계정의 기존 서명 세션을 차단하는 `revoked_profiles` migration 추가',
