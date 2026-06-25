@@ -24,6 +24,20 @@ const expectedMigrations = [
   '0006_moderation.sql',
 ];
 
+const requiredMigrationTables = [
+  'user_points',
+  'point_transactions',
+  'daily_point_claims',
+  'chat_room_reads',
+  'chat_room_exits',
+  'user_blocks',
+  'reports',
+  'report_moderation',
+  'request_gates',
+  'revoked_profiles',
+  'user_suspensions',
+];
+
 const legacyTablesToInspect = [
   'recent_users',
   'talk_posts',
@@ -112,9 +126,9 @@ for (const text of requiredApplyWorkflowTexts) {
   if (!applyWorkflow.includes(text)) fail(`.github/workflows/d1-migrations-apply.yml missing required safety text: ${text}`);
 }
 
-for (const table of legacyTablesToInspect) {
+for (const table of [...requiredMigrationTables, ...legacyTablesToInspect]) {
   if (!applyWorkflow.includes(table)) {
-    fail(`.github/workflows/d1-migrations-apply.yml must capture schema report for legacy table: ${table}`);
+    fail(`.github/workflows/d1-migrations-apply.yml must capture schema report for table: ${table}`);
   }
 }
 
