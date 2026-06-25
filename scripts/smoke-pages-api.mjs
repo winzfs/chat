@@ -141,9 +141,29 @@ if (mismatchedRoomsResponse.status !== 403) {
   fail('mismatched chat room profile_id must be rejected', mismatchedRoomsResponse, mismatchedRoomsBody);
 }
 
+const mismatchedCreateResponse = await fetch(chatRoomsUrl, {
+  method: 'POST',
+  headers: {
+    accept: 'application/json',
+    'content-type': 'application/json',
+    authorization: `Bearer ${issueBody.token}`,
+    'x-profile-id': issueBody.profile_id,
+  },
+  body: JSON.stringify({
+    profile_id: crypto.randomUUID(),
+    title: '권한 검증용 채팅방',
+  }),
+});
+const mismatchedCreateBody = await readJson(mismatchedCreateResponse);
+
+if (mismatchedCreateResponse.status !== 403) {
+  fail('mismatched chat room create profile_id must be rejected before room creation', mismatchedCreateResponse, mismatchedCreateBody);
+}
+
 console.log(`Pages API smoke check passed for ${chatRoomsUrl.origin}.`);
 console.log('- CORS preflight allows Capacitor Authorization requests.');
 console.log('- Auth session endpoint issues a signed session.');
 console.log('- Authorized chat room list returns a rooms array.');
 console.log('- Anonymous chat room list requests are rejected.');
-console.log('- Mismatched chat room profile_id requests are rejected.');
+console.log('- Mismatched chat room profile_id list requests are rejected.');
+console.log('- Mismatched chat room profile_id create requests are rejected before room creation.');
