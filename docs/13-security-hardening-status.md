@@ -18,6 +18,7 @@ D1 Schema Inspect와 D1 Migrations Apply workflow를 사용하려면 GitHub repo
 - 포인트·채팅 상태·차단·신고·1:1 요청 잠금 테이블의 버전형 D1 migration 추가
 - D1 migration Preview/Production 적용 runbook 추가
 - D1 migration apply workflow 추가
+- D1 migration apply workflow schema artifact가 기존 핵심 테이블 table_info까지 캡처하도록 보강
 - 탈퇴 계정의 기존 서명 세션을 차단하는 `revoked_profiles` migration 추가
 - 신고 관리자 메모와 사용자 정지를 위한 `0006_moderation.sql` migration 추가
 - 자동 Web Verify, Web E2E, Android debug APK, Pages Auth/API Smoke, D1 Schema Inspect workflow의 수동 재실행·timeout·artifact 실패 조건 보강
