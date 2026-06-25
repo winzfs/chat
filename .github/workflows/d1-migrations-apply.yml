@@ -1,0 +1,130 @@
+name: D1 Migrations Apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      database_name:
+        description: Cloudflare D1 database name or UUID to migrate
+        required: true
+        type: string
+      target_environment:
+        description: Environment label used for logs and artifact naming
+        required: true
+        default: preview
+        type: choice
+        options:
+          - preview
+          - production
+      confirm_apply:
+        description: Confirm that the target D1 database was backed up and should receive migrations
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: d1-migrations-apply-${{ github.ref }}-${{ inputs.target_environment }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    name: Apply D1 migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      D1_SCHEMA_REPORT_DIR: d1-schema-report
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Check migration contracts
+        run: pnpm check:d1-migrations
+
+      - name: Validate Cloudflare credentials
+        run: |
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID repository secret is required."; exit 1; }
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "CLOUDFLARE_API_TOKEN repository secret is required."; exit 1; }
+
+      - name: Validate D1 migration target
+        env:
+          DATABASE_NAME: ${{ inputs.database_name }}
+          TARGET_ENVIRONMENT: ${{ inputs.target_environment }}
+          CONFIRM_APPLY: ${{ inputs.confirm_apply }}
+        run: |
+          node --input-type=module <<'NODE'
+          const databaseName = process.env.DATABASE_NAME ?? '';
+          const targetEnvironment = process.env.TARGET_ENVIRONMENT ?? '';
+          const confirmApply = process.env.CONFIRM_APPLY ?? '';
+
+          if (!/^[a-zA-Z0-9_-]{1,128}$/.test(databaseName)) {
+            console.error('database_name must be a D1 database name or UUID containing only letters, numbers, underscore, or hyphen.');
+            process.exit(1);
+          }
+
+          if (!['preview', 'production'].includes(targetEnvironment)) {
+            console.error('target_environment must be preview or production.');
+            process.exit(1);
+          }
+
+          if (confirmApply !== 'true') {
+            console.error('confirm_apply must be true after backing up or exporting the target D1 database.');
+            process.exit(1);
+          }
+          NODE
+
+      - name: Apply D1 migrations
+        run: pnpm dlx wrangler@4.20.5 d1 migrations apply "${{ inputs.database_name }}" --remote
+
+      - name: Capture sqlite_master after migrations
+        if: always()
+        run: |
+          mkdir -p "$D1_SCHEMA_REPORT_DIR"
+          pnpm dlx wrangler@4.20.5 d1 execute "${{ inputs.database_name }}" --remote --json --command "select type, name, tbl_name, sql from sqlite_master where type in ('table', 'index') order by type, name;" > "$D1_SCHEMA_REPORT_DIR/sqlite-master.json"
+
+      - name: Capture table info after migrations
+        if: always()
+        run: |
+          set -euo pipefail
+          for table in \
+            user_points \
+            point_transactions \
+            daily_point_claims \
+            chat_room_reads \
+            chat_room_exits \
+            user_blocks \
+            reports \
+            request_gates \
+            revoked_profiles \
+            user_suspensions
+          do
+            pnpm dlx wrangler@4.20.5 d1 execute "${{ inputs.database_name }}" --remote --json --command "pragma table_info($table);" > "$D1_SCHEMA_REPORT_DIR/table-info-$table.json"
+          done
+
+      - name: Check captured schema report
+        if: always()
+        run: pnpm check:d1-schema-report
+
+      - name: Upload migration schema report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d1-migrations-${{ inputs.target_environment }}
+          path: d1-schema-report
+          if-no-files-found: error
