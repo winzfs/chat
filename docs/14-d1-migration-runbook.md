@@ -36,6 +36,7 @@ API 요청마다 실행하던 `create table if not exists`와 호환용 스키�
 - 현재 배포 대상 migration 6개가 모두 존재하는지
 - checked migration에 `drop table`, `delete from`, `truncate`, `alter table ... drop` 같은 파괴적 SQL이 없는지
 - D1 migration apply workflow가 수동 실행, 명시적 적용 확인, 대상 이름 검증, 고정 Wrangler 버전, 적용 후 schema artifact 검사를 유지하는지
+- D1 migration apply workflow가 새 migration 테이블과 기존 핵심 테이블의 `pragma table_info(...)`를 모두 artifact에 포함하는지
 - 이 runbook과 `docs/13-security-hardening-status.md`가 D1 적용 상태를 계속 언급하는지
 
 이 검사는 실제 Preview/Production 데이터베이스에 SQL을 적용하지 않습니다. 배포 전에는 아래 절차대로 Cloudflare D1에 직접 적용하고 회귀 확인을 해야 합니다.
@@ -64,7 +65,7 @@ workflow는 `scripts/check-d1-schema-report.mjs`를 실행해 새 migration 테�
 - `target_environment`를 Preview 또는 Production 중 하나로 선택합니다.
 - 백업과 대상 확인이 끝난 경우에만 `confirm_apply`를 true로 지정합니다.
 
-workflow는 적용 전 `pnpm check:d1-migrations`를 실행하고, 적용 후 `sqlite_master`와 migration 대상 테이블의 `pragma table_info(...)`를 `d1-migrations-<environment>` artifact로 업로드합니다. artifact가 없거나 schema report 검사가 실패하면 workflow가 실패합니다.
+workflow는 적용 전 `pnpm check:d1-migrations`를 실행하고, 적용 후 `sqlite_master`, migration 대상 테이블, 기존 핵심 테이블의 `pragma table_info(...)`를 `d1-migrations-<environment>` artifact로 업로드합니다. artifact가 없거나 schema report 검사가 실패하면 workflow가 실패합니다.
 
 ## 적용 순서
 
