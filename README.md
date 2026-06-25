@@ -1,221 +1,64 @@
 # 플러팅
 
-모바일 웹 우선의 1:1 채팅 앱 프로젝트입니다. 현재는 React + Vite 프론트엔드와 Cloudflare Pages Functions, D1, R2를 기반으로 구현하고 있습니다.
+모바일 웹 우선의 20세 이상 1:1 채팅 앱입니다.
 
-## 목표
+- Frontend: React + Vite
+- API: Cloudflare Pages Functions
+- Database: Cloudflare D1
+- Image Storage: Cloudflare R2
+- Android: Capacitor
+- CI/CD: GitHub Actions
 
-- 모바일 웹앱을 먼저 완성합니다.
-- Cloudflare Pages로 배포합니다.
-- Capacitor를 사용해 Android 앱으로 패키징합니다.
-- 유지보수와 확장이 쉽도록 기능을 작은 모듈로 분리합니다.
-- 포인트 기반 쪽지/수익화 구조를 단계적으로 도입합니다.
+## 현재 구현 상태
 
-## 현재 기술 스택
+### 계정과 프로필
 
-```txt
-Frontend: React + Vite
-Deploy: Cloudflare Pages
-API: Cloudflare Pages Functions
-DB: Cloudflare D1
-Image Storage: Cloudflare R2
-Mobile Wrapper: Capacitor
-CI Build: GitHub Actions
-```
-
-## 현재 구현된 기능
-
-### 가입/프로필
-
-- 닉네임, 성별, 나이, 지역을 입력하는 간단 가입
-- 지역은 대한민국 광역시/도 목록에서 선택
-- 프로필 설정 화면에서도 같은 지역 목록으로 변경 가능
+- HMAC 서명 Bearer 세션
+- 가입, 프로필 저장·수정
 - 20세 이상 가입 제한
-- 같은 기기 localStorage 기준 1계정 사용
-- 프로필 저장/수정
-- 닉네임, 나이, 지역, 소개, 프로필 사진 동기화
-- `profile_id` 또는 닉네임 기반 최신 프로필 조회 API 제공
-- 토크/사람/채팅 목록의 프로필 아이콘에서 프로필 미리보기 표시
-- 채팅방 말풍선 안에서는 프로필 아이콘을 표시하지 않음
+- 프로필 사진 크롭·R2 업로드·삭제
+- 회원 탈퇴와 D1·R2·localStorage 정리
+- 탈퇴 계정의 기존 세션 즉시 차단
 
-지역 목록:
+현재 계정은 이메일·소셜 로그인 계정이 아닙니다. 앱 데이터 삭제나 기기 변경 후 계정 복구 기능은 아직 없습니다.
 
-```txt
-서울특별시, 부산광역시, 대구광역시, 인천광역시, 광주광역시, 대전광역시, 울산광역시, 세종특별자치시,
-경기도, 강원특별자치도, 충청북도, 충청남도, 전북특별자치도, 전라남도, 경상북도, 경상남도, 제주특별자치도
-```
+### 토크·사람·포인트
 
-### 프로필 사진
-
-- 설정 화면에서 이미지 업로드
-- 1:1 정사각형 크롭 모달 제공
-- 확대/위치 조절 후 업로드
-- R2 저장
-- 프로필 사진 삭제/기본 이미지 되돌리기
-- 토크/사람/채팅 목록/프로필 모달에 표시
-- 채팅방 목록은 상대방 `peer_avatar_url`을 사용해 상대 프로필 이미지를 표시
-
-### 토크
-
-- 한줄 토크 작성
-- 분위기 선택 없이 내용만 입력
-- 목록에서 분위기/태그 표시 숨김
-- 내 글 강조 표시
-- 내 글 삭제
-- 토크 글에서 바로 쪽지 시작
-- 대화 연결은 닉네임이 아니라 작성자 `profile_id` 기준
-- 토크 작성 시 하루 1회 100P 보상 지급
-- API 실패 시 목업 글을 만들지 않고 실패 안내만 표시
-
-### 사람
-
+- 한줄 토크 작성·삭제
 - 최근 접속자 목록
-- 내 프로필 제외
 - 차단 관계 사용자 제외
-- 상대방 프로필 사진 표시
-- 상대방에게 쪽지 보내기
-- 쪽지 시작 비용은 100P
-- 포인트 부족 시 쪽지 시작을 막고 안내 표시
+- `profile_id` 기준 직접대화 시작
+- 출석·광고·토크 작성 일일 보상
+- 직접대화 시작 100P 차감
+- 중복 차감 방지와 채팅방 생성 실패 환불
 
-### 포인트
+실제 결제 PG와 광고 SDK는 아직 연결되지 않았습니다.
 
-- D1 기반 포인트 잔액 저장
-- 설정 탭에서 내 포인트 표시
-- 출석체크: 하루 1회 100P 지급
-- 광고보기 보상: 하루 1회 100P 지급
-- 토크 작성 보상: 하루 1회 100P 지급
-- 쪽지/1:1 대화 시작 시 100P 차감
-- 이미 존재하고 내가 나가지 않은 1:1 방을 단순히 다시 여는 경우는 중복 차감하지 않음
-- 포인트 충전 메뉴와 상품 UI 제공
-- 실제 결제 PG 및 광고 SDK는 아직 미연동
+### 채팅과 마이룸
 
-포인트 충전 기준:
+- 1:1 채팅방 재사용
+- 텍스트·이미지 메시지
+- 읽지 않은 메시지 수
+- 채팅방 나가기·재입장
+- 메시지 전송 실패 시 입력값 보존
+- 마이룸 벽지·바닥·가구 배치
+- 마이룸 로딩 실패 시 편집·저장 차단
+- 폴링 기반 자동 갱신
 
-```txt
-기본 단가: 1,000P = ₩1,200
+### 신고·차단·관리자 운영
 
-1,000P  / ₩1,200  / 기본 충전
-5,300P  / ₩6,000  / 300P 보너스
-10,800P / ₩12,000 / 800P 보너스
-33,000P / ₩36,000 / 3,000P 보너스
-57,000P / ₩60,000 / 7,000P 보너스
-```
+- 사용자 신고·차단
+- 차단 목록 조회·해제
+- 관리자 신고 목록과 대상 사용자 검토
+- 신고 상태: 접수, 검토중, 처리완료, 기각
+- 관리자 메모, 처리자, 처리 시각
+- 1일·7일·30일·무기한 사용자 정지
+- 사용자 정지 해제
+- 관리자 토크 삭제
+- 관리자 채팅 메시지 삭제 처리
+- 이미지 메시지 삭제 시 R2 원본 제거
 
-### 채팅
-
-- D1 기반 채팅방 목록
-- `profile_id` 조합으로 직접대화방 재사용
-- 내 기준 상대방 이름으로 채팅방 제목 표시
-- 채팅방 목록 5초 폴링
-- 전역 새 메시지 알림은 하단 채팅 탭 점으로 표시
-- 방별 안 읽은 메시지 수 표시
-- 목록 안의 새 메시지 배지
-- 텍스트/이미지 메시지 전송
-- 이미지 메시지 `profile_id` 검사 강화
-- 내 메시지/상대 메시지 말풍선 분리
-- 말풍선 안에는 프로필 아이콘을 표시하지 않음
-- 채팅방 화면은 마이룸 기반 게임형 화면으로 크게 표시
-- 메시지는 캐릭터 위 말풍선으로 표시
-- 대화 기록은 채팅방에서 접어서 확인 가능
-
-### 마이룸
-
-- 설정 탭에서 마이룸 꾸미기 진입
-- 마이룸 벽지 선택
-- 마이룸 바닥 선택
-- 기본 가구/소품 배치 표시
-- 가구 카탈로그에서 가구 추가
-- 카페트 카테고리를 별도 탭으로 분리
-- 하트러그 `rug01` 에셋 등록
-- 하트러그 파일 경로: `apps/web/public/assets/room/furniture/rug01.png`
-- 하트러그는 카탈로그/카페트 탭에만 표시하고 기본 방에는 자동 포함하지 않음
-- 선택한 가구 삭제
-- 선택한 가구 복제
-- 같은 가구 여러 개 배치
-- 가구 드래그 위치 이동
-- 선택한 가구 앞/뒤 깊이 조절
-- 선택한 가구 회전 조절
-- 꾸미기 메뉴는 마이룸 화면 내부의 접을 수 있는 플로팅 버튼/패널로 표시
-- 방 데이터는 `my_rooms` 테이블에 저장
-- 1:1 대화를 새로 신청한 사람이 해당 채팅방의 기본 마이룸 주인이 됨
-- 채팅방에서는 `room_owner_profile_id` 기준으로 마이룸을 불러옴
-- 가구/카페트/벽지/액자 에셋 확장을 위해 `asset_id`, `x`, `y`, `z_index`, `rotation` 구조 사용
-
-### 채팅방 나가기
-
-- 방 전체 삭제가 아니라 내 목록에서만 숨김
-- 상대방에게는 `닉네임님이 나갔습니다.` 시스템 메시지 표시
-- 상대방 채팅 목록 마지막 메시지도 나감 문구로 갱신
-- 나간 사용자가 다시 대화를 시작하면 이전 메시지와 이전 나감 시스템 메시지는 보이지 않음
-- 양쪽 모두 나간 뒤 다시 대화가 시작되면 목록 요약도 `아직 메시지가 없어요.`로 초기화
-
-### 차단/신고
-
-- 채팅방에서 상대방 신고
-- 채팅방에서 상대방 차단
-- 차단된 사용자와 새 직접 채팅방 생성 제한
-- 차단 관계 사용자는 최근 접속자 목록에서 제외
-- 설정 화면에서 차단 목록 조회/해제
-- 신고 관리 API와 화면은 운영자 전용
-
-### Android 앱 리소스
-
-- 앱 이름: 플러팅
-- Android 패키지명: `com.flirting.app`
-- 앱 아이콘 원본: `resources/icon.png`
-- 앱 스플래시 원본: `resources/splash.png`
-- Android 기본 스플래시 이후 웹앱 내부 풀스크린 스플래시 표시
-
-## 프로젝트 구조
-
-```txt
-chat/
- ├─ .github/
- │  └─ workflows/
- │     ├─ android-debug-apk.yml
- │     └─ android-release-aab.yml
- ├─ apps/
- │  └─ web/
- │     ├─ src/
- │     │  ├─ features/
- │     │  │  ├─ auth/
- │     │  │  └─ home/
- │     │  └─ shared/
- │     └─ package.json
- ├─ functions/
- │  └─ api/
- ├─ resources/
- │  ├─ icon.png
- │  └─ splash.png
- ├─ docs/
- ├─ capacitor.config.ts
- ├─ package.json
- └─ pnpm-workspace.yaml
-```
-
-## 주요 문서
-
-```txt
-docs/03-deployment.md
-docs/04-auth-and-permissions-plan.md
-docs/05-android-capacitor.md
-docs/06-mobile-only-android-build.md
-docs/07-play-store-release-checklist.md
-docs/08-play-store-listing-draft.md
-docs/09-release-aab-and-keystore.md
-docs/10-safety-and-operation-policy.md
-docs/11-my-room-game-chat-plan.md
-docs/current-implementation-status.md
-```
-
-현재 구현 상태와 주의사항은 `docs/current-implementation-status.md`를 기준으로 확인합니다.
-실제 인증/권한 전환 계획은 `docs/04-auth-and-permissions-plan.md`를 기준으로 확인합니다.
-Android 패키징 절차는 `docs/05-android-capacitor.md`를 기준으로 확인합니다.
-모바일만으로 APK를 만드는 방법은 `docs/06-mobile-only-android-build.md`를 기준으로 확인합니다.
-Google Play 정식 출시 전 차단 조건은 `docs/07-play-store-release-checklist.md`를 기준으로 확인합니다.
-Play Store 등록 문구 초안은 `docs/08-play-store-listing-draft.md`를 기준으로 확인합니다.
-release AAB 서명 키 준비와 GitHub Secrets 등록 절차는 `docs/09-release-aab-and-keystore.md`를 기준으로 확인합니다.
-안전/운영 정책과 금지 콘텐츠, 신고/차단 처리 기준은 `docs/10-safety-and-operation-policy.md`를 기준으로 확인합니다.
-마이룸 게임형 채팅 구조와 확장 계획은 `docs/11-my-room-game-chat-plan.md`를 기준으로 확인합니다.
+관리자 계정은 Cloudflare 환경변수 `ADMIN_PROFILE_IDS`에 등록합니다.
 
 ## 로컬 실행
 
@@ -223,3 +66,119 @@ release AAB 서명 키 준비와 GitHub Secrets 등록 절차는 `docs/09-releas
 pnpm install
 pnpm dev
 ```
+
+필수 런타임:
+
+```txt
+Node >= 22
+pnpm 9.15.0
+```
+
+## 검증
+
+전체 정적 검증:
+
+```bash
+pnpm verify
+```
+
+`pnpm verify`는 다음을 실행합니다.
+
+- dependency pin 검사
+- 클라이언트 안정화 계약
+- D1 migration 계약
+- TypeScript typecheck
+- production build
+
+Playwright E2E:
+
+```bash
+pnpm exec playwright install chromium
+pnpm e2e
+```
+
+현재 15개 테스트 케이스가 가입, 토크, 모달, 직접대화, 메시지 실패, 채팅방 나가기, 회원 탈퇴, 프로필·사진·포인트·마이룸 실패 복구를 검증합니다.
+
+## Cloudflare 운영 설정
+
+필수 환경변수:
+
+```txt
+AUTH_SECRET=<32자 이상 비밀값>
+ADMIN_PROFILE_IDS=<관리자 profile_id, 쉼표 구분>
+```
+
+GitHub Actions에서 D1 workflow를 사용할 때 필요한 repository secrets:
+
+```txt
+CLOUDFLARE_ACCOUNT_ID
+CLOUDFLARE_API_TOKEN
+```
+
+현재 D1 migration:
+
+```txt
+migrations/0001_points.sql
+migrations/0002_chat_state.sql
+migrations/0003_safety.sql
+migrations/0004_request_gates.sql
+migrations/0005_revoked_profiles.sql
+migrations/0006_moderation.sql
+```
+
+`0006_moderation.sql`은 재실행 가능한 `report_moderation`과 `user_suspensions` 테이블을 생성합니다.
+
+## GitHub Actions
+
+- Web Verify
+- Web E2E
+- Pages Auth Smoke
+- Pages API Smoke
+- D1 Schema Inspect
+- D1 Migrations Apply
+- Android Debug APK
+- Android Release AAB
+
+실제 D1 적용은 데이터베이스를 백업한 뒤 `D1 Migrations Apply` workflow를 사용합니다.
+
+## Android
+
+- 앱 이름: 플러팅
+- 패키지명: `com.flirting.app`
+- 아이콘 원본: `resources/icon.png`
+- 스플래시 원본: `resources/splash.png`
+
+Android 동기화:
+
+```bash
+pnpm android:sync
+```
+
+Release AAB에는 별도의 keystore와 GitHub Secrets가 필요합니다.
+
+## 주요 문서
+
+- 현재 구현 상태: `docs/current-implementation-status.md`
+- 배포: `docs/03-deployment.md`
+- 인증·권한 계획: `docs/04-auth-and-permissions-plan.md`
+- Android Capacitor: `docs/05-android-capacitor.md`
+- Google Play 출시 체크리스트: `docs/07-play-store-release-checklist.md`
+- Play Store 등록 문구: `docs/08-play-store-listing-draft.md`
+- Release AAB·keystore: `docs/09-release-aab-and-keystore.md`
+- 안전·운영 정책: `docs/10-safety-and-operation-policy.md`
+- 보안·안정화 현황: `docs/13-security-hardening-status.md`
+- D1 migration runbook: `docs/14-d1-migration-runbook.md`
+- 프론트엔드 점검 결과: `docs/15-frontend-review.md`
+- Web E2E: `docs/16-web-e2e.md`
+- 출시 준비 전체 점검: `docs/17-release-readiness-audit.md`
+
+## 정식 출시 전 핵심 차단 항목
+
+- Preview와 Production migration 1~6 적용·검증
+- Pages Auth/API Smoke 성공
+- 회원 탈퇴와 관리자 제재 실제 환경 회귀
+- Android Release AAB 서명·실기기 설치 검증
+- 개인정보처리방침·이용약관 실제 운영 정보 반영
+- Google Play Data Safety·콘텐츠 등급·스토어 이미지 준비
+
+자세한 기준은 `docs/17-release-readiness-audit.md`를 확인합니다.
