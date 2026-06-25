@@ -20,6 +20,14 @@ function requireText(path, content, needle, description) {
   if (!content.includes(needle)) fail(`${path}: ${description}`);
 }
 
+function requireAnyText(path, content, needles, description) {
+  if (!needles.some((needle) => content.includes(needle))) fail(`${path}: ${description}`);
+}
+
+function lockfileDependencyKey(name) {
+  return [`      ${name}:`, `      '${name}':`, `      "${name}":`];
+}
+
 function checkExactDependencyVersions(path) {
   const pkg = readJson(path);
   const dependencyGroups = ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies'];
@@ -40,6 +48,18 @@ function checkExactDependencyVersions(path) {
   }
 }
 
+function checkLockedDependencies(packagePath, dependencies, groupDescription) {
+  for (const [name, version] of Object.entries(dependencies ?? {})) {
+    requireAnyText(
+      'pnpm-lock.yaml',
+      lockfile,
+      lockfileDependencyKey(name),
+      `${groupDescription} ${name} must be present in the lockfile importer`,
+    );
+    requireText('pnpm-lock.yaml', lockfile, `specifier: ${version}`, `${groupDescription} ${name} must keep lockfile specifier ${version}`);
+  }
+}
+
 const rootPackage = readJson('package.json');
 if (rootPackage.packageManager !== 'pnpm@9.15.0') {
   fail('package.json: packageManager must pin pnpm@9.15.0');
@@ -57,26 +77,12 @@ requireText('pnpm-lock.yaml', lockfile, "lockfileVersion: '9.0'", 'lockfile vers
 requireText('pnpm-lock.yaml', lockfile, '  .:', 'root importer must remain locked');
 requireText('pnpm-lock.yaml', lockfile, '  apps/web:', 'web app importer must remain locked');
 
-for (const [name, version] of Object.entries(rootPackage.dependencies ?? {})) {
-  requireText('pnpm-lock.yaml', lockfile, `      '${name}':`, `root dependency ${name} must be present in the lockfile importer`);
-  requireText('pnpm-lock.yaml', lockfile, `specifier: ${version}`, `root dependency ${name} must keep lockfile specifier ${version}`);
-}
-
-for (const [name, version] of Object.entries(rootPackage.devDependencies ?? {})) {
-  requireText('pnpm-lock.yaml', lockfile, `      '${name}':`, `root devDependency ${name} must be present in the lockfile importer`);
-  requireText('pnpm-lock.yaml', lockfile, `specifier: ${version}`, `root devDependency ${name} must keep lockfile specifier ${version}`);
-}
+checkLockedDependencies('package.json', rootPackage.dependencies, 'root dependency');
+checkLockedDependencies('package.json', rootPackage.devDependencies, 'root devDependency');
 
 const webPackage = readJson('apps/web/package.json');
-for (const [name, version] of Object.entries(webPackage.dependencies ?? {})) {
-  requireText('pnpm-lock.yaml', lockfile, `      ${name}:`, `web dependency ${name} must be present in the lockfile importer`);
-  requireText('pnpm-lock.yaml', lockfile, `specifier: ${version}`, `web dependency ${name} must keep lockfile specifier ${version}`);
-}
-
-for (const [name, version] of Object.entries(webPackage.devDependencies ?? {})) {
-  requireText('pnpm-lock.yaml', lockfile, `      '${name}':`, `web devDependency ${name} must be present in the lockfile importer`);
-  requireText('pnpm-lock.yaml', lockfile, `specifier: ${version}`, `web devDependency ${name} must keep lockfile specifier ${version}`);
-}
+checkLockedDependencies('apps/web/package.json', webPackage.dependencies, 'web dependency');
+checkLockedDependencies('apps/web/package.json', webPackage.devDependencies, 'web devDependency');
 
 const workflowPaths = [
   '.github/workflows/web-verify.yml',
