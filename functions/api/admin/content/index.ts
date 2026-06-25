@@ -1,6 +1,6 @@
 import { requireAdminProfile } from '../../../_shared/auth';
 
-type Env = { DB: D1Database; AUTH_SECRET?: string; ADMIN_PROFILE_IDS?: string };
+type Env = { DB: D1Database; IMAGES: R2Bucket; AUTH_SECRET?: string; ADMIN_PROFILE_IDS?: string };
 
 type ContentDeleteBody = {
   content_type?: string;
@@ -25,14 +25,23 @@ async function deleteTalkPost(env: Env, id: string) {
 
 async function redactChatMessage(env: Env, id: string) {
   const message = await env.DB.prepare(
-    `select id, room_id, created_at
+    `select id, room_id, image_key, created_at
      from chat_messages
      where id = ?
      limit 1`,
-  ).bind(id).first<{ id: string; room_id: string; created_at?: string | null }>();
+  ).bind(id).first<{ id: string; room_id: string; image_key?: string | null; created_at?: string | null }>();
 
   if (!message) {
     return Response.json({ error: '삭제할 채팅 메시지를 찾지 못했어요.' }, { status: 404 });
+  }
+
+  const imageKey = message.image_key?.trim() ?? '';
+  if (imageKey) {
+    try {
+      await env.IMAGES.delete(imageKey);
+    } catch {
+      return Response.json({ error: '채팅 이미지를 삭제하지 못했어요. 잠시 후 다시 시도해주세요.' }, { status: 502 });
+    }
   }
 
   await env.DB.batch([
