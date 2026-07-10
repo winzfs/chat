@@ -9,6 +9,20 @@
 - Android: Capacitor
 - CI/CD: GitHub Actions
 
+## 상태 기준
+
+이 문서에서 **구현 완료**는 코드가 저장소에 반영됐다는 뜻입니다. 실제 서비스 출시에는 별도로 Preview·Production Cloudflare 환경, D1/R2 데이터, Android 실기기 검증이 필요합니다.
+
+| 단계 | 의미 |
+| --- | --- |
+| 구현 완료 | 코드와 화면이 저장소에 반영됨 |
+| 자동 검증 | 정적 검사 또는 Playwright 테스트 대상 |
+| Preview 검증 | Preview Pages·D1·R2에서 실제 확인 |
+| Production 검증 | Production 환경에서 실제 확인 |
+| 실기기 검증 | 서명된 Android 빌드를 실제 기기에 설치해 확인 |
+
+현재 프로젝트는 **모바일 웹 MVP와 Android 비공개 테스트 준비 단계**입니다. Production 출시 완료 상태가 아닙니다.
+
 ## 현재 구현 상태
 
 ### 계정과 프로필
@@ -17,8 +31,8 @@
 - 가입, 프로필 저장·수정
 - 20세 이상 가입 제한
 - 프로필 사진 크롭·R2 업로드·삭제
-- 회원 탈퇴와 D1·R2·localStorage 정리
-- 탈퇴 계정의 기존 세션 즉시 차단
+- 회원 탈퇴와 D1·R2·localStorage 정리 로직
+- 탈퇴 계정의 기존 세션 차단 로직
 
 현재 계정은 이메일·소셜 로그인 계정이 아닙니다. 앱 데이터 삭제나 기기 변경 후 계정 복구 기능은 아직 없습니다.
 
@@ -30,7 +44,7 @@
 - `profile_id` 기준 직접대화 시작
 - 출석·광고·토크 작성 일일 보상
 - 직접대화 시작 100P 차감
-- 중복 차감 방지와 채팅방 생성 실패 환불
+- 중복 차감 방지와 채팅방 생성 실패 환불 로직
 
 실제 결제 PG와 광고 SDK는 아직 연결되지 않았습니다.
 
@@ -43,7 +57,7 @@
 - 메시지 전송 실패 시 입력값 보존
 - 마이룸 벽지·바닥·가구 배치
 - 마이룸 로딩 실패 시 편집·저장 차단
-- 폴링 기반 자동 갱신
+- 문서 비활성화 시 중단되는 폴링 기반 자동 갱신
 
 ### 신고·차단·관리자 운영
 
@@ -56,7 +70,7 @@
 - 사용자 정지 해제
 - 관리자 토크 삭제
 - 관리자 채팅 메시지 삭제 처리
-- 이미지 메시지 삭제 시 R2 원본 제거
+- 이미지 메시지 삭제 시 R2 원본 제거 로직
 
 관리자 계정은 Cloudflare 환경변수 `ADMIN_PROFILE_IDS`에 등록합니다.
 
@@ -70,7 +84,7 @@ pnpm dev
 필수 런타임:
 
 ```txt
-Node >= 22
+Node 22.x
 pnpm 9.15.0
 ```
 
@@ -97,7 +111,9 @@ pnpm exec playwright install chromium
 pnpm e2e
 ```
 
-현재 15개 테스트 케이스가 가입, 토크, 모달, 직접대화, 메시지 실패, 채팅방 나가기, 회원 탈퇴, 프로필·사진·포인트·마이룸 실패 복구를 검증합니다.
+15개 사용자 흐름을 데스크톱 Chromium과 Pixel 7 모바일 에뮬레이션에서 각각 실행합니다. 가입, 토크, 모달, 직접대화, 메시지 실패, 채팅방 나가기, 회원 탈퇴, 프로필·사진·포인트·마이룸 실패 복구를 검증합니다.
+
+Playwright 모바일 에뮬레이션은 Android WebView 실기기 검증을 대체하지 않습니다.
 
 ## Cloudflare 운영 설정
 
@@ -171,14 +187,17 @@ Release AAB에는 별도의 keystore와 GitHub Secrets가 필요합니다.
 - 프론트엔드 점검 결과: `docs/15-frontend-review.md`
 - Web E2E: `docs/16-web-e2e.md`
 - 출시 준비 전체 점검: `docs/17-release-readiness-audit.md`
+- 2026-07-10 강화 작업: `docs/18-hardening-2026-07-10.md`
 
 ## 정식 출시 전 핵심 차단 항목
 
+- 현재 HEAD의 Web Verify와 Web E2E 성공
 - Preview와 Production migration 1~6 적용·검증
 - Pages Auth/API Smoke 성공
 - 회원 탈퇴와 관리자 제재 실제 환경 회귀
 - Android Release AAB 서명·실기기 설치 검증
 - 개인정보처리방침·이용약관 실제 운영 정보 반영
 - Google Play Data Safety·콘텐츠 등급·스토어 이미지 준비
+- 계정 복구가 없는 상태에서 유료 결제를 도입하지 않도록 제품 정책 확정
 
 자세한 기준은 `docs/17-release-readiness-audit.md`를 확인합니다.
