@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Card } from '../../shared/components/Card';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { type D1ChatRoom } from './api/d1ChatRooms';
 import { createD1TalkPost, deleteD1TalkPost, loadD1TalkPosts, type D1TalkPost } from './api/d1TalkPosts';
 import { getProfileId } from './api/profileId';
@@ -20,6 +19,7 @@ import './ProfileAvatar.css';
 import './components/HomeUiPolish.css';
 import './FullScreenRoutes.css';
 import './components/HomeModern.css';
+import './components/ChatModern.css';
 
 type HomeTab = 'talk' | 'people' | 'chats' | 'settings';
 type IconName = 'talk' | 'people' | 'chats' | 'my';
@@ -33,13 +33,12 @@ const tabs: { id: HomeTab; label: string; icon: IconName }[] = [
 const titles: Record<HomeTab, string> = { talk: '오늘 누구와 이야기해볼까요?', people: '최근 접속한 사람', chats: '내 대화', settings: '마이' };
 
 function TabIcon({ name }: { name: IconName }) {
-  const paths: Record<IconName, JSX.Element> = {
+  const paths: Record<IconName, ReactNode> = {
     talk: <><path d="M5 6.5A3.5 3.5 0 0 1 8.5 3h7A3.5 3.5 0 0 1 19 6.5v4a3.5 3.5 0 0 1-3.5 3.5H11l-4.5 3v-3.4A3.5 3.5 0 0 1 5 10.5z" /><path d="M9 8h6M9 11h4" /></>,
     people: <><path d="M16 19v-1.5A3.5 3.5 0 0 0 12.5 14h-5A3.5 3.5 0 0 0 4 17.5V19" /><circle cx="10" cy="8" r="3" /><path d="M17 11a2.5 2.5 0 1 0 0-5M18 14.5c1.2.4 2 1.5 2 2.8V19" /></>,
     chats: <><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h8A2.5 2.5 0 0 1 17 5.5v5A2.5 2.5 0 0 1 14.5 13H9l-3.5 2.5V13A2.5 2.5 0 0 1 4 10.5z" /><path d="M17 8h.5A2.5 2.5 0 0 1 20 10.5v4a2.5 2.5 0 0 1-2.5 2.5H16v2l-3-2h-2" /></>,
     my: <><circle cx="12" cy="8" r="3.2" /><path d="M5.5 20a6.5 6.5 0 0 1 13 0" /></>,
   };
-
   return <svg aria-hidden="true" className="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.9">{paths[name]}</svg>;
 }
 
