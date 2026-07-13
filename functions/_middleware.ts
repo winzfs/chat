@@ -2,6 +2,13 @@ import { authenticatedProfileId, jsonError } from './_shared/auth';
 
 type Env = { AUTH_SECRET?: string; DB: D1Database };
 
+class PolicyLookupError extends Error {
+  constructor() {
+    super('Authorization policy lookup failed');
+    this.name = 'PolicyLookupError';
+  }
+}
+
 const publicGetPaths = new Set([
   '/api/talk-posts',
   '/api/profile-lookup',
@@ -82,7 +89,7 @@ async function isRevokedProfile(env: Env, profileId: string) {
     ).bind(profileId).first();
     return Boolean(row);
   } catch {
-    return false;
+    throw new PolicyLookupError();
   }
 }
 
@@ -96,7 +103,7 @@ async function activeSuspension(env: Env, profileId: string) {
        limit 1`,
     ).bind(profileId).first<{ reason?: string | null; suspended_until?: string | null }>();
   } catch {
-    return null;
+    throw new PolicyLookupError();
   }
 }
 
@@ -192,6 +199,7 @@ export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
 
     return finish(await next(new Request(request, { headers })));
   } catch (error) {
+    const policyUnavailable = error instanceof PolicyLookupError;
     console.error(JSON.stringify({
       event: 'api.unhandled_error',
       request_id: id,
@@ -200,7 +208,12 @@ export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
       error_name: error instanceof Error ? error.name : 'UnknownError',
       error_message: error instanceof Error ? error.message : 'Unknown server error',
     }));
-    authState = `${authState}:error`;
-    return finish(jsonError('일시적인 서버 오류가 발생했어요. 잠시 후 다시 시도해주세요.', 500));
+    authState = policyUnavailable ? 'policy-unavailable' : `${authState}:error`;
+    return finish(jsonError(
+      policyUnavailable
+        ? '서버 권한 정보를 확인하지 못했어요. 잠시 후 다시 시도해주세요.'
+        : '일시적인 서버 오류가 발생했어요. 잠시 후 다시 시도해주세요.',
+      policyUnavailable ? 503 : 500,
+    ));
   }
 };
