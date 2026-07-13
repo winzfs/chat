@@ -16,40 +16,6 @@ type TalkProfile = {
 
 const TALK_DAILY_REWARD = 100;
 
-async function ensurePointTables(env: Env) {
-  await env.DB.prepare(
-    `create table if not exists user_points (
-      profile_id text primary key,
-      balance integer not null default 0,
-      created_at text not null default (datetime('now')),
-      updated_at text not null default (datetime('now'))
-    )`,
-  ).run();
-
-  await env.DB.prepare(
-    `create table if not exists point_transactions (
-      id text primary key,
-      profile_id text not null,
-      amount integer not null,
-      reason text not null,
-      reference_id text,
-      description text,
-      created_at text not null default (datetime('now'))
-    )`,
-  ).run();
-
-  await env.DB.prepare(
-    `create table if not exists daily_point_claims (
-      profile_id text not null,
-      claim_type text not null,
-      claim_date text not null,
-      amount integer not null,
-      created_at text not null default (datetime('now')),
-      primary key (profile_id, claim_type, claim_date)
-    )`,
-  ).run();
-}
-
 async function ensurePointAccount(env: Env, profileId: string) {
   await env.DB.prepare(
     `insert into user_points (profile_id, balance, created_at, updated_at)
@@ -68,10 +34,23 @@ async function getBalance(env: Env, profileId: string) {
   return Number(row?.balance ?? 0);
 }
 
+async function hasTalkRewardClaim(env: Env, profileId: string, today: string) {
+  const row = await env.DB.prepare(
+    `select 1 as claimed
+     from daily_point_claims
+     where profile_id = ? and claim_type = 'talk_daily' and claim_date = ?
+     limit 1`,
+  ).bind(profileId, today).first<{ claimed: number }>();
+  return Boolean(row?.claimed);
+}
+
 async function awardDailyTalkPoints(env: Env, profileId: string, postId: string) {
-  await ensurePointTables(env);
   await ensurePointAccount(env, profileId);
   const today = await getToday(env);
+
+  if (await hasTalkRewardClaim(env, profileId, today)) {
+    return { awarded: false, amount: 0, balance: await getBalance(env, profileId) };
+  }
 
   try {
     await env.DB.batch([
@@ -89,8 +68,11 @@ async function awardDailyTalkPoints(env: Env, profileId: string, postId: string)
          values (?, ?, ?, 'talk_daily', ?, '토크 작성 보상')`,
       ).bind(crypto.randomUUID(), profileId, TALK_DAILY_REWARD, postId),
     ]);
-  } catch {
-    return { awarded: false, amount: 0, balance: await getBalance(env, profileId) };
+  } catch (error) {
+    if (await hasTalkRewardClaim(env, profileId, today)) {
+      return { awarded: false, amount: 0, balance: await getBalance(env, profileId) };
+    }
+    throw error;
   }
 
   return { awarded: true, amount: TALK_DAILY_REWARD, balance: await getBalance(env, profileId) };
@@ -115,6 +97,16 @@ async function loadTalkProfile(env: Env, profileId: string) {
   ).bind(profileId).first<TalkProfile>();
 }
 
+function parseTags(value: unknown) {
+  if (typeof value !== 'string') return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
   await ensureTalkPostColumns(env);
 
@@ -124,7 +116,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
 
   const posts = (results ?? []).map((row) => ({
     ...row,
-    tags: typeof row.tags === 'string' ? JSON.parse(row.tags) : [],
+    tags: parseTags(row.tags),
     online: Boolean(row.online),
   }));
 
@@ -134,7 +126,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   await ensureTalkPostColumns(env);
 
-  const body = await request.json() as TalkPostBody;
+  const body = await request.json().catch(() => null) as TalkPostBody | null;
+  if (!body) return jsonError('요청 형식이 올바르지 않아요.', 400);
+
   const text = body.text?.trim() ?? '';
   const mood = body.mood?.trim().slice(0, 30) || '가벼운 수다';
   const profileId = request.headers.get('x-auth-profile-id')?.trim() ?? '';
@@ -170,7 +164,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   return Response.json({
     post: {
       ...post,
-      tags: typeof post?.tags === 'string' ? JSON.parse(post.tags) : [],
+      tags: parseTags(post?.tags),
       online: Boolean(post?.online),
     },
     point_reward,
