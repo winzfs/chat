@@ -6,42 +6,6 @@ type PointActionBody = {
 
 const DAILY_REWARD = 100;
 
-async function ensurePointTables(env: Env) {
-  await env.DB.prepare(
-    `create table if not exists user_points (
-      profile_id text primary key,
-      balance integer not null default 0,
-      created_at text not null default (datetime('now')),
-      updated_at text not null default (datetime('now'))
-    )`,
-  ).run();
-
-  await env.DB.prepare(
-    `create table if not exists point_transactions (
-      id text primary key,
-      profile_id text not null,
-      amount integer not null,
-      reason text not null,
-      reference_id text,
-      description text,
-      created_at text not null default (datetime('now'))
-    )`,
-  ).run();
-
-  await env.DB.prepare(
-    `create table if not exists daily_point_claims (
-      profile_id text not null,
-      claim_type text not null,
-      claim_date text not null,
-      amount integer not null,
-      created_at text not null default (datetime('now')),
-      primary key (profile_id, claim_type, claim_date)
-    )`,
-  ).run();
-
-  await env.DB.prepare('create index if not exists point_transactions_profile_idx on point_transactions(profile_id, created_at)').run();
-}
-
 async function ensurePointAccount(env: Env, profileId: string) {
   await env.DB.prepare(
     `insert into user_points (profile_id, balance, created_at, updated_at)
@@ -82,7 +46,6 @@ async function getPointHistory(env: Env, profileId: string) {
 }
 
 async function claimDailyReward(env: Env, profileId: string, claimType: string, amount: number, description: string) {
-  await ensurePointTables(env);
   await ensurePointAccount(env, profileId);
   const today = await getToday(env);
 
@@ -121,7 +84,6 @@ function authenticatedProfileId(request: Request) {
 }
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
-  await ensurePointTables(env);
   const profileId = authenticatedProfileId(request);
 
   if (!profileId) {
@@ -139,7 +101,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 };
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
-  const body = await request.json() as PointActionBody;
+  const body = await request.json().catch(() => ({})) as PointActionBody;
   const profileId = authenticatedProfileId(request);
 
   if (!profileId) {
@@ -156,12 +118,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   }
 
   if (body.action === 'ad_reward') {
-    const result = await claimDailyReward(env, profileId, 'ad_reward', DAILY_REWARD, '광고보기 보상');
     return Response.json({
-      ...result,
-      amount: result.awarded ? DAILY_REWARD : 0,
-      message: result.awarded ? '광고보기로 100포인트를 받았어요.' : '오늘 광고보기 보상은 이미 받았어요.',
-    });
+      error: '광고 보상은 광고 완료 검증 연동 후 제공할 예정이에요.',
+      code: 'AD_REWARD_NOT_AVAILABLE',
+    }, { status: 503 });
   }
 
   return Response.json({ error: '지원하지 않는 포인트 요청이에요.' }, { status: 400 });
