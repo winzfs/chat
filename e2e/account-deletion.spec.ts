@@ -1,6 +1,6 @@
 import { expect, test, type Page, type Request } from '@playwright/test';
 import { installMockRoutes } from './helpers/mockRoutes';
-import { E2E_SESSION_VALUE, seedSignedUpUser } from './helpers/sessionSeed';
+import { E2E_PROFILE_ID, E2E_SESSION_VALUE, seedSignedUpUser } from './helpers/sessionSeed';
 
 function watchAccountDeleteRequests(page: Page) {
   const requests: Request[] = [];
@@ -44,8 +44,19 @@ test('회원 탈퇴 성공 시 로컬 계정 상태를 지우고 가입 화면�
   await page.getByRole('dialog').getByRole('button', { name: '탈퇴하고 삭제' }).click();
 
   await expect(page.getByRole('heading', { name: '20세 이상 가입' })).toBeVisible();
-  const remainingKeys = await page.evaluate(() => Object.keys(localStorage).filter((key) => key.startsWith('chitchat.')));
-  expect(remainingKeys).toEqual([]);
+  const localState = await page.evaluate(() => {
+    const rawSession = localStorage.getItem('chitchat.authSession.v1');
+    return {
+      remainingKeys: ['chitchat.signup.v1', 'chitchat.myProfile.v1'].filter((key) => localStorage.getItem(key) !== null),
+      profileId: localStorage.getItem('chitchat.profileId.v1'),
+      session: rawSession ? JSON.parse(rawSession) as { profile_id?: string } : null,
+    };
+  });
+
+  expect(localState.remainingKeys).toEqual([]);
+  expect(localState.profileId).toBeTruthy();
+  expect(localState.profileId).not.toBe(E2E_PROFILE_ID);
+  expect(localState.session?.profile_id).toBe(localState.profileId);
   expect(deleteRequests).toHaveLength(1);
   expect(deleteRequests[0]?.headers().authorization).toBe(`Bearer ${E2E_SESSION_VALUE}`);
 });
