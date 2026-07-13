@@ -65,8 +65,8 @@ if (rootPackage.packageManager !== 'pnpm@9.15.0') {
   fail('package.json: packageManager must pin pnpm@9.15.0');
 }
 
-if (!rootPackage.engines || rootPackage.engines.node !== '>=22.0.0') {
-  fail('package.json: engines.node must require >=22.0.0');
+if (!rootPackage.engines || rootPackage.engines.node !== '>=22.0.0 <23.0.0') {
+  fail('package.json: engines.node must pin the supported Node 22.x range');
 }
 
 checkExactDependencyVersions('package.json');
