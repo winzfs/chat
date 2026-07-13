@@ -34,7 +34,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
         <div className="my-room-card-title-row">
           <div>
             <strong>배치 편집</strong>
-            <p>{editor.loadFailed ? '연결을 확인한 뒤 화면을 다시 열어주세요.' : editor.hasUnsavedChanges ? '변경사항 저장이 필요해요.' : '가구를 끌어서 옮기고, 빈 바닥을 누르면 선택을 해제해요.'}</p>
+            {!editor.loadFailed && <p>{editor.hasUnsavedChanges ? '변경사항 저장이 필요해요.' : '가구를 끌어서 옮기고, 빈 바닥을 누르면 선택을 해제해요.'}</p>}
           </div>
           <span>{editor.selectedItem ? editor.selectedItem.label : '선택 없음'}</span>
         </div>
@@ -53,7 +53,7 @@ export function MyRoomSettingsPanel({ onClose }: { onClose: () => void }) {
         )}
 
         {(editor.notice || editor.hasUnsavedChanges) && (
-          <p className="my-room-notice" aria-live="polite">{editor.notice || '저장하지 않은 변경사항이 있어요.'}</p>
+          <p className="my-room-notice" role={editor.loadFailed ? 'alert' : undefined} aria-live="polite">{editor.notice || '저장하지 않은 변경사항이 있어요.'}</p>
         )}
 
         <div className={editor.isEditorMenuOpen ? 'my-room-floating-editor is-open' : 'my-room-floating-editor'}>
