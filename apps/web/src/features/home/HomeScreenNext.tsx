@@ -23,6 +23,8 @@ import './components/ChatModern.css';
 
 type HomeTab = 'talk' | 'people' | 'chats' | 'settings';
 type IconName = 'talk' | 'people' | 'chats' | 'my';
+type NoticeTone = 'success' | 'error' | 'info';
+type AppNotice = { message: string; tone: NoticeTone };
 
 const tabs: { id: HomeTab; label: string; icon: IconName }[] = [
   { id: 'talk', label: '토크', icon: 'talk' },
@@ -31,6 +33,7 @@ const tabs: { id: HomeTab; label: string; icon: IconName }[] = [
   { id: 'settings', label: '마이', icon: 'my' },
 ];
 const titles: Record<HomeTab, string> = { talk: '오늘 누구와 이야기해볼까요?', people: '최근 접속한 사람', chats: '내 대화', settings: '마이' };
+const noticeIcons: Record<NoticeTone, string> = { success: '✓', error: '!', info: 'i' };
 
 function TabIcon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
@@ -62,16 +65,21 @@ export function HomeScreenNext() {
   const [openRoom, setOpenRoom] = useState<D1ChatRoom | null>(null);
   const [isRoomVisible, setIsRoomVisible] = useState(hasRoomHash());
   const [chatListKey, setChatListKey] = useState(0);
-  const [notice, setNotice] = useState('');
+  const [notice, setNotice] = useState<AppNotice | null>(null);
   const [hasNewChat, setHasNewChat] = useState(false);
+  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+
+  const showNotice = useCallback((message: string, tone: NoticeTone = 'info') => {
+    setNotice({ message, tone });
+  }, []);
 
   const refreshTalkPosts = useCallback(async (showError = false) => {
     try {
       setPosts(await loadD1TalkPosts());
     } catch (error) {
-      if (showError) setNotice(errorMessage(error, '토크 목록을 불러오지 못했어요.'));
+      if (showError) showNotice(errorMessage(error, '토크 목록을 불러오지 못했어요.'), 'error');
     }
-  }, []);
+  }, [showNotice]);
 
   const changeTab = (tab: HomeTab) => {
     setActiveTab(tab);
@@ -118,8 +126,29 @@ export function HomeScreenNext() {
   }, [refreshTalkPosts]);
 
   useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      showNotice('인터넷 연결이 복구됐어요.', 'success');
+      touchRecentUser(profile).catch(() => undefined);
+      if (activeTab === 'talk') void refreshTalkPosts(false);
+      if (activeTab === 'chats') setChatListKey((current) => current + 1);
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      showNotice('인터넷 연결이 끊겼어요. 작성 중인 내용은 그대로 유지돼요.', 'error');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [activeTab, profile, refreshTalkPosts, showNotice]);
+
+  useEffect(() => {
     if (!notice) return;
-    const timer = window.setTimeout(() => setNotice(''), 3000);
+    const timer = window.setTimeout(() => setNotice(null), notice.tone === 'error' ? 5000 : 3200);
     return () => window.clearTimeout(timer);
   }, [notice]);
 
@@ -130,11 +159,12 @@ export function HomeScreenNext() {
       setPosts((current) => [result.post, ...current]);
       setIsComposeOpen(false);
       setActiveTab('talk');
-      if (result.point_reward?.awarded) setNotice('토크 작성 보상으로 100포인트를 받았어요.');
+      if (result.point_reward?.awarded) showNotice('토크 작성 보상으로 100포인트를 받았어요.', 'success');
+      else showNotice('토크가 등록됐어요.', 'success');
       void refreshTalkPosts(false);
       return true;
     } catch (error) {
-      setNotice(errorMessage(error, '토크를 등록하지 못했어요. 잠시 후 다시 시도해주세요.'));
+      showNotice(errorMessage(error, '토크를 등록하지 못했어요. 잠시 후 다시 시도해주세요.'), 'error');
       return false;
     }
   };
@@ -143,18 +173,24 @@ export function HomeScreenNext() {
     try {
       await deleteD1TalkPost(id);
       setPosts((current) => current.filter((post) => post.id !== id));
+      showNotice('토크를 삭제했어요.', 'success');
     } catch (error) {
-      setNotice(errorMessage(error, '토크를 삭제하지 못했어요.'));
+      showNotice(errorMessage(error, '토크를 삭제하지 못했어요.'), 'error');
     }
   };
 
   const saveProfile = async (next: MyProfile) => {
-    const previousNickname = profile.nickname;
-    await syncProfile(previousNickname, next);
-    saveMyProfile(next);
-    setProfile(next);
-    void refreshTalkPosts(false);
-    setNotice('프로필이 저장됐어요.');
+    try {
+      const previousNickname = profile.nickname;
+      await syncProfile(previousNickname, next);
+      saveMyProfile(next);
+      setProfile(next);
+      void refreshTalkPosts(false);
+      showNotice('프로필이 저장됐어요.', 'success');
+    } catch (error) {
+      showNotice(errorMessage(error, '프로필을 저장하지 못했어요.'), 'error');
+      throw error;
+    }
   };
 
   const openDirectRoom = (room: D1ChatRoom) => {
@@ -166,8 +202,10 @@ export function HomeScreenNext() {
 
   return (
     <main className={isRoomVisible ? 'app-shell is-chat-room' : 'app-shell'}>
+      <a className="skip-link" href="#home-content">본문 바로가기</a>
+      {!isOnline && <div className="connection-banner" role="status" aria-live="polite"><span aria-hidden="true" />오프라인 상태예요. 연결되면 자동으로 새 내용을 확인할게요.</div>}
       <HomeScreenPollingBridge activeTab={activeTab} isComposeOpen={isComposeOpen} markUnread={() => setHasNewChat(true)} refreshTalk={() => refreshTalkPosts(false)} />
-      <section className="home-screen" aria-labelledby="home-title">
+      <section className="home-screen" id="home-content" aria-labelledby="home-title">
         {!isRoomVisible && <header className="home-header"><div><p className="home-kicker">플러팅</p><h1 id="home-title">{titles[activeTab]}</h1></div><div className="header-profile-chip" aria-label={`내 프로필 ${profile.nickname}`}><span>{profile.nickname?.slice(0, 1) || '나'}</span><small>{profile.nickname || '내 프로필'}</small></div></header>}
         {activeTab === 'talk' && <TalkPanel2 posts={posts} myProfileId={getProfileId()} onDeletePost={removeTalk} onOpenCompose={() => setIsComposeOpen(true)} onOpenRoom={openDirectRoom} />}
         {activeTab === 'people' && <RecentUsersPanel onOpenRoom={openDirectRoom} />}
@@ -175,7 +213,7 @@ export function HomeScreenNext() {
         {activeTab === 'settings' && <><ProfileSettingsPanel myProfile={profile} onSave={saveProfile} /><AccountDeletionCard /></>}
       </section>
       {!isRoomVisible && <nav className="bottom-nav" aria-label="주요 메뉴">{tabs.map((tab) => <button aria-current={activeTab === tab.id ? 'page' : undefined} className={activeTab === tab.id ? 'nav-item is-active' : 'nav-item'} key={tab.id} onClick={() => changeTab(tab.id)} type="button"><TabIcon name={tab.icon} /><span className="nav-label">{tab.label}</span>{tab.id === 'chats' && hasNewChat ? <em className="nav-dot" aria-label="새 채팅 알림" /> : null}</button>)}</nav>}
-      {notice && <div className="app-snackbar" role="status"><span aria-hidden="true">✓</span>{notice}</div>}
+      {notice && <div className={`app-snackbar is-${notice.tone}`} role={notice.tone === 'error' ? 'alert' : 'status'} aria-live={notice.tone === 'error' ? 'assertive' : 'polite'} aria-atomic="true"><span aria-hidden="true">{noticeIcons[notice.tone]}</span><p>{notice.message}</p></div>}
       <TalkComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} onSubmit={submitTalk} />
     </main>
   );
