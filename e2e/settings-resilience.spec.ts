@@ -20,7 +20,7 @@ function watchApiRequests(page: Page, pathname: string, method: string) {
 
 async function openSettings(page: Page) {
   await page.goto('/');
-  await page.getByRole('button', { name: '설정' }).click();
+  await page.getByRole('button', { name: '마이' }).click();
 }
 
 test('프로필 저장 실패 시 서버 오류를 표시하고 기존 프로필을 보존한다', async ({ page }) => {
