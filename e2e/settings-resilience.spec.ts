@@ -85,7 +85,7 @@ test('마이룸 로드 실패 시 편집과 저장을 차단한다', async ({ pa
   await page.getByRole('button', { name: '열기' }).first().click();
 
   await expect(page.getByText('마이룸을 불러오지 못해 저장할 수 없어요.')).toBeVisible();
-  await expect(page.getByText('연결을 확인한 뒤 화면을 다시 열어주세요.')).toBeVisible();
+  await expect(page.getByRole('alert')).toContainText('마이룸을 불러오지 못했어요.');
   await expect(page.getByRole('button', { name: '저장됨' })).toBeDisabled();
   await expect(page.getByRole('button', { name: '꾸미기' })).toBeDisabled();
   expect(saveRequests).toHaveLength(0);
