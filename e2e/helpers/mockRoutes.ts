@@ -57,6 +57,8 @@ const pointStatus = {
 
 export async function installMockRoutes(page: Page, options: MockRouteOptions = {}) {
   let roomVisible = Boolean(options.withChatRoom);
+  let authProfileId = E2E_PROFILE_ID;
+  let authToken = 'e2e-session';
 
   page.on('pageerror', (error) => {
     console.error(`[browser pageerror] ${error.stack || error.message}`);
@@ -79,13 +81,17 @@ export async function installMockRoutes(page: Page, options: MockRouteOptions = 
 
     if (path === '/api/auth/session') {
       await reply(route, method === 'POST'
-        ? { profile_id: E2E_PROFILE_ID, token: 'e2e-session' }
-        : { profile_id: E2E_PROFILE_ID });
+        ? { profile_id: authProfileId, token: authToken }
+        : { profile_id: authProfileId });
       return;
     }
 
     if (path === '/api/account' && method === 'DELETE') {
       const status = options.accountDeleteStatus ?? 200;
+      if (status === 200) {
+        authProfileId = 'e2e-fresh-profile';
+        authToken = 'e2e-fresh-session';
+      }
       await reply(route, status === 200 ? { ok: true } : { error: '회원 탈퇴 처리 실패' }, status);
       return;
     }
