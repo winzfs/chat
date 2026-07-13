@@ -5,6 +5,10 @@ export const E2E_SESSION_VALUE = 'e2e-session';
 
 export async function seedSignedUpUser(page: Page) {
   await page.addInitScript(({ profileId, sessionValue }) => {
+    const seedKey = 'e2e.signedUpUser.seeded';
+    if (sessionStorage.getItem(seedKey) === 'yes') return;
+
+    sessionStorage.setItem(seedKey, 'yes');
     localStorage.setItem('chitchat.authSession.v1', JSON.stringify({ profile_id: profileId, token: sessionValue }));
     localStorage.setItem('chitchat.profileId.v1', profileId);
     localStorage.setItem('chitchat.signup.v1', 'yes');
