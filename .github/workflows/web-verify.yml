@@ -26,4 +26,13 @@ jobs:
         with:
           version: 9.15.0
       - run: pnpm install --frozen-lockfile --ignore-scripts
-      - run: pnpm verify
+      - name: Check dependency pins
+        run: pnpm check:dependency-pins
+      - name: Check client contracts
+        run: pnpm check:client-contracts
+      - name: Check D1 migrations
+        run: pnpm check:d1-migrations
+      - name: Typecheck web
+        run: pnpm typecheck
+      - name: Build web
+        run: pnpm build
