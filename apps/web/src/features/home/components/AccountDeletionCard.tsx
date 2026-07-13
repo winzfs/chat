@@ -7,10 +7,15 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : '회원 탈퇴를 처리하지 못했어요.';
 }
 
-function resetLocalAccount() {
-  const keys = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index))
+function clearAppStorage(storage: Storage) {
+  const keys = Array.from({ length: storage.length }, (_, index) => storage.key(index))
     .filter((key): key is string => Boolean(key?.startsWith('chitchat.')));
-  for (const key of keys) localStorage.removeItem(key);
+  for (const key of keys) storage.removeItem(key);
+}
+
+function resetLocalAccount() {
+  clearAppStorage(localStorage);
+  clearAppStorage(sessionStorage);
   window.location.replace('/');
 }
 
