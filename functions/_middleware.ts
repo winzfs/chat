@@ -1,6 +1,7 @@
 import { authenticatedProfileId, jsonError } from './_shared/auth';
 
 type Env = { AUTH_SECRET?: string; ALLOWED_ORIGINS?: string; DB: D1Database };
+type PolicyTable = 'revoked_profiles' | 'user_suspensions';
 
 class PolicyLookupError extends Error {
   constructor() {
@@ -25,6 +26,30 @@ const nativeAppOrigins = new Set([
   'https://localhost',
   'capacitor://localhost',
 ]);
+
+const policyTableStatements: Record<PolicyTable, string[]> = {
+  revoked_profiles: [
+    `create table if not exists revoked_profiles (
+      profile_id text primary key,
+      revoked_at text not null default (datetime('now')),
+      reason text not null default 'account_deleted'
+    )`,
+    'create index if not exists revoked_profiles_revoked_at_idx on revoked_profiles(revoked_at)',
+  ],
+  user_suspensions: [
+    `create table if not exists user_suspensions (
+      profile_id text primary key,
+      reason text not null,
+      suspended_until text,
+      created_by text not null,
+      created_at text not null default (datetime('now')),
+      updated_at text not null default (datetime('now'))
+    )`,
+    'create index if not exists user_suspensions_until_idx on user_suspensions(suspended_until)',
+  ],
+};
+
+const policyTableBootstraps = new Map<PolicyTable, Promise<void>>();
 
 function bodyProfileId(body: unknown) {
   return typeof body === 'object' && body !== null && 'profile_id' in body
@@ -119,28 +144,70 @@ function logRequest(details: {
   else console.log(payload);
 }
 
+function isMissingPolicyTable(error: unknown, table: PolicyTable) {
+  const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+  return message.toLowerCase().includes(`no such table: ${table}`);
+}
+
+async function bootstrapPolicyTable(env: Env, table: PolicyTable) {
+  const existing = policyTableBootstraps.get(table);
+  if (existing) return existing;
+
+  const bootstrap = (async () => {
+    for (const statement of policyTableStatements[table]) {
+      await env.DB.prepare(statement).run();
+    }
+    console.warn(JSON.stringify({
+      event: 'api.policy_table_bootstrapped',
+      table,
+    }));
+  })().catch((error) => {
+    policyTableBootstraps.delete(table);
+    throw error;
+  });
+
+  policyTableBootstraps.set(table, bootstrap);
+  return bootstrap;
+}
+
 async function isRevokedProfile(env: Env, profileId: string) {
+  const query = () => env.DB.prepare(
+    'select profile_id from revoked_profiles where profile_id = ? limit 1',
+  ).bind(profileId).first();
+
   try {
-    const row = await env.DB.prepare(
-      'select profile_id from revoked_profiles where profile_id = ? limit 1',
-    ).bind(profileId).first();
+    const row = await query();
     return Boolean(row);
-  } catch {
-    throw new PolicyLookupError();
+  } catch (error) {
+    if (!isMissingPolicyTable(error, 'revoked_profiles')) throw new PolicyLookupError();
+    try {
+      await bootstrapPolicyTable(env, 'revoked_profiles');
+      return Boolean(await query());
+    } catch {
+      throw new PolicyLookupError();
+    }
   }
 }
 
 async function activeSuspension(env: Env, profileId: string) {
+  const query = () => env.DB.prepare(
+    `select reason, suspended_until
+     from user_suspensions
+     where profile_id = ?
+       and (suspended_until is null or datetime(suspended_until) > datetime('now'))
+     limit 1`,
+  ).bind(profileId).first<{ reason?: string | null; suspended_until?: string | null }>();
+
   try {
-    return await env.DB.prepare(
-      `select reason, suspended_until
-       from user_suspensions
-       where profile_id = ?
-         and (suspended_until is null or datetime(suspended_until) > datetime('now'))
-       limit 1`,
-    ).bind(profileId).first<{ reason?: string | null; suspended_until?: string | null }>();
-  } catch {
-    throw new PolicyLookupError();
+    return await query();
+  } catch (error) {
+    if (!isMissingPolicyTable(error, 'user_suspensions')) throw new PolicyLookupError();
+    try {
+      await bootstrapPolicyTable(env, 'user_suspensions');
+      return await query();
+    } catch {
+      throw new PolicyLookupError();
+    }
   }
 }
 
