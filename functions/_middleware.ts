@@ -16,6 +16,11 @@ const publicGetPaths = new Set([
   '/api/chat-images',
 ]);
 
+const crossOriginAssetPaths = new Set([
+  '/api/profile-image',
+  '/api/chat-images',
+]);
+
 function bodyProfileId(body: unknown) {
   return typeof body === 'object' && body !== null && 'profile_id' in body
     ? String((body as { profile_id?: unknown }).profile_id ?? '').trim()
@@ -38,13 +43,13 @@ function appendVary(headers: Headers, value: string) {
   if (!values.includes(value.toLowerCase())) headers.set('vary', `${current}, ${value}`);
 }
 
-function withApiHeaders(response: Response, id: string, durationMs: number) {
+function withApiHeaders(response: Response, id: string, durationMs: number, pathname: string) {
   const headers = new Headers(response.headers);
   headers.set('x-request-id', id);
   headers.set('x-content-type-options', 'nosniff');
   headers.set('x-frame-options', 'DENY');
   headers.set('referrer-policy', 'same-origin');
-  headers.set('cross-origin-resource-policy', 'same-origin');
+  headers.set('cross-origin-resource-policy', crossOriginAssetPaths.has(pathname) ? 'cross-origin' : 'same-origin');
   headers.set('server-timing', `app;dur=${durationMs}`);
   if (!headers.has('cache-control')) headers.set('cache-control', 'no-store');
   appendVary(headers, 'Authorization');
@@ -127,7 +132,7 @@ export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
       durationMs,
       authState,
     });
-    return withApiHeaders(response, id, durationMs);
+    return withApiHeaders(response, id, durationMs, pathname);
   };
 
   try {
