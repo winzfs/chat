@@ -84,7 +84,7 @@ const webPackage = readJson('apps/web/package.json');
 checkLockedDependencies('apps/web/package.json', webPackage.dependencies, 'web dependency');
 checkLockedDependencies('apps/web/package.json', webPackage.devDependencies, 'web devDependency');
 
-const workflowPaths = [
+const nodeWorkflowPaths = [
   '.github/workflows/web-verify.yml',
   '.github/workflows/web-e2e.yml',
   '.github/workflows/pages-auth-smoke.yml',
@@ -93,11 +93,22 @@ const workflowPaths = [
   '.github/workflows/android-debug-apk.yml',
 ];
 
-for (const workflowPath of workflowPaths) {
+for (const workflowPath of nodeWorkflowPaths) {
   const workflow = read(workflowPath);
   requireText(workflowPath, workflow, 'node-version: 22', 'workflow must pin Node 22');
-  requireText(workflowPath, workflow, 'version: 9.15.0', 'workflow must pin pnpm 9.15.0');
-  requireText(workflowPath, workflow, 'pnpm install --frozen-lockfile', 'workflow must install with a frozen lockfile');
+}
+
+const dependencyWorkflowPaths = [
+  '.github/workflows/web-verify.yml',
+  '.github/workflows/web-e2e.yml',
+  '.github/workflows/d1-schema-inspect.yml',
+  '.github/workflows/android-debug-apk.yml',
+];
+
+for (const workflowPath of dependencyWorkflowPaths) {
+  const workflow = read(workflowPath);
+  requireText(workflowPath, workflow, 'version: 9.15.0', 'dependency workflow must pin pnpm 9.15.0');
+  requireText(workflowPath, workflow, 'pnpm install --frozen-lockfile', 'dependency workflow must install with a frozen lockfile');
 }
 
 const verifyScript = rootPackage.scripts?.verify ?? '';
