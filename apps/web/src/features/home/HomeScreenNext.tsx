@@ -180,17 +180,11 @@ export function HomeScreenNext() {
   };
 
   const saveProfile = async (next: MyProfile) => {
-    try {
-      const previousNickname = profile.nickname;
-      await syncProfile(previousNickname, next);
-      saveMyProfile(next);
-      setProfile(next);
-      void refreshTalkPosts(false);
-      showNotice('프로필이 저장됐어요.', 'success');
-    } catch (error) {
-      showNotice(errorMessage(error, '프로필을 저장하지 못했어요.'), 'error');
-      throw error;
-    }
+    const previousNickname = profile.nickname;
+    await syncProfile(previousNickname, next);
+    saveMyProfile(next);
+    setProfile(next);
+    void refreshTalkPosts(false);
   };
 
   const openDirectRoom = (room: D1ChatRoom) => {
