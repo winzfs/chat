@@ -19,7 +19,7 @@ test('회원 탈퇴 실패 시 확인창을 유지하고 다시 시도할 수 �
   const deleteRequests = watchAccountDeleteRequests(page);
 
   await page.goto('/');
-  await page.getByRole('button', { name: '설정' }).click();
+  await page.getByRole('button', { name: '마이' }).click();
   await page.getByRole('button', { name: '회원 탈퇴' }).click();
 
   const dialog = page.getByRole('dialog');
@@ -39,7 +39,7 @@ test('회원 탈퇴 성공 시 로컬 계정 상태를 지우고 가입 화면�
   const deleteRequests = watchAccountDeleteRequests(page);
 
   await page.goto('/');
-  await page.getByRole('button', { name: '설정' }).click();
+  await page.getByRole('button', { name: '마이' }).click();
   await page.getByRole('button', { name: '회원 탈퇴' }).click();
   await page.getByRole('dialog').getByRole('button', { name: '탈퇴하고 삭제' }).click();
 
