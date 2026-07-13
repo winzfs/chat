@@ -57,6 +57,9 @@ function logRequest(details: {
   durationMs: number;
   authState: string;
 }) {
+  const shouldLog = details.status >= 400 || details.method !== 'GET' || details.durationMs >= 1000;
+  if (!shouldLog) return;
+
   const payload = JSON.stringify({
     event: 'api.request',
     request_id: details.requestId,
