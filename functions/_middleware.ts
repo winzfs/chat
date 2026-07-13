@@ -1,6 +1,6 @@
 import { authenticatedProfileId, jsonError } from './_shared/auth';
 
-type Env = { AUTH_SECRET?: string; DB: D1Database };
+type Env = { AUTH_SECRET?: string; ALLOWED_ORIGINS?: string; DB: D1Database };
 
 class PolicyLookupError extends Error {
   constructor() {
@@ -19,6 +19,11 @@ const publicGetPaths = new Set([
 const crossOriginAssetPaths = new Set([
   '/api/profile-image',
   '/api/chat-images',
+]);
+
+const nativeAppOrigins = new Set([
+  'https://localhost',
+  'capacitor://localhost',
 ]);
 
 function bodyProfileId(body: unknown) {
@@ -43,7 +48,26 @@ function appendVary(headers: Headers, value: string) {
   if (!values.includes(value.toLowerCase())) headers.set('vary', `${current}, ${value}`);
 }
 
-function withApiHeaders(response: Response, id: string, durationMs: number, pathname: string) {
+function configuredOrigins(env: Env) {
+  return (env.ALLOWED_ORIGINS ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
+
+function resolveCorsOrigin(env: Env, request: Request) {
+  const origin = request.headers.get('origin')?.trim();
+  if (!origin) return '';
+
+  const allowed = new Set([
+    new URL(request.url).origin,
+    ...nativeAppOrigins,
+    ...configuredOrigins(env),
+  ]);
+  return allowed.has(origin) ? origin : null;
+}
+
+function withApiHeaders(response: Response, id: string, durationMs: number, pathname: string, corsOrigin: string | null) {
   const headers = new Headers(response.headers);
   headers.set('x-request-id', id);
   headers.set('x-content-type-options', 'nosniff');
@@ -51,6 +75,14 @@ function withApiHeaders(response: Response, id: string, durationMs: number, path
   headers.set('referrer-policy', 'same-origin');
   headers.set('cross-origin-resource-policy', crossOriginAssetPaths.has(pathname) ? 'cross-origin' : 'same-origin');
   headers.set('server-timing', `app;dur=${durationMs}`);
+  headers.set('access-control-expose-headers', 'x-request-id, server-timing');
+  if (corsOrigin) {
+    headers.set('access-control-allow-origin', corsOrigin);
+    headers.set('access-control-allow-methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    headers.set('access-control-allow-headers', 'authorization, content-type, x-request-id');
+    headers.set('access-control-max-age', '86400');
+    appendVary(headers, 'Origin');
+  }
   if (!headers.has('cache-control')) headers.set('cache-control', 'no-store');
   appendVary(headers, 'Authorization');
 
@@ -120,6 +152,7 @@ export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
 
   const id = requestId(request);
   const startedAt = Date.now();
+  const corsOrigin = resolveCorsOrigin(env, request);
   let authState = 'not-checked';
 
   const finish = (response: Response) => {
@@ -132,11 +165,18 @@ export const onRequest: PagesFunction<Env> = async ({ env, request, next }) => {
       durationMs,
       authState,
     });
-    return withApiHeaders(response, id, durationMs, pathname);
+    return withApiHeaders(response, id, durationMs, pathname, corsOrigin);
   };
 
   try {
-    if (request.method === 'OPTIONS') return finish(await next());
+    if (corsOrigin === null) {
+      authState = 'cors-rejected';
+      return finish(jsonError('허용되지 않은 앱 출처에서 보낸 요청이에요.', 403));
+    }
+    if (request.method === 'OPTIONS') {
+      authState = 'preflight';
+      return finish(new Response(null, { status: 204 }));
+    }
     if (pathname === '/api/auth/session' && request.method === 'POST') {
       authState = 'public';
       return finish(await next());
