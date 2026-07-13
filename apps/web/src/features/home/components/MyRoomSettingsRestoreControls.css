@@ -133,3 +133,11 @@
   background: rgba(239, 68, 68, 0.09) !important;
   color: #dc2626 !important;
 }
+
+.my-room-floating-editor-toggle:disabled {
+  border-color: rgba(39, 39, 42, 0.08) !important;
+  color: #a1a1aa !important;
+  background: #f4f4f5 !important;
+  box-shadow: none !important;
+  opacity: 1;
+}
