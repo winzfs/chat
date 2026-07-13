@@ -79,7 +79,7 @@ function withApiHeaders(response: Response, id: string, durationMs: number, path
   if (corsOrigin) {
     headers.set('access-control-allow-origin', corsOrigin);
     headers.set('access-control-allow-methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    headers.set('access-control-allow-headers', 'authorization, content-type, x-request-id');
+    headers.set('access-control-allow-headers', 'authorization, content-type, x-profile-id, x-request-id');
     headers.set('access-control-max-age', '86400');
     appendVary(headers, 'Origin');
   }
