@@ -5,7 +5,7 @@ import { apiUrl, assetUrl } from '../api/apiBase';
 import { parseApiResponse } from '../api/apiResponse';
 import { loadAdminStatus } from '../api/admin';
 import { isKoreaRegion, KOREA_REGIONS } from '../api/koreaRegions';
-import { claimAdRewardPoints, claimAttendancePoints, loadPointStatus, type PointStatus } from '../api/points';
+import { claimAttendancePoints, loadPointStatus, type PointStatus } from '../api/points';
 import type { MyProfile } from '../api/profileStorage';
 import { AvatarCropModal } from './AvatarCropModal';
 import { SettingsLazyPanel, type SettingsSubpanel } from './SettingsLazyPanel';
@@ -31,14 +31,6 @@ function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
-const pointProducts = [
-  { label: '1,000P', price: '₩1,200', hint: '기본 충전' },
-  { label: '5,300P', price: '₩6,000', hint: '300P 보너스' },
-  { label: '10,800P', price: '₩12,000', hint: '800P 보너스' },
-  { label: '33,000P', price: '₩36,000', hint: '3,000P 보너스' },
-  { label: '57,000P', price: '₩60,000', hint: '7,000P 보너스' },
-];
-
 function formatPointDate(value: string) {
   const date = new Date(value.replace(' ', 'T') + 'Z');
   if (Number.isNaN(date.getTime())) return value;
@@ -52,13 +44,11 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
   const [profileNotice, setProfileNotice] = useState('');
   const [cropImageUrl, setCropImageUrl] = useState('');
   const [activeSubpanel, setActiveSubpanel] = useState<SettingsSubpanel | null>(null);
-  const [isChargeOpen, setIsChargeOpen] = useState(false);
   const [isPointHistoryOpen, setIsPointHistoryOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [pointStatus, setPointStatus] = useState<PointStatus | null>(null);
   const [pointNotice, setPointNotice] = useState('');
   const [isCheckingAttendance, setIsCheckingAttendance] = useState(false);
-  const [isWatchingAd, setIsWatchingAd] = useState(false);
 
   const refreshPoints = async () => {
     try {
@@ -182,26 +172,6 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
     }
   };
 
-  const watchAd = async () => {
-    if (isWatchingAd) return;
-
-    setIsWatchingAd(true);
-    setPointNotice('');
-    try {
-      const result = await claimAdRewardPoints();
-      setPointNotice(result.message);
-      await refreshPoints();
-    } catch (error) {
-      setPointNotice(errorMessage(error, '광고 보상을 처리하지 못했어요. 잠시 후 다시 시도해주세요.'));
-    } finally {
-      setIsWatchingAd(false);
-    }
-  };
-
-  const showChargeNotice = (productLabel: string) => {
-    setPointNotice(`${productLabel} 충전 결제는 아직 준비 중이에요.`);
-  };
-
   const regionValue = isKoreaRegion(form.location) ? form.location : '';
   const profileLocation = isKoreaRegion(myProfile.location) ? myProfile.location : '지역 재선택 필요';
   const pointHistory = pointStatus?.history ?? [];
@@ -226,11 +196,12 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
         <strong>포인트</strong>
         <p>{pointStatus ? `${pointStatus.balance.toLocaleString()}P 보유 중` : '포인트 확인 중...'}</p>
         <p>쪽지를 보낼 때 100P가 사용돼요.</p>
+        <p className="settings-service-note">광고 보상과 유료 충전은 계정 복구·결제 검증 연동을 마친 뒤 제공할 예정이에요.</p>
         {pointNotice && <p aria-live="polite">{pointNotice}</p>}
         <div className="chat-room-card-actions">
           <button type="button" disabled={isCheckingAttendance || Boolean(pointStatus?.attendance_claimed)} onClick={checkAttendance}>{pointStatus?.attendance_claimed ? '출석완료' : isCheckingAttendance ? '처리 중' : '출석체크 100P'}</button>
-          <button type="button" disabled={isWatchingAd || Boolean(pointStatus?.ad_reward_claimed)} onClick={watchAd}>{pointStatus?.ad_reward_claimed ? '광고보상 완료' : isWatchingAd ? '처리 중' : '광고보기 100P'}</button>
-          <button type="button" onClick={() => setIsChargeOpen((value) => !value)}>포인트 충전</button>
+          <button type="button" disabled>광고 보상 준비 중</button>
+          <button type="button" disabled>충전 준비 중</button>
           <button type="button" onClick={() => setIsPointHistoryOpen((value) => !value)}>포인트 내역</button>
         </div>
       </Card>
@@ -244,19 +215,6 @@ export function ProfileSettingsPanel({ myProfile, onSave }: { myProfile: MyProfi
               <strong>{item.amount > 0 ? `+${item.amount.toLocaleString()}P` : `${item.amount.toLocaleString()}P`}</strong>
               <span>{item.description || item.reason} · {formatPointDate(item.created_at)}</span>
             </div>
-          ))}
-        </Card>
-      )}
-
-      {isChargeOpen && (
-        <Card className="person-card">
-          <strong>포인트 충전</strong>
-          <p>기본 1,000P는 1,200원이고, 많이 충전할수록 보너스 포인트가 붙어요.</p>
-          {pointProducts.map((product) => (
-            <button className="setting-item" key={product.label} type="button" onClick={() => showChargeNotice(product.label)}>
-              <strong>{product.label}</strong>
-              <span>{product.price} · {product.hint}</span>
-            </button>
           ))}
         </Card>
       )}
